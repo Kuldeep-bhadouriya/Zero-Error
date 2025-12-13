@@ -89,7 +89,7 @@ export function ProfileClient({ profile, stats }: ProfileClientProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Profile Header */}
       <ProfileHeader profile={profile} onUpdate={handleUpdate} />
 
@@ -97,36 +97,36 @@ export function ProfileClient({ profile, stats }: ProfileClientProps) {
       <ProfileStats stats={stats} />
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Edit Profile Form */}
         <EditProfileForm profile={profile} onSuccess={handleUpdate} />
 
         {/* Security Card */}
-        <GlassCard variant="intense" gradient="red" className="p-6">
-          <div className="mb-6">
-            <div className="flex items-center gap-3">
-              <div className="bg-red-500/10 p-2 rounded-lg">
-                <Shield className="w-5 h-5 text-red-500" />
+        <GlassCard variant="intense" gradient="red" className="p-4 sm:p-6">
+          <div className="mb-4 sm:mb-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="bg-red-500/10 p-1.5 sm:p-2 rounded-lg">
+                <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">Security Settings</h2>
-                <p className="text-gray-400 text-sm mt-1">
+                <h2 className="text-xl sm:text-2xl font-bold text-white">Security Settings</h2>
+                <p className="text-gray-400 text-xs sm:text-sm mt-1">
                   Manage your account security and authentication
                 </p>
               </div>
             </div>
           </div>
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Change Password */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Key className="w-4 h-4 text-red-400" />
-                <h3 className="font-semibold text-white text-lg">Change Password</h3>
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <Key className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400" />
+                <h3 className="font-semibold text-white text-base sm:text-lg">Change Password</h3>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="current-password" className="text-white font-semibold">
+                  <Label htmlFor="current-password" className="text-white font-semibold text-sm">
                     Current Password
                   </Label>
                   <Input
@@ -134,13 +134,13 @@ export function ProfileClient({ profile, stats }: ProfileClientProps) {
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="bg-black/60 border-white/10 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20 h-11"
+                    className="bg-black/60 border-white/10 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20 h-10 sm:h-11 text-sm"
                     placeholder="Enter current password"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="new-password" className="text-white font-semibold">
+                  <Label htmlFor="new-password" className="text-white font-semibold text-sm">
                     New Password
                   </Label>
                   <Input
@@ -148,13 +148,13 @@ export function ProfileClient({ profile, stats }: ProfileClientProps) {
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="bg-black/60 border-white/10 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20 h-11"
+                    className="bg-black/60 border-white/10 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20 h-10 sm:h-11 text-sm"
                     placeholder="Enter new password (min 8 characters)"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password" className="text-white font-semibold">
+                  <Label htmlFor="confirm-password" className="text-white font-semibold text-sm">
                     Confirm New Password
                   </Label>
                   <Input
@@ -162,7 +162,7 @@ export function ProfileClient({ profile, stats }: ProfileClientProps) {
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="bg-black/60 border-white/10 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20 h-11"
+                    className="bg-black/60 border-white/10 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20 h-10 sm:h-11 text-sm"
                     placeholder="Confirm new password"
                   />
                 </div>
@@ -170,7 +170,7 @@ export function ProfileClient({ profile, stats }: ProfileClientProps) {
                 <Button
                   onClick={handlePasswordChange}
                   disabled={isChangingPassword || !newPassword || !confirmPassword}
-                  className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white font-semibold h-11 shadow-lg shadow-red-500/20"
+                  className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white font-semibold h-10 sm:h-11 shadow-lg shadow-red-500/20 text-sm"
                 >
                   {isChangingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Update Password
@@ -179,23 +179,23 @@ export function ProfileClient({ profile, stats }: ProfileClientProps) {
             </div>
 
             {/* Future Features */}
-            <div className="border-t border-zinc-700/50 pt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                <h3 className="font-semibold text-white text-lg">Coming Soon</h3>
+            <div className="border-t border-zinc-700/50 pt-4 sm:pt-6">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-400" />
+                <h3 className="font-semibold text-white text-base sm:text-lg">Coming Soon</h3>
               </div>
-              <div className="grid grid-cols-1 gap-3">
-                <div className="flex items-center gap-3 text-gray-300 bg-black/40 p-3 rounded-lg">
-                  <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-                  <span className="text-sm">Two-factor authentication (2FA)</span>
+              <div className="grid grid-cols-1 gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 text-gray-300 bg-black/40 p-2.5 sm:p-3 rounded-lg">
+                  <div className="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm">Two-factor authentication (2FA)</span>
                 </div>
-                <div className="flex items-center gap-3 text-gray-300 bg-black/40 p-3 rounded-lg">
-                  <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-                  <span className="text-sm">Session management & device tracking</span>
+                <div className="flex items-center gap-2 sm:gap-3 text-gray-300 bg-black/40 p-2.5 sm:p-3 rounded-lg">
+                  <div className="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm">Session management & device tracking</span>
                 </div>
-                <div className="flex items-center gap-3 text-gray-300 bg-black/40 p-3 rounded-lg">
-                  <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
-                  <span className="text-sm">Login history & activity logs</span>
+                <div className="flex items-center gap-2 sm:gap-3 text-gray-300 bg-black/40 p-2.5 sm:p-3 rounded-lg">
+                  <div className="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm">Login history & activity logs</span>
                 </div>
               </div>
             </div>

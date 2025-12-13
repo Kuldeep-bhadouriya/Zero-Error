@@ -76,27 +76,27 @@ export function EditProfileForm({ profile, onSuccess }: EditProfileFormProps) {
 
   return (
     <Card className="border-0 bg-gradient-to-br from-zinc-900 via-zinc-900 to-black shadow-2xl">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold text-white">Edit Profile</CardTitle>
-        <p className="text-sm text-gray-400 mt-1">Update your personal information</p>
+      <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
+        <CardTitle className="text-xl sm:text-2xl font-bold text-white">Edit Profile</CardTitle>
+        <p className="text-xs sm:text-sm text-gray-400 mt-1">Update your personal information</p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white font-semibold">Display Name</FormLabel>
+                  <FormLabel className="text-white font-semibold text-sm">Display Name</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Enter your name"
-                      className="bg-black/60 border-white/10 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20 h-11"
+                      className="bg-black/60 border-white/10 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20 h-10 sm:h-11 text-sm"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage className="text-red-400" />
+                  <FormMessage className="text-red-400 text-xs" />
                 </FormItem>
               )}
             />
@@ -106,29 +106,29 @@ export function EditProfileForm({ profile, onSuccess }: EditProfileFormProps) {
               name="bio"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-white font-semibold">Bio</FormLabel>
+                  <FormLabel className="text-white font-semibold text-sm">Bio</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Tell us about yourself..."
-                      className="bg-black/60 border-white/10 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20 resize-none"
+                      className="bg-black/60 border-white/10 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20 resize-none text-sm"
                       rows={4}
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription className="text-gray-500 text-sm">
+                  <FormDescription className="text-gray-500 text-xs">
                     {form.watch('bio')?.length || 0}/200 characters
                   </FormDescription>
-                  <FormMessage className="text-red-400" />
+                  <FormMessage className="text-red-400 text-xs" />
                 </FormItem>
               )}
             />
 
-            <div className="bg-black/40 p-4 rounded-lg border border-white/10">
-              <FormLabel className="text-white font-semibold">Email Address</FormLabel>
+            <div className="bg-black/40 p-3 sm:p-4 rounded-lg border border-white/10">
+              <FormLabel className="text-white font-semibold text-sm">Email Address</FormLabel>
               <Input
                 value={profile.email}
                 disabled
-                className="bg-black/60 border-white/10 text-gray-400 cursor-not-allowed mt-2 h-11"
+                className="bg-black/60 border-white/10 text-gray-400 cursor-not-allowed mt-2 h-10 sm:h-11 text-sm"
               />
               <p className="text-xs text-gray-500 mt-2">Email address cannot be changed</p>
             </div>
@@ -136,7 +136,7 @@ export function EditProfileForm({ profile, onSuccess }: EditProfileFormProps) {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white font-semibold h-11 shadow-lg shadow-red-500/20"
+              className="w-full bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white font-semibold h-10 sm:h-11 shadow-lg shadow-red-500/20 text-sm"
             >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes

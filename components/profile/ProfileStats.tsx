@@ -54,12 +54,12 @@ export function ProfileStats({ stats }: ProfileStatsProps) {
   ]
 
   return (
-    <GlassCard variant="intense" className="p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-white">Performance Statistics</h2>
-        <p className="text-sm text-gray-400 mt-1">Your ZE Club achievements and progress</p>
+    <GlassCard variant="intense" className="p-4 sm:p-6">
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-white">Performance Statistics</h2>
+        <p className="text-xs sm:text-sm text-gray-400 mt-1">Your ZE Club achievements and progress</p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {statItems.map((item, index) => (
             <motion.div
               key={item.label}
@@ -67,15 +67,15 @@ export function ProfileStats({ stats }: ProfileStatsProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
               whileHover={{ scale: 1.02, y: -2 }}
-              className={`bg-gradient-to-br ${item.bgGradient} rounded-xl p-5 border ${item.borderColor} hover:border-opacity-50 transition-all duration-300`}
+              className={`bg-gradient-to-br ${item.bgGradient} rounded-lg sm:rounded-xl p-3 sm:p-5 border ${item.borderColor} hover:border-opacity-50 transition-all duration-300`}
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className={`${item.iconBg} p-3 rounded-lg`}>
-                  <item.icon className={`w-6 h-6 ${item.color}`} />
+              <div className="flex items-start justify-between mb-2 sm:mb-3">
+                <div className={`${item.iconBg} p-2 sm:p-3 rounded-lg`}>
+                  <item.icon className={`w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ${item.color}`} />
                 </div>
               </div>
-              <div className="text-3xl font-bold text-white mb-1">{item.value}</div>
-              <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold">{item.label}</div>
+              <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1">{item.value}</div>
+              <div className="text-xs text-gray-400 uppercase tracking-wider font-semibold line-clamp-1">{item.label}</div>
             </motion.div>
           ))}
         </div>
