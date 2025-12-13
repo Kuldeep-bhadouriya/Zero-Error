@@ -155,51 +155,51 @@ export default function SubmissionVerifier() {
       className="space-y-6"
     >
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
         <Card className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border-blue-500/50 backdrop-blur-sm">
-          <CardContent className="pt-6">
+          <CardContent className="p-3 sm:p-4 lg:pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-800">Total Submissions</p>
-                <p className="text-3xl font-bold text-blue-900">{stats.total}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-800 mb-1">Total</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-900">{stats.total}</p>
               </div>
-              <Users className="h-10 w-10 text-blue-900 opacity-40" />
+              <Users className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-blue-900 opacity-40" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border-yellow-500/50 backdrop-blur-sm">
-          <CardContent className="pt-6">
+          <CardContent className="p-3 sm:p-4 lg:pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-800">Pending</p>
-                <p className="text-3xl font-bold text-yellow-900">{stats.pending}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-800 mb-1">Pending</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-yellow-900">{stats.pending}</p>
               </div>
-              <Clock className="h-10 w-10 text-yellow-900 opacity-40" />
+              <Clock className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-yellow-900 opacity-40" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-green-500/20 to-green-600/20 border-green-500/50 backdrop-blur-sm">
-          <CardContent className="pt-6">
+          <CardContent className="p-3 sm:p-4 lg:pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-800">Approved</p>
-                <p className="text-3xl font-bold text-green-900">{stats.approved}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-800 mb-1">Approved</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-900">{stats.approved}</p>
               </div>
-              <CheckCircle2 className="h-10 w-10 text-green-900 opacity-40" />
+              <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-green-900 opacity-40" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-to-br from-red-500/20 to-red-600/20 border-red-500/50 backdrop-blur-sm">
-          <CardContent className="pt-6">
+          <CardContent className="p-3 sm:p-4 lg:pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-800">Rejected</p>
-                <p className="text-3xl font-bold text-red-900">{stats.rejected}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-800 mb-1">Rejected</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-900">{stats.rejected}</p>
               </div>
-              <XCircle className="h-10 w-10 text-red-900 opacity-40" />
+              <XCircle className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-red-900 opacity-40" />
             </div>
           </CardContent>
         </Card>
@@ -207,28 +207,28 @@ export default function SubmissionVerifier() {
 
       {/* Filters */}
       <Card className="bg-zinc-900/50 border-zinc-700">
-        <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <CardContent className="p-3 sm:p-4 lg:pt-6 lg:px-6">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 lg:gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
               <Input
                 placeholder="Search by user, email, or mission..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
+                className="pl-9 sm:pl-10 text-sm bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
               />
             </div>
             <div className="flex gap-2">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px] bg-zinc-800 border-zinc-700 text-white">
+                <SelectTrigger className="w-full sm:w-[180px] bg-zinc-800 border-zinc-700 text-white text-sm">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700">
-                  <SelectItem value="all" className="text-white">All Status</SelectItem>
-                  <SelectItem value="pending" className="text-white">Pending</SelectItem>
-                  <SelectItem value="approved" className="text-white">Approved</SelectItem>
-                  <SelectItem value="rejected" className="text-white">Rejected</SelectItem>
+                  <SelectItem value="all" className="text-white text-sm">All Status</SelectItem>
+                  <SelectItem value="pending" className="text-white text-sm">Pending</SelectItem>
+                  <SelectItem value="approved" className="text-white text-sm">Approved</SelectItem>
+                  <SelectItem value="rejected" className="text-white text-sm">Rejected</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -238,23 +238,24 @@ export default function SubmissionVerifier() {
 
       {/* Submissions Table */}
       <Card className="bg-zinc-900/50 border-zinc-700">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white text-base sm:text-lg">
+        <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
+          <CardTitle className="flex items-center gap-2 text-white text-sm sm:text-base lg:text-lg">
             <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
             Submission Review ({filteredSubmissions.length})
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0 sm:p-6">
-          <div className="rounded-md border-0 sm:border border-zinc-700 overflow-x-auto -mx-4 sm:mx-0">
-            <Table>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto w-full">
+            <div className="min-w-[800px]">
+              <Table>
               <TableHeader>
                 <TableRow className="border-zinc-700">
-                  <TableHead className="min-w-[180px] text-gray-300">User</TableHead>
-                  <TableHead className="min-w-[150px] text-gray-300">Mission</TableHead>
-                  <TableHead className="min-w-[100px] text-gray-300">Points</TableHead>
-                  <TableHead className="min-w-[100px] text-gray-300">Proof</TableHead>
-                  <TableHead className="min-w-[100px] text-gray-300">Status</TableHead>
-                  <TableHead className="min-w-[200px] text-gray-300">Actions</TableHead>
+                  <TableHead className="w-[180px] text-gray-300 text-xs sm:text-sm">User</TableHead>
+                  <TableHead className="w-[150px] text-gray-300 text-xs sm:text-sm">Mission</TableHead>
+                  <TableHead className="w-[80px] text-gray-300 text-xs sm:text-sm">Points</TableHead>
+                  <TableHead className="w-[80px] text-gray-300 text-xs sm:text-sm">Proof</TableHead>
+                  <TableHead className="w-[100px] text-gray-300 text-xs sm:text-sm">Status</TableHead>
+                  <TableHead className="w-[180px] text-gray-300 text-xs sm:text-sm">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -267,34 +268,34 @@ export default function SubmissionVerifier() {
                       transition={{ duration: 0.3, delay: index * 0.05 }}
                       className="border-b border-zinc-700 transition-colors hover:bg-zinc-800/30"
                     >
-                      <TableCell>
+                      <TableCell className="py-3">
                         <div className="space-y-1">
-                          <div className="font-medium text-sm text-white">{submission.user.name}</div>
-                          <div className="text-xs text-gray-400 break-all">
+                          <div className="font-medium text-xs sm:text-sm text-white truncate max-w-[160px]">{submission.user.name}</div>
+                          <div className="text-xs text-gray-400 truncate max-w-[160px]">
                             {submission.user.email}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm font-medium text-gray-300">
-                        {submission.mission.name}
+                      <TableCell className="text-xs sm:text-sm font-medium text-gray-300 py-3">
+                        <div className="truncate max-w-[140px]">{submission.mission.name}</div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="bg-red-600/20 text-red-400">
+                      <TableCell className="py-3">
+                        <Badge variant="secondary" className="bg-red-600/20 text-red-400 text-xs">
                           +{submission.mission.points}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-3">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handlePreview(submission.proof)}
-                          className="gap-2 text-gray-300 hover:text-white hover:bg-zinc-800"
+                          className="gap-1 text-gray-300 hover:text-white hover:bg-zinc-800 text-xs h-8 px-2"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-3 w-3" />
                           View
                         </Button>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-3">
                         <Badge
                           variant={
                             submission.status === 'pending'
@@ -305,35 +306,37 @@ export default function SubmissionVerifier() {
                           }
                           className={
                             submission.status === 'pending'
-                              ? 'bg-yellow-600/20 text-yellow-400'
+                              ? 'bg-yellow-600/20 text-yellow-400 text-xs'
                               : submission.status === 'approved'
-                              ? 'bg-green-600/20 text-green-400'
-                              : ''
+                              ? 'bg-green-600/20 text-green-400 text-xs'
+                              : 'text-xs'
                           }
                         >
                           {submission.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-3">
                         {submission.status === 'pending' && (
-                          <div className="flex flex-col sm:flex-row gap-2">
+                          <div className="flex gap-1">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleVerification(submission._id, 'approved')}
-                              className="gap-1 border-green-500/50 text-green-400 hover:bg-green-500/20"
+                              className="gap-1 border-green-500/50 text-green-400 hover:bg-green-500/20 text-xs h-8 px-2"
                             >
-                              <CheckCircle2 className="h-4 w-4" />
-                              Approve
+                              <CheckCircle2 className="h-3 w-3" />
+                              <span className="hidden sm:inline">Approve</span>
+                              <span className="sm:hidden">✓</span>
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleVerification(submission._id, 'rejected')}
-                              className="gap-1 border-red-500/50 text-red-400 hover:bg-red-500/20"
+                              className="gap-1 border-red-500/50 text-red-400 hover:bg-red-500/20 text-xs h-8 px-2"
                             >
-                              <XCircle className="h-4 w-4" />
-                              Reject
+                              <XCircle className="h-3 w-3" />
+                              <span className="hidden sm:inline">Reject</span>
+                              <span className="sm:hidden">✗</span>
                             </Button>
                           </div>
                         )}
@@ -352,6 +355,7 @@ export default function SubmissionVerifier() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </div>
         </CardContent>
       </Card>

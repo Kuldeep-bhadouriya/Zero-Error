@@ -108,13 +108,13 @@ export default function MissionManager() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
         <Card className="bg-zinc-900/50 border-zinc-700">
-          <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6 pt-3 sm:pt-6">
+          <CardHeader className="pb-2 px-3 pt-3 sm:pb-3 sm:px-6 sm:pt-6">
             <CardTitle className="text-xs sm:text-sm font-medium text-white">Total Missions</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.total}</div>
+          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
+            <div className="text-xl sm:text-2xl font-bold text-white">{stats.total}</div>
             <p className="text-xs text-gray-400">
               {stats.active} active, {stats.inactive} inactive
             </p>
@@ -122,11 +122,11 @@ export default function MissionManager() {
         </Card>
 
         <Card className="bg-zinc-900/50 border-zinc-700">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-white">Time-Limited</CardTitle>
+          <CardHeader className="pb-2 px-3 pt-3 sm:pb-3 sm:px-6 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-white">Time-Limited</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.timeLimited}</div>
+          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
+            <div className="text-xl sm:text-2xl font-bold text-white">{stats.timeLimited}</div>
             <p className="text-xs text-gray-400">
               {stats.expired} expired
             </p>
@@ -134,11 +134,11 @@ export default function MissionManager() {
         </Card>
 
         <Card className="bg-zinc-900/50 border-zinc-700">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-white">Featured</CardTitle>
+          <CardHeader className="pb-2 px-3 pt-3 sm:pb-3 sm:px-6 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-white">Featured</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.featured}</div>
+          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
+            <div className="text-xl sm:text-2xl font-bold text-white">{stats.featured}</div>
             <p className="text-xs text-gray-400">
               Shown at top of list
             </p>
@@ -146,11 +146,11 @@ export default function MissionManager() {
         </Card>
 
         <Card className="bg-zinc-900/50 border-zinc-700">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-white">At Capacity</CardTitle>
+          <CardHeader className="pb-2 px-3 pt-3 sm:pb-3 sm:px-6 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-white">At Capacity</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{stats.maxedOut}</div>
+          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
+            <div className="text-xl sm:text-2xl font-bold text-white">{stats.maxedOut}</div>
             <p className="text-xs text-gray-400">
               Max completions reached
             </p>

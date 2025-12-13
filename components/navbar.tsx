@@ -210,6 +210,7 @@ export default function Navbar() {
         <Link
           href="/join-us"
           className="block w-full text-center px-6 py-3 rounded-md bg-gradient-to-r from-red-700 to-red-500 text-white text-lg font-medium shadow-lg shadow-red-900/30"
+          onClick={() => setIsMenuOpen(false)}
         >
           Join Us
         </Link>

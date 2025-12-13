@@ -103,18 +103,17 @@ export default function AdminZEClubPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden fixed inset-0 bg-black/60 z-40 pt-20"
+            className="lg:hidden fixed inset-0 bg-black/60 z-30 pt-20"
           />
         )}
       </AnimatePresence>
 
       {/* Sidebar */}
-      <motion.aside
-        initial={{ x: -300 }}
-        animate={{ x: sidebarOpen ? 0 : 0 }}
+      <aside
         className={cn(
-          "fixed left-0 top-20 bottom-0 w-72 bg-zinc-900/30 backdrop-blur-xl border-r border-zinc-700/30 z-40 transition-transform lg:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "fixed left-0 top-20 bottom-0 w-72 bg-zinc-900/30 backdrop-blur-xl border-r border-zinc-700/30 z-50 transition-transform duration-300 ease-in-out",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
+          "lg:translate-x-0"
         )}
       >
         <div className="h-full overflow-y-auto p-6">
@@ -175,30 +174,30 @@ export default function AdminZEClubPage() {
             })}
           </nav>
         </div>
-      </motion.aside>
+      </aside>
 
       {/* Main Content */}
-      <div className="lg:ml-72 pt-20">
-        <div className="container mx-auto px-4 sm:px-6 py-8 max-w-7xl">
+      <div className="lg:ml-72 pt-20 pb-8">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 max-w-7xl">
           {/* Page Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            className="mb-4 sm:mb-6 lg:mb-8"
           >
             {navItems.map((item) => {
               if (item.id === activeTab) {
                 const Icon = item.icon
                 return (
-                  <div key={item.id} className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-red-500 to-orange-600 shadow-lg shadow-red-500/50">
-                      <Icon className="h-7 w-7 text-white" />
+                  <div key={item.id} className="flex items-center gap-3 sm:gap-4">
+                    <div className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-red-500 to-orange-600 shadow-lg shadow-red-500/50">
+                      <Icon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7 text-white" />
                     </div>
                     <div>
-                      <h1 className="text-3xl font-bold bg-gradient-to-r from-red-500 via-orange-500 to-red-600 bg-clip-text text-transparent">
+                      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-red-500 via-orange-500 to-red-600 bg-clip-text text-transparent">
                         {item.label}
                       </h1>
-                      <p className="text-gray-400 text-sm">{item.description}</p>
+                      <p className="text-gray-400 text-xs sm:text-sm">{item.description}</p>
                     </div>
                   </div>
                 )

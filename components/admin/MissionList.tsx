@@ -170,33 +170,33 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
 
       {/* Filters */}
       <Card className="bg-zinc-900/50 border-zinc-700">
-        <CardHeader>
-          <CardTitle className="text-white">Filters</CardTitle>
-          <CardDescription className="text-gray-400">Filter and search missions</CardDescription>
+        <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
+          <CardTitle className="text-white text-sm sm:text-base">Filters</CardTitle>
+          <CardDescription className="text-gray-400 text-xs sm:text-sm">Filter and search missions</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-4">
+        <CardContent className="space-y-3 sm:space-y-4 px-3 pb-3 sm:px-6 sm:pb-6">
+          <div className="flex gap-3 sm:gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search missions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
+                className="pl-9 text-sm bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
             <div>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white text-sm">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700">
-                  <SelectItem value="all" className="text-white hover:bg-zinc-700">All Categories</SelectItem>
+                  <SelectItem value="all" className="text-white hover:bg-zinc-700 text-sm">All Categories</SelectItem>
                   {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat} className="text-white hover:bg-zinc-700">
+                    <SelectItem key={cat} value={cat} className="text-white hover:bg-zinc-700 text-sm">
                       {cat}
                     </SelectItem>
                   ))}
@@ -206,33 +206,33 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
 
             <div>
               <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white text-sm">
                   <SelectValue placeholder="Difficulty" />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700">
-                  <SelectItem value="all" className="text-white hover:bg-zinc-700">All Difficulties</SelectItem>
-                  <SelectItem value="Easy" className="text-white hover:bg-zinc-700">Easy</SelectItem>
-                  <SelectItem value="Medium" className="text-white hover:bg-zinc-700">Medium</SelectItem>
-                  <SelectItem value="Hard" className="text-white hover:bg-zinc-700">Hard</SelectItem>
+                  <SelectItem value="all" className="text-white hover:bg-zinc-700 text-sm">All Difficulties</SelectItem>
+                  <SelectItem value="Easy" className="text-white hover:bg-zinc-700 text-sm">Easy</SelectItem>
+                  <SelectItem value="Medium" className="text-white hover:bg-zinc-700 text-sm">Medium</SelectItem>
+                  <SelectItem value="Hard" className="text-white hover:bg-zinc-700 text-sm">Hard</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white text-sm">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700">
-                  <SelectItem value="all" className="text-white hover:bg-zinc-700">All Status</SelectItem>
-                  <SelectItem value="active" className="text-white hover:bg-zinc-700">Active Only</SelectItem>
-                  <SelectItem value="inactive" className="text-white hover:bg-zinc-700">Inactive Only</SelectItem>
+                  <SelectItem value="all" className="text-white hover:bg-zinc-700 text-sm">All Status</SelectItem>
+                  <SelectItem value="active" className="text-white hover:bg-zinc-700 text-sm">Active Only</SelectItem>
+                  <SelectItem value="inactive" className="text-white hover:bg-zinc-700 text-sm">Inactive Only</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className="flex gap-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
             <div className="flex items-center gap-2">
               <Switch
                 checked={timeLimitedOnly}
@@ -262,24 +262,25 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
 
       {/* Mission Table */}
       <Card className="bg-zinc-900/50 border-zinc-700">
-        <CardHeader>
-          <CardTitle className="text-white">
+        <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
+          <CardTitle className="text-white text-sm sm:text-base">
             Missions ({filteredMissions.length})
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0 sm:p-6">
-          <div className="rounded-md border-0 sm:border border-zinc-700 overflow-x-auto -mx-3 sm:mx-0">
-            <Table className="min-w-[900px]">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto w-full">
+            <div className="min-w-[900px]">
+              <Table>
               <TableHeader>
                 <TableRow className="border-zinc-700 hover:bg-zinc-800/50">
-                  <TableHead className="min-w-[200px] text-gray-300">Name</TableHead>
-                  <TableHead className="min-w-[100px] text-gray-300">Category</TableHead>
-                  <TableHead className="min-w-[100px] text-gray-300">Difficulty</TableHead>
-                  <TableHead className="min-w-[80px] text-gray-300">Points</TableHead>
-                  <TableHead className="min-w-[100px] text-gray-300">Status</TableHead>
-                  <TableHead className="min-w-[120px] text-gray-300">Completions</TableHead>
-                  <TableHead className="min-w-[120px] text-gray-300">Time Limit</TableHead>
-                  <TableHead className="min-w-[100px] text-gray-300">Actions</TableHead>
+                  <TableHead className="w-[200px] text-gray-300 text-xs sm:text-sm">Name</TableHead>
+                  <TableHead className="w-[100px] text-gray-300 text-xs sm:text-sm">Category</TableHead>
+                  <TableHead className="w-[100px] text-gray-300 text-xs sm:text-sm">Difficulty</TableHead>
+                  <TableHead className="w-[80px] text-gray-300 text-xs sm:text-sm">Points</TableHead>
+                  <TableHead className="w-[100px] text-gray-300 text-xs sm:text-sm">Status</TableHead>
+                  <TableHead className="w-[120px] text-gray-300 text-xs sm:text-sm">Completions</TableHead>
+                  <TableHead className="w-[120px] text-gray-300 text-xs sm:text-sm">Time Limit</TableHead>
+                  <TableHead className="w-[100px] text-gray-300 text-xs sm:text-sm">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -292,35 +293,35 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
                 ) : (
                   filteredMissions.map((mission) => (
                     <TableRow key={mission._id} className="border-zinc-700 hover:bg-zinc-800/30">
-                      <TableCell>
+                      <TableCell className="py-3">
                         <div className="flex items-center gap-2">
                           {mission.featured && (
-                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                            <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 fill-yellow-500 flex-shrink-0" />
                           )}
-                          <div>
-                            <div className="font-medium text-white">{mission.name}</div>
-                            <div className="text-sm text-gray-400 line-clamp-1">
+                          <div className="min-w-0">
+                            <div className="font-medium text-white text-xs sm:text-sm truncate max-w-[160px]">{mission.name}</div>
+                            <div className="text-xs text-gray-400 line-clamp-1">
                               {mission.description}
                             </div>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="border-zinc-600 text-gray-300">{mission.category}</Badge>
+                      <TableCell className="py-3">
+                        <Badge variant="outline" className="border-zinc-600 text-gray-300 text-xs">{mission.category}</Badge>
                       </TableCell>
-                      <TableCell className="text-gray-300">
-                        <div className="flex items-center gap-2">
-                          <div className={cn('h-2 w-2 rounded-full', getDifficultyColor(mission.difficulty))} />
+                      <TableCell className="text-gray-300 py-3">
+                        <div className="flex items-center gap-2 text-xs sm:text-sm">
+                          <div className={cn('h-2 w-2 rounded-full flex-shrink-0', getDifficultyColor(mission.difficulty))} />
                           {mission.difficulty}
                         </div>
                       </TableCell>
-                      <TableCell className="text-gray-300">
-                        <div className="flex items-center gap-1">
-                          <TrendingUp className="h-4 w-4 text-red-500" />
+                      <TableCell className="text-gray-300 py-3">
+                        <div className="flex items-center gap-1 text-xs sm:text-sm">
+                          <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 flex-shrink-0" />
                           {mission.points}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-3">
                         <div className="flex flex-col gap-1">
                           <Switch
                             checked={mission.active}
@@ -340,41 +341,41 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-gray-300">
-                        <div className="flex items-center gap-1">
-                          <Users className="h-4 w-4 text-gray-400" />
+                      <TableCell className="text-gray-300 py-3">
+                        <div className="flex items-center gap-1 text-xs sm:text-sm">
+                          <Users className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
                           <span>
                             {mission.currentCompletions}
                             {mission.maxCompletions ? `/${mission.maxCompletions}` : ''}
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-gray-300">
+                      <TableCell className="text-gray-300 py-3">
                         {mission.isTimeLimited ? (
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4 text-orange-500" />
+                          <div className="flex items-center gap-1 text-xs sm:text-sm">
+                            <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500 flex-shrink-0" />
                             {mission.daysRemaining !== null ? (
-                              <span className="text-sm">{mission.daysRemaining}d left</span>
+                              <span>{mission.daysRemaining}d left</span>
                             ) : mission.isExpired ? (
-                              <span className="text-sm text-red-500">Expired</span>
+                              <span className="text-red-500">Expired</span>
                             ) : (
-                              <span className="text-sm">Active</span>
+                              <span>Active</span>
                             )}
                           </div>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-gray-400 text-xs">-</span>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
+                      <TableCell className="py-3">
+                        <div className="flex gap-1">
                           <Button
                             size="icon"
                             variant="ghost"
                             onClick={() => onEdit(mission)}
                             disabled={loading}
-                            className="text-gray-300 hover:text-white hover:bg-zinc-800"
+                            className="text-gray-300 hover:text-white hover:bg-zinc-800 h-8 w-8"
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                           </Button>
                           <Button
                             size="icon"
@@ -384,9 +385,9 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
                               setDeleteDialogOpen(true)
                             }}
                             disabled={loading}
-                            className="text-red-400 hover:text-red-300 hover:bg-zinc-800"
+                            className="text-red-400 hover:text-red-300 hover:bg-zinc-800 h-8 w-8"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -395,6 +396,7 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
                 )}
               </TableBody>
             </Table>
+            </div>
           </div>
         </CardContent>
       </Card>
