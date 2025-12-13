@@ -4,7 +4,7 @@ export interface IEvent extends Document {
   title: string
   description: string
   eventDate: Date
-  eventType: 'upcoming' | 'past'
+  eventType: 'upcoming' | 'past' | 'current'
   imageUrl?: string
   location?: string
   registrationLink?: string
@@ -39,7 +39,7 @@ const EventSchema = new Schema<IEvent>(
     },
     eventType: {
       type: String,
-      enum: ['upcoming', 'past'],
+      enum: ['upcoming', 'past', 'current'],
       required: [true, 'Event type is required'],
       index: true,
     },
@@ -99,6 +99,11 @@ const EventSchema = new Schema<IEvent>(
 EventSchema.index({ eventType: 1, status: 1, eventDate: 1 })
 EventSchema.index({ featured: 1, status: 1, eventDate: 1 })
 
-const Event: Model<IEvent> = mongoose.models.Event || mongoose.model<IEvent>('Event', EventSchema)
+// Delete the cached model if it exists to ensure schema updates are applied
+if (mongoose.models.Event) {
+  delete mongoose.models.Event
+}
+
+const Event: Model<IEvent> = mongoose.model<IEvent>('Event', EventSchema)
 
 export default Event

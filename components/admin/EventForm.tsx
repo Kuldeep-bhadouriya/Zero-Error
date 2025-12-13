@@ -26,7 +26,7 @@ interface EventFormData {
   title: string
   description: string
   eventDate: Date
-  eventType: 'upcoming' | 'past'
+  eventType: 'upcoming' | 'past' | 'current'
   imageUrl?: string
   location?: string
   registrationLink?: string
@@ -220,23 +220,47 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
         <Label className="text-white font-medium">
           Event Date <span className="text-red-500">*</span>
         </Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                'w-full justify-start text-left font-normal bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700',
-                !eventDate && 'text-gray-500'
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {eventDate ? format(eventDate, 'PPP') : <span>Pick a date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar mode="single" selected={eventDate} onSelect={setEventDate} initialFocus />
-          </PopoverContent>
-        </Popover>
+        <div className="flex gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  'flex-1 justify-start text-left font-normal bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700',
+                  !eventDate && 'text-gray-500'
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {eventDate ? format(eventDate, 'PPP') : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar mode="single" selected={eventDate} onSelect={setEventDate} initialFocus />
+            </PopoverContent>
+          </Popover>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              const today = new Date()
+              setEventDate(today)
+              // Auto-set to 'current' when today is selected
+              setValue('eventType', 'current')
+            }}
+            className="bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20 hover:text-red-300"
+            title="Set to today (for current/live events)"
+          >
+            Today
+          </Button>
+        </div>
+        {eventDate && format(eventDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') && (
+          <div className="mt-2 flex items-center gap-2 text-sm">
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            <span className="text-red-400 font-medium">
+              This will appear as a CURRENT/LIVE event on the events page
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Event Type & Status */}
@@ -247,7 +271,7 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
           </Label>
           <Select
             onValueChange={(value) =>
-              setValue('eventType', value as 'upcoming' | 'past')
+              setValue('eventType', value as 'upcoming' | 'past' | 'current')
             }
             defaultValue={event?.eventType || 'upcoming'}
           >
@@ -255,6 +279,12 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
               <SelectValue placeholder="Select event type" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="current">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  Current/Live
+                </div>
+              </SelectItem>
               <SelectItem value="upcoming">Upcoming</SelectItem>
               <SelectItem value="past">Past</SelectItem>
             </SelectContent>

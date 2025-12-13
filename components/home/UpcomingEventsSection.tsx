@@ -14,7 +14,7 @@ interface Event {
   title: string
   description: string
   eventDate: string
-  eventType: 'upcoming' | 'past'
+  eventType: 'upcoming' | 'past' | 'current'
   imageUrl?: string
   location?: string
   registrationLink?: string

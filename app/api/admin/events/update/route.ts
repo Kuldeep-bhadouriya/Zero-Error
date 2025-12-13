@@ -34,9 +34,9 @@ export async function PATCH(req: Request) {
     }
 
     // Validate eventType if provided
-    if (updateData.eventType && !['upcoming', 'past'].includes(updateData.eventType)) {
+    if (updateData.eventType && !['upcoming', 'past', 'current'].includes(updateData.eventType)) {
       return NextResponse.json(
-        { error: 'Invalid eventType. Must be "upcoming" or "past"' },
+        { error: 'Invalid eventType. Must be "upcoming", "past", or "current"' },
         { status: 400 }
       )
     }

@@ -16,13 +16,14 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import CurrentEventsSection from "@/components/home/CurrentEventsSection";
 
 interface Event {
   _id: string
   title: string
   description: string
   eventDate: string
-  eventType: 'upcoming' | 'past'
+  eventType: 'upcoming' | 'past' | 'current'
   imageUrl?: string
   location?: string
   registrationLink?: string
@@ -182,6 +183,9 @@ export default function EventsPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Current Events Section */}
+      <CurrentEventsSection />
 
       {/* Upcoming Events Section */}
       <section id="upcoming" className="py-16 bg-zinc-950 relative">

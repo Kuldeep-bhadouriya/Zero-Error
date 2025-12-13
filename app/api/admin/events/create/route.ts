@@ -39,9 +39,9 @@ export async function POST(req: Request) {
       )
     }
 
-    if (!['upcoming', 'past'].includes(eventType)) {
+    if (!['upcoming', 'past', 'current'].includes(eventType)) {
       return NextResponse.json(
-        { error: 'Invalid eventType. Must be "upcoming" or "past"' },
+        { error: 'Invalid eventType. Must be "upcoming", "past", or "current"' },
         { status: 400 }
       )
     }
