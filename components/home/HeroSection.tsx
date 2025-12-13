@@ -82,7 +82,7 @@ const HeroSection = ({
             preload="auto"
             poster={posterSrc}
           >
-            <source src="/images/background.mp4" type="video/mp4" />
+            <source src={videoSrc} type="video/mp4" />
             <source src="/images/background.webm" type="video/webm" />
             {/* Fallback image if video fails to load */}
             <Image

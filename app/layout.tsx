@@ -1,5 +1,5 @@
 import type React from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Rajdhani } from "next/font/google";
 import ClientLayout from "@/components/client-layout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -13,6 +13,16 @@ const rajdhani = Rajdhani({
   weight: ["300", "400", "500", "600", "700"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#000000" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+}
+
 export const metadata: Metadata = {
   title: "Zero Error Esports | Professional Gaming Team",
   description:
@@ -20,16 +30,6 @@ export const metadata: Metadata = {
   keywords:
     "Zero Error, Esports, professional gaming, tournaments, gaming team, India",
   authors: [{ name: "Zero Error Esports" }],
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#000000" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
-  ],
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
   openGraph: {
     title: "Zero Error Esports | Professional Gaming Team",
     description:
