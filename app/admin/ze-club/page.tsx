@@ -11,13 +11,15 @@ import UserRoleManager from '@/components/admin/UserRoleManager'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Shield, Zap, Video, Calendar, ListChecks, Megaphone, Target, Users, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { MenuItem, MenuContainer } from '@/components/ui/fluid-menu'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 export default function AdminZEClubPage() {
   const router = useRouter()
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('submissions')
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     // Check if user has access by trying to fetch submissions
@@ -87,34 +89,41 @@ export default function AdminZEClubPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black">
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-24 left-4 z-50 p-2 bg-zinc-900 border border-zinc-700 rounded-lg text-white hover:bg-zinc-800 transition-colors"
-      >
-        {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </button>
+      {/* Fluid Menu for mobile */}
+      {isMobile && (
+        <div className="fixed left-4 bottom-4 z-50">
+          <MenuContainer>
+            <MenuItem 
+              icon={
+                <div className="relative w-5 h-5">
+                  <div className="absolute inset-0 transition-all duration-300 ease-in-out origin-center opacity-100 scale-100 rotate-0 [div[data-expanded=true]_&]:opacity-0 [div[data-expanded=true]_&]:scale-0 [div[data-expanded=true]_&]:rotate-180">
+                    <Menu size={20} strokeWidth={1.5} className="text-white" />
+                  </div>
+                  <div className="absolute inset-0 transition-all duration-300 ease-in-out origin-center opacity-0 scale-0 -rotate-180 [div[data-expanded=true]_&]:opacity-100 [div[data-expanded=true]_&]:scale-100 [div[data-expanded=true]_&]:rotate-0">
+                    <X size={20} strokeWidth={1.5} className="text-white" />
+                  </div>
+                </div>
+              } 
+            />
+            {navItems.map((item) => {
+              const Icon = item.icon
+              return (
+                <MenuItem 
+                  key={item.id}
+                  icon={<Icon size={20} strokeWidth={1.5} className="text-white" />} 
+                  onClick={() => setActiveTab(item.id)}
+                  isActive={activeTab === item.id}
+                />
+              )
+            })}
+          </MenuContainer>
+        </div>
+      )}
 
-      {/* Sidebar Overlay for Mobile */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden fixed inset-0 bg-black/60 z-30 pt-20"
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Sidebar */}
+      {/* Sidebar - Hidden on mobile, always visible on desktop */}
+      {!isMobile && (
       <aside
-        className={cn(
-          "fixed left-0 top-20 bottom-0 w-72 bg-zinc-900/30 backdrop-blur-xl border-r border-zinc-700/30 z-50 transition-transform duration-300 ease-in-out",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full",
-          "lg:translate-x-0"
-        )}
+        className="fixed left-0 top-20 bottom-0 w-72 bg-zinc-900/30 backdrop-blur-xl border-r border-zinc-700/30 z-50"
       >
         <div className="h-full overflow-y-auto p-6">
           {/* Header */}
@@ -138,10 +147,7 @@ export default function AdminZEClubPage() {
               return (
                 <motion.button
                   key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id)
-                    setSidebarOpen(false)
-                  }}
+                  onClick={() => setActiveTab(item.id)}
                   whileHover={{ x: 4 }}
                   whileTap={{ scale: 0.98 }}
                   className={cn(
@@ -175,9 +181,13 @@ export default function AdminZEClubPage() {
           </nav>
         </div>
       </aside>
+      )}
 
       {/* Main Content */}
-      <div className="lg:ml-72 pt-20 pb-8">
+      <div className={cn(
+        "pt-20 pb-8",
+        !isMobile && "ml-72"
+      )}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 max-w-7xl">
           {/* Page Header */}
           <motion.div

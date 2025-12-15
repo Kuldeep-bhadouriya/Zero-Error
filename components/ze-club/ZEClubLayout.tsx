@@ -1,16 +1,17 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { AnimatePresence, motion } from "framer-motion"
 import PageTransition from "@/components/page-transition"
 import { useState, useEffect } from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Menu, X, LayoutDashboard, Trophy, Gift, Target, HeadphonesIcon, User, Sparkles, Shield } from "lucide-react"
+import { Menu, X, LayoutDashboard, Trophy, Gift, Target, HeadphonesIcon, User, Sparkles, Shield, Home } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useSession } from "next-auth/react"
 import { GlassCard } from "@/components/ui/GlassCard"
+import { MenuItem, MenuContainer } from "@/components/ui/fluid-menu"
 
 function ZEClubLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -49,36 +50,67 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const router = useRouter()
+
+  const handleNavigate = (href: string) => {
+    router.push(href)
+  }
+
   return (
     <div className="relative flex min-h-screen z-10">
-      {/* Mobile menu button */}
+      {/* Fluid Menu for mobile */}
       {isMobile && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="fixed left-4 top-14 z-50 bg-gradient-to-r from-red-600 to-red-700 backdrop-blur-sm text-white hover:from-red-700 hover:to-red-800 shadow-lg shadow-red-500/50"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </Button>
+        <div className="fixed left-4 bottom-4 z-50">
+          <MenuContainer>
+            <MenuItem 
+              icon={
+                <div className="relative w-5 h-5">
+                  <div className="absolute inset-0 transition-all duration-300 ease-in-out origin-center opacity-100 scale-100 rotate-0 [div[data-expanded=true]_&]:opacity-0 [div[data-expanded=true]_&]:scale-0 [div[data-expanded=true]_&]:rotate-180">
+                    <Menu size={20} strokeWidth={1.5} className="text-white" />
+                  </div>
+                  <div className="absolute inset-0 transition-all duration-300 ease-in-out origin-center opacity-0 scale-0 -rotate-180 [div[data-expanded=true]_&]:opacity-100 [div[data-expanded=true]_&]:scale-100 [div[data-expanded=true]_&]:rotate-0">
+                    <X size={20} strokeWidth={1.5} className="text-white" />
+                  </div>
+                </div>
+              } 
+            />
+            <MenuItem 
+              icon={<LayoutDashboard size={20} strokeWidth={1.5} className="text-white" />} 
+              onClick={() => handleNavigate('/ze-club')}
+            />
+            <MenuItem 
+              icon={<User size={20} strokeWidth={1.5} className="text-white" />} 
+              onClick={() => handleNavigate('/profile')}
+            />
+            <MenuItem 
+              icon={<Trophy size={20} strokeWidth={1.5} className="text-white" />} 
+              onClick={() => handleNavigate('/ze-club/leaderboard')}
+            />
+            <MenuItem 
+              icon={<Gift size={20} strokeWidth={1.5} className="text-white" />} 
+              onClick={() => handleNavigate('/ze-club/rewards')}
+            />
+            <MenuItem 
+              icon={<Target size={20} strokeWidth={1.5} className="text-white" />} 
+              onClick={() => handleNavigate('/ze-club/missions')}
+            />
+            {/* Admin Panel - Only visible to admins */}
+            {session?.user?.roles?.includes('admin') && (
+              <MenuItem 
+                icon={<Shield size={20} strokeWidth={1.5} className="text-white" />} 
+                onClick={() => handleNavigate('/admin/ze-club')}
+                className="admin-button"
+              />
+            )}
+          </MenuContainer>
+        </div>
       )}
 
-      {/* Overlay for mobile */}
-      {isMobile && sidebarOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-30 top-14"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
+      {/* Sidebar - Hidden on mobile, always visible on desktop */}
+      {!isMobile && (
       <aside
         className={cn(
-          "fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-[85vw] sm:w-80 md:w-72 lg:w-64 backdrop-blur-xl text-white p-4 sm:p-5 md:p-6 border-r border-red-500/30 overflow-hidden z-40 transition-all duration-300 flex flex-col shadow-2xl",
-          isMobile && !sidebarOpen && "-translate-x-full"
+          "fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-[85vw] sm:w-80 md:w-72 lg:w-64 backdrop-blur-xl text-white p-4 sm:p-5 md:p-6 border-r border-red-500/30 overflow-hidden z-40 transition-all duration-300 flex flex-col shadow-2xl"
         )}
       >
         {/* Scrollable container */}
@@ -211,6 +243,7 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
         </div>
         </div>
       </aside>
+      )}
 
       {/* Main content */}
       <main className={cn(
