@@ -1,4 +1,5 @@
 import MissionUploader from '@/components/ze-club/MissionUploader'
+import CurrentMissions from '@/components/ze-club/CurrentMissions'
 import { Suspense } from 'react'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
 import dbConnect from '@/lib/mongodb'
@@ -116,21 +117,44 @@ async function UserSubmissions() {
 export default function MissionsPage() {
   return (
     <ZEClubLayout>
-      <div className="text-white">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-red-500 via-orange-500 to-red-600 bg-clip-text text-transparent">
-          🎯 Missions
-        </h1>
-        <p className="text-gray-400 text-lg mb-8">Complete missions to earn points and rewards</p>
+      <div className="text-white space-y-8">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-red-500 via-orange-500 to-red-600 bg-clip-text text-transparent">
+            🎯 Missions
+          </h1>
+          <p className="text-gray-400 text-lg mb-8">Complete missions to earn points and rewards</p>
+        </div>
         
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4 text-white">Upload Mission Proof</h2>
+        {/* Current Missions Section */}
+        <div>
+          <Suspense fallback={
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold text-white">Current Missions</h2>
+              <div className="text-gray-400">Loading missions...</div>
+            </div>
+          }>
+            <CurrentMissions />
+          </Suspense>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-white/10"></div>
+        
+        {/* Upload Mission Proof Section */}
+        <div>
+          <h2 className="text-2xl font-bold mb-4 text-white">📤 Upload Mission Proof</h2>
+          <p className="text-gray-400 mb-4">Select a mission from above and upload your proof of completion</p>
           <Suspense fallback={<div className="text-gray-400">Loading uploader...</div>}>
             <MissionUploader />
           </Suspense>
         </div>
+
+        {/* Divider */}
+        <div className="border-t border-white/10"></div>
         
+        {/* My Submissions Section */}
         <div>
-          <h2 className="text-2xl font-bold mb-4 text-white">My Submissions</h2>
+          <h2 className="text-2xl font-bold mb-4 text-white">📋 My Submissions</h2>
           <Suspense fallback={<div className="text-gray-400">Loading submissions...</div>}>
             <UserSubmissions />
           </Suspense>
