@@ -7,8 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { UploadButton } from "@/lib/uploadthing"
-import { Loader2, Upload, Video, Image as ImageIcon, Check, X, Undo2, AlertCircle } from "lucide-react"
+import { Loader2, Upload, Video, Image as ImageIcon, Check, X, Undo2, AlertCircle, Info } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+
+// Default media URLs
+const DEFAULT_HERO_VIDEO = "/images/background.mp4"
+const DEFAULT_HERO_POSTER = "/images/hero-background.jpg"
 
 interface HeroSettings {
   heroVideoUrl: string
@@ -262,17 +266,26 @@ export default function HeroMediaManager() {
               )}
             </div>
 
-            {(settings.heroVideoUrl || videoPreview) && (
-              <div className="mt-2">
-                <p className="text-sm text-gray-400 mb-2">Preview:</p>
-                <video
-                  src={videoPreview || settings.heroVideoUrl}
-                  controls
-                  className="w-full max-w-md rounded-md border border-zinc-700"
-                  style={{ maxHeight: "200px" }}
-                />
-              </div>
-            )}
+            {/* Current Video Preview */}
+            <div className="mt-2">
+              <p className="text-sm text-gray-400 mb-2">
+                {settings.heroVideoUrl ? "Current Video:" : "Default Video (will be used):"}
+              </p>
+              <video
+                src={videoPreview || settings.heroVideoUrl || DEFAULT_HERO_VIDEO}
+                controls
+                className="w-full max-w-md rounded-md border border-zinc-700"
+                style={{ maxHeight: "200px" }}
+              />
+              {!settings.heroVideoUrl && (
+                <Alert className="bg-blue-900/20 border-blue-700 mt-2">
+                  <Info className="h-4 w-4 text-blue-400" />
+                  <AlertDescription className="text-blue-400 text-xs">
+                    This is the default hero video. Upload a custom video to replace it.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
 
             {settings.previousHeroVideoUrl && (
               <div className="mt-2">
@@ -375,17 +388,26 @@ export default function HeroMediaManager() {
               )}
             </div>
 
-            {settings.heroPosterUrl && (
-              <div className="mt-2">
-                <p className="text-sm text-gray-400 mb-2">Current Poster:</p>
-                <img
-                  src={settings.heroPosterUrl}
-                  alt="Hero poster preview"
-                  className="w-full max-w-md rounded-md border border-zinc-700"
-                  style={{ maxHeight: "200px", objectFit: "cover" }}
-                />
-              </div>
-            )}
+            {/* Current Poster Preview */}
+            <div className="mt-2">
+              <p className="text-sm text-gray-400 mb-2">
+                {settings.heroPosterUrl ? "Current Poster:" : "Default Poster (will be used):"}
+              </p>
+              <img
+                src={settings.heroPosterUrl || DEFAULT_HERO_POSTER}
+                alt="Hero poster preview"
+                className="w-full max-w-md rounded-md border border-zinc-700"
+                style={{ maxHeight: "200px", objectFit: "cover" }}
+              />
+              {!settings.heroPosterUrl && (
+                <Alert className="bg-blue-900/20 border-blue-700 mt-2">
+                  <Info className="h-4 w-4 text-blue-400" />
+                  <AlertDescription className="text-blue-400 text-xs">
+                    This is the default poster image. Upload a custom image to replace it.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
 
             {settings.previousHeroPosterUrl && (
               <div className="mt-2">

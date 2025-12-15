@@ -7,10 +7,23 @@ import { revalidatePath } from 'next/cache'
 /**
  * GET /api/admin/marketing/hero
  * Get current hero video and poster URLs (public access)
+ * 
+ * Returns:
+ * - heroVideoUrl: Custom video URL (empty string if not set, will use default)
+ * - heroPosterUrl: Custom poster URL (empty string if not set, will use default)
+ * - defaultHeroVideoUrl: The default video path (/images/background.mp4)
+ * - defaultHeroPosterUrl: The default poster path (/images/hero-background.jpg)
+ * 
+ * Note: When heroVideoUrl or heroPosterUrl is empty, the frontend will automatically
+ * use the default media from /public/images/
  */
 export async function GET() {
   try {
     await dbConnect()
+
+    // Default URLs that will be used if no custom media is set
+    const DEFAULT_HERO_VIDEO = '/images/background.mp4'
+    const DEFAULT_HERO_POSTER = '/images/hero-background.jpg'
 
     // Get or create site settings (singleton pattern)
     let settings = await SiteSetting.findOne()
@@ -29,6 +42,9 @@ export async function GET() {
       heroPosterUrl: settings.heroPosterUrl || '',
       previousHeroVideoUrl: settings.previousHeroVideoUrl || '',
       previousHeroPosterUrl: settings.previousHeroPosterUrl || '',
+      // Include default URLs for reference
+      defaultHeroVideoUrl: DEFAULT_HERO_VIDEO,
+      defaultHeroPosterUrl: DEFAULT_HERO_POSTER,
       updatedAt: settings.updatedAt,
       updatedBy: settings.updatedBy,
     })

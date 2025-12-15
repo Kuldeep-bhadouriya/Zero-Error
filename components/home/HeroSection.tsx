@@ -27,6 +27,8 @@ const HeroSection = ({
   const [isMobile, setIsMobile] = useState(false);
 
   // Use admin-provided URLs or fallback to defaults
+  // When admin uploads a custom video, it will be shown
+  // When admin removes the custom video (empty string), default video will be used
   const videoSrc = heroVideoUrl || "/images/background.mp4"
   const posterSrc = heroPosterUrl || "/images/hero-background.jpg"
 
