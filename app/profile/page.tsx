@@ -45,10 +45,8 @@ export default async function ProfilePage() {
   // Convert MongoDB document to plain object
   const profile = {
     id: user._id.toString(),
-    name: user.name,
     email: user.email,
     image: user.image,
-    zeClubId: user.zeClubId,
     zeTag: user.zeTag,
     bio: user.bio,
     profilePhotoUrl: user.profilePhotoUrl,

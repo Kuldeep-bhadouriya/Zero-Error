@@ -19,7 +19,7 @@ import RankBadge from './RankBadge';
 
 interface LeaderboardUser {
   _id: string;
-  name: string;
+  zeTag: string;
   points: number;
   rank: number;
   userRank: string;
@@ -62,7 +62,7 @@ export default function Leaderboard() {
     // Search filter
     if (searchQuery) {
       filtered = filtered.filter(user =>
-        user.name.toLowerCase().includes(searchQuery.toLowerCase())
+        user.zeTag.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -230,9 +230,9 @@ export default function Leaderboard() {
                         <div className="flex justify-center mb-4">
                           <div className="relative">
                             <Avatar className="h-20 w-20 border-4 border-gray-400 shadow-xl">
-                              <AvatarImage src={topThree[1].profilePhoto || undefined} alt={topThree[1].name} />
+                              <AvatarImage src={topThree[1].profilePhoto || undefined} alt={topThree[1].zeTag} />
                               <AvatarFallback className="bg-black/70 text-white text-2xl font-bold">
-                                {topThree[1].name.charAt(0).toUpperCase()}
+                                {topThree[1].zeTag.charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div className="absolute -bottom-2 -right-2 bg-black/90 rounded-full px-3 py-1 text-xs font-bold border-2 border-gray-400 text-gray-200">
@@ -240,7 +240,7 @@ export default function Leaderboard() {
                             </div>
                           </div>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2 drop-shadow-lg">{topThree[1].name}</h3>
+                        <h3 className="text-xl font-bold text-white mb-2 drop-shadow-lg">@{topThree[1].zeTag}</h3>
                         <p className="text-2xl font-bold text-gray-200 drop-shadow-md">
                           {topThree[1].points} pts
                         </p>
@@ -263,9 +263,9 @@ export default function Leaderboard() {
                         <div className="flex justify-center mb-4">
                           <div className="relative">
                             <Avatar className="h-24 w-24 border-4 border-yellow-400 shadow-2xl shadow-yellow-500/50">
-                              <AvatarImage src={topThree[0].profilePhoto || undefined} alt={topThree[0].name} />
+                              <AvatarImage src={topThree[0].profilePhoto || undefined} alt={topThree[0].zeTag} />
                               <AvatarFallback className="bg-yellow-600 text-white text-3xl font-bold">
-                                {topThree[0].name.charAt(0).toUpperCase()}
+                                {topThree[0].zeTag.charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div className="absolute -bottom-2 -right-2 bg-black/90 rounded-full px-3 py-1 text-sm font-bold border-2 border-yellow-400 text-yellow-300">
@@ -273,7 +273,7 @@ export default function Leaderboard() {
                             </div>
                           </div>
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">{topThree[0].name}</h3>
+                        <h3 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">@{topThree[0].zeTag}</h3>
                         <p className="text-3xl font-bold text-yellow-400 drop-shadow-md">
                           {topThree[0].points} pts
                         </p>
@@ -296,9 +296,9 @@ export default function Leaderboard() {
                         <div className="flex justify-center mb-4">
                           <div className="relative">
                             <Avatar className="h-20 w-20 border-4 border-orange-600 shadow-xl shadow-orange-500/30">
-                              <AvatarImage src={topThree[2].profilePhoto || undefined} alt={topThree[2].name} />
+                              <AvatarImage src={topThree[2].profilePhoto || undefined} alt={topThree[2].zeTag} />
                               <AvatarFallback className="bg-orange-700 text-white text-2xl font-bold">
-                                {topThree[2].name.charAt(0).toUpperCase()}
+                                {topThree[2].zeTag.charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
                             <div className="absolute -bottom-2 -right-2 bg-black/90 rounded-full px-3 py-1 text-xs font-bold border-2 border-orange-600 text-orange-300">
@@ -306,7 +306,7 @@ export default function Leaderboard() {
                             </div>
                           </div>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2 drop-shadow-lg">{topThree[2].name}</h3>
+                        <h3 className="text-xl font-bold text-white mb-2 drop-shadow-lg">@{topThree[2].zeTag}</h3>
                         <p className="text-2xl font-bold text-orange-400 drop-shadow-md">
                           {topThree[2].points} pts
                         </p>
@@ -355,12 +355,12 @@ export default function Leaderboard() {
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <Avatar className="h-10 w-10 border-2 border-white/20">
-                                <AvatarImage src={user.profilePhoto || undefined} alt={user.name} />
+                                <AvatarImage src={user.profilePhoto || undefined} alt={user.zeTag} />
                                 <AvatarFallback className="bg-black/70 text-white font-bold">
-                                  {user.name.charAt(0).toUpperCase()}
+                                  {user.zeTag.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="text-white font-medium">{user.name}</span>
+                              <span className="text-white font-medium">@{user.zeTag}</span>
                             </div>
                           </TableCell>
                           <TableCell>

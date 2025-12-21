@@ -35,7 +35,7 @@ import { CheckCircle2, XCircle, Eye, Search, Filter, TrendingUp, Users, Clock, I
 interface Submission {
   _id: string
   user: {
-    name: string
+    zeTag: string
     email: string
   }
   mission: {
@@ -84,7 +84,7 @@ export default function SubmissionVerifier() {
     if (searchQuery) {
       filtered = filtered.filter(
         (sub) =>
-          sub.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          sub.user.zeTag.toLowerCase().includes(searchQuery.toLowerCase()) ||
           sub.user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
           sub.mission.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
@@ -270,7 +270,7 @@ export default function SubmissionVerifier() {
                     >
                       <TableCell className="py-3">
                         <div className="space-y-1">
-                          <div className="font-medium text-xs sm:text-sm text-white truncate max-w-[160px]">{submission.user.name}</div>
+                          <div className="font-medium text-xs sm:text-sm text-white truncate max-w-[160px]">@{submission.user.zeTag}</div>
                           <div className="text-xs text-gray-400 truncate max-w-[160px]">
                             {submission.user.email}
                           </div>

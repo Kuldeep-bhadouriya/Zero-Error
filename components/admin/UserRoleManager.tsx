@@ -21,16 +21,14 @@ import {
 
 interface UserData {
   _id: string
-  name: string
+  zeTag?: string
   email: string
   image?: string
   profilePhotoUrl?: string
-  zeClubId: string
   roles: string[]
   points: number
   rank: string
   discordId?: string
-  zeTag?: string
 }
 
 export default function UserRoleManager() {
@@ -114,7 +112,7 @@ export default function UserRoleManager() {
 
       toast({
         title: 'Success',
-        description: `Successfully ${selectedAction === 'add' ? 'granted' : 'revoked'} admin access for ${selectedUser.name}`,
+        description: `Successfully ${selectedAction === 'add' ? 'granted' : 'revoked'} admin access for @${selectedUser.zeTag || selectedUser.email}`,
       })
 
       setDialogOpen(false)
@@ -138,7 +136,7 @@ export default function UserRoleManager() {
             User Role Management
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Search for users by username, email, ZE Tag, or ZE Club ID to manage admin roles
+            Search for users by username (ZE Tag) or email to manage admin roles
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -147,7 +145,7 @@ export default function UserRoleManager() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
                 type="text"
-                placeholder="Search by username, email, ZE Tag, or ZE Club ID..."
+                placeholder="Search by username or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -172,7 +170,7 @@ export default function UserRoleManager() {
 
           {users.length === 0 && searchQuery && !isSearching && (
             <p className="text-center text-gray-500 py-8">
-              No users found matching "{searchQuery}". Try searching by username, email, ZE Tag, or ZE Club ID.
+              No users found matching "{searchQuery}". Try searching by username or email.
             </p>
           )}
 
@@ -194,10 +192,10 @@ export default function UserRoleManager() {
                         return hasValidImage ? (
                           <img
                             src={imageUrl}
-                            alt={user.name}
+                            alt={user.zeTag || user.email}
                             className="h-12 w-12 rounded-full border-2 border-zinc-700 object-cover"
                             onError={(e) => {
-                              console.error('Image failed to load for user:', user.name, {
+                              console.error('Image failed to load for user:', user.zeTag || user.email, {
                                 profilePhotoUrl: user.profilePhotoUrl,
                                 image: user.image,
                                 attemptedUrl: imageUrl
@@ -213,7 +211,7 @@ export default function UserRoleManager() {
                       })()}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-white font-semibold truncate">{user.name}</h3>
+                          <h3 className="text-white font-semibold truncate">@{user.zeTag || 'No username'}</h3>
                           {user.roles.includes('admin') && (
                             <Badge className="bg-red-600 text-white">
                               <Crown className="h-3 w-3 mr-1" />
@@ -222,10 +220,7 @@ export default function UserRoleManager() {
                           )}
                         </div>
                         <div className="flex items-center gap-3 text-sm text-gray-400 mt-1 flex-wrap">
-                          <span className="font-mono text-orange-400">{user.zeClubId}</span>
-                          {user.zeTag && (
-                            <span className="text-blue-400">@{user.zeTag}</span>
-                          )}
+                          <span className="text-blue-400">{user.email}</span>
                           <span className="flex items-center gap-1">
                             <Trophy className="h-3 w-3" />
                             {user.points} pts
@@ -289,12 +284,12 @@ export default function UserRoleManager() {
             <AlertDialogDescription className="text-gray-400">
               {selectedAction === 'add' ? (
                 <>
-                  Are you sure you want to grant admin access to <span className="text-white font-semibold">{selectedUser?.name}</span>?
+                  Are you sure you want to grant admin access to <span className="text-white font-semibold">@{selectedUser?.zeTag || selectedUser?.email}</span>?
                   They will be able to manage missions, verify submissions, and access the admin panel.
                 </>
               ) : (
                 <>
-                  Are you sure you want to revoke admin access from <span className="text-white font-semibold">{selectedUser?.name}</span>?
+                  Are you sure you want to revoke admin access from <span className="text-white font-semibold">@{selectedUser?.zeTag || selectedUser?.email}</span>?
                   They will no longer be able to access the admin panel or perform admin actions.
                 </>
               )}

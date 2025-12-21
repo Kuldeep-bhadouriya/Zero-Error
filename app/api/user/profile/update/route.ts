@@ -13,13 +13,9 @@ export async function PATCH(req: Request) {
     await dbConnect()
 
     const body = await req.json()
-    const { name, bio } = body
+    const { bio } = body
 
     // Validate input
-    if (name && (typeof name !== 'string' || name.trim().length === 0)) {
-      return NextResponse.json({ error: 'Invalid name' }, { status: 400 })
-    }
-
     if (bio && (typeof bio !== 'string' || bio.length > 200)) {
       return NextResponse.json(
         { error: 'Bio must be 200 characters or less' },
@@ -33,7 +29,6 @@ export async function PATCH(req: Request) {
     }
 
     // Update only allowed fields
-    if (name !== undefined) user.name = name.trim()
     if (bio !== undefined) user.bio = bio.trim()
 
     await user.save()
@@ -42,7 +37,6 @@ export async function PATCH(req: Request) {
       success: true,
       profile: {
         id: user._id.toString(),
-        name: user.name,
         bio: user.bio,
       },
     })

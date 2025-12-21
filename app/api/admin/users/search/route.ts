@@ -22,16 +22,14 @@ export async function GET(req: Request) {
     // Escape special regex characters
     const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-    // Search by username, email, or zeClubId (case-insensitive partial match)
+    // Search by username, email, or zeTag (case-insensitive partial match)
     const users = await User.find({
       $or: [
-        { name: { $regex: escapedQuery, $options: 'i' } },
+        { zeTag: { $regex: escapedQuery, $options: 'i' } },
         { email: { $regex: escapedQuery, $options: 'i' } },
-        { zeClubId: { $regex: escapedQuery, $options: 'i' } },
-        { zeTag: { $regex: escapedQuery, $options: 'i' } }
       ]
     })
-      .select('_id name email image profilePhotoUrl zeClubId roles points rank discordId zeTag')
+      .select('_id email image profilePhotoUrl roles points rank discordId zeTag')
       .limit(20)
       .lean()
 

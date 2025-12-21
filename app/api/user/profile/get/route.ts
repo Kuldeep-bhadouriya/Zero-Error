@@ -38,7 +38,6 @@ export async function GET() {
     return NextResponse.json({
       profile: {
         id: user._id.toString(),
-        name: user.name,
         email: user.email,
         image: user.image,
         zeClubId: user.zeClubId,

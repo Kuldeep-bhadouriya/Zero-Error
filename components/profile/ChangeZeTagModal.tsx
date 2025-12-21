@@ -77,12 +77,12 @@ export function ChangeZeTagModal({
       })
 
       if (res.ok) {
-        toast.success('ZE Tag updated successfully')
+        toast.success('Username updated successfully')
         onSuccess()
         onClose()
       } else {
         const data = await res.json()
-        toast.error(data.error || 'Failed to update ZE Tag')
+        toast.error(data.error || 'Failed to update username')
       }
     } catch (error) {
       toast.error('An error occurred. Please try again.')
@@ -95,19 +95,19 @@ export function ChangeZeTagModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-black/95 border-white/10 text-white shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Change ZE Tag</DialogTitle>
+          <DialogTitle className="text-2xl font-bold">Change Username</DialogTitle>
           <DialogDescription className="text-gray-400 text-sm">
-            Choose a unique ZE Tag (3-20 characters: letters, numbers, and underscores only)
+            Choose a unique username (3-20 characters: letters, numbers, and underscores only)
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="zetag" className="text-white font-semibold">
-              New ZE Tag
+              Username
             </Label>
             <Input
               id="zetag"
-              placeholder="Enter new ZE Tag"
+              placeholder="Enter your username"
               value={zeTag}
               onChange={(e) => setZeTag(e.target.value)}
               className="bg-black/60 border-white/10 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20 h-11 font-mono"
@@ -126,23 +126,23 @@ export function ChangeZeTagModal({
             {!isChecking && isAvailable === true && debouncedZeTag.length >= 3 && (
               <div className="flex items-center gap-2 text-emerald-400">
                 <CheckCircle2 className="w-5 h-5" />
-                <span className="text-sm font-medium">This ZE Tag is available!</span>
+                <span className="text-sm font-medium">This username is available!</span>
               </div>
             )}
             {!isChecking && isAvailable === false && debouncedZeTag.length >= 3 && (
               <div className="flex items-center gap-2 text-red-400">
                 <XCircle className="w-5 h-5" />
-                <span className="text-sm font-medium">{error || 'This ZE Tag is not available'}</span>
+                <span className="text-sm font-medium">{error || 'This username is not available'}</span>
               </div>
             )}
             {debouncedZeTag.length > 0 && debouncedZeTag.length < 3 && (
               <div className="flex items-center gap-2 text-yellow-400">
-                <span className="text-sm font-medium">ZE Tag must be at least 3 characters</span>
+                <span className="text-sm font-medium">Username must be at least 3 characters</span>
               </div>
             )}
             {!zeTag && (
               <div className="flex items-center gap-2 text-gray-500">
-                <span className="text-sm">Enter a ZE Tag to check availability</span>
+                <span className="text-sm">Enter a username to check availability</span>
               </div>
             )}
           </div>

@@ -53,9 +53,7 @@ export async function PATCH(req: Request) {
       success: true,
       user: {
         _id: user._id,
-        name: user.name,
-        email: user.email,
-        zeClubId: user.zeClubId,
+        zeTag: user.zeTag,
         roles: user.roles,
         points: user.points,
         rank: user.rank

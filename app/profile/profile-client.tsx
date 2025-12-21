@@ -15,10 +15,8 @@ import { toast } from 'sonner'
 interface ProfileClientProps {
   profile: {
     id: string
-    name?: string
     email?: string
     image?: string
-    zeClubId: string
     zeTag?: string
     bio?: string
     profilePhotoUrl?: string

@@ -21,9 +21,6 @@ import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
 const formSchema = z.object({
-  name: z.string().min(2, {
-    message: 'Name must be at least 2 characters.',
-  }).optional(),
   bio: z.string().max(200, {
     message: 'Bio must not be longer than 200 characters.',
   }).optional(),
@@ -31,7 +28,6 @@ const formSchema = z.object({
 
 interface EditProfileFormProps {
   profile: {
-    name?: string
     email?: string
     bio?: string
   }
@@ -44,7 +40,6 @@ export function EditProfileForm({ profile, onSuccess }: EditProfileFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: profile.name || '',
       bio: profile.bio || '',
     },
   })
@@ -83,24 +78,6 @@ export function EditProfileForm({ profile, onSuccess }: EditProfileFormProps) {
       <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-white font-semibold text-sm">Display Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter your name"
-                      className="bg-black/60 border-white/10 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20 h-10 sm:h-11 text-sm"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-400 text-xs" />
-                </FormItem>
-              )}
-            />
-            
             <FormField
               control={form.control}
               name="bio"

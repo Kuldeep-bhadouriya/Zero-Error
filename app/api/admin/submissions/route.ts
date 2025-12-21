@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 
   try {
     const submissions = await MissionSubmission.find({ status: 'pending' })
-      .populate('user', 'name email')
+      .populate('user', 'zeTag email')
       .populate('mission', 'name points')
     return NextResponse.json(submissions)
   } catch (error) {

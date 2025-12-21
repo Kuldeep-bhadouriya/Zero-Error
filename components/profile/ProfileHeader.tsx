@@ -13,10 +13,8 @@ import { ProfilePhotoUploader } from './ProfilePhotoUploader'
 
 interface ProfileHeaderProps {
   profile: {
-    name?: string
     email?: string
     image?: string
-    zeClubId: string
     zeTag?: string
     profilePhotoUrl?: string
     rank: string
@@ -32,7 +30,7 @@ export function ProfileHeader({ profile, onUpdate }: ProfileHeaderProps) {
   const [showPhotoUploader, setShowPhotoUploader] = useState(false)
 
   const displayImage = profile.profilePhotoUrl || profile.image || '/images/default-avatar.png'
-  const displayName = profile.name || 'Anonymous User'
+  const displayName = profile.zeTag ? `@${profile.zeTag}` : 'Set your ZE Tag'
   const memberSince = profile.accountCreatedAt
     ? format(new Date(profile.accountCreatedAt), 'MMMM yyyy')
     : 'Unknown'
@@ -102,16 +100,10 @@ export function ProfileHeader({ profile, onUpdate }: ProfileHeaderProps) {
 
               {/* Info Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {/* ZE Club ID */}
-                <div className="bg-black/50 rounded-lg p-3 sm:p-4 border border-white/10">
-                  <div className="text-xs text-gray-500 uppercase tracking-wider mb-1.5 sm:mb-2 font-semibold">ZE Club ID</div>
-                  <div className="text-red-400 font-mono text-base sm:text-lg font-bold truncate">{profile.zeClubId}</div>
-                </div>
-
-                {/* ZE Tag */}
+                {/* Username (ZE Tag) */}
                 <div className="bg-black/50 rounded-lg p-3 sm:p-4 border border-white/10">
                   <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                    <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">ZE Tag</div>
+                    <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Username</div>
                     <Button
                       variant="ghost"
                       size="sm"

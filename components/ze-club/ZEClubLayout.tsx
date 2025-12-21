@@ -141,7 +141,7 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
                 <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs sm:text-sm font-semibold text-white truncate leading-tight">{session.user.name}</p>
+                <p className="text-xs sm:text-sm font-semibold text-white truncate leading-tight">@{session.user.zeTag || 'Set username'}</p>
                 <p className="text-[10px] sm:text-xs text-gray-400 truncate mt-0.5">{session.user.email}</p>
               </div>
             </div>
