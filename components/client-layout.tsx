@@ -17,7 +17,8 @@ export default function ClientLayout({
   const [isLoading, setIsLoading] = useState(true);
   const isAdminRoute = pathname?.startsWith("/admin");
   const isZeClubRoute = pathname?.startsWith("/ze-club");
-  const shouldHideFooter = isAdminRoute || isZeClubRoute;
+  const isProfileRoute = pathname === "/profile";
+  const shouldHideFooter = isAdminRoute || isZeClubRoute || isProfileRoute;
   const shouldOffsetContent = isAdminRoute || isZeClubRoute;
 
   useEffect(() => {
