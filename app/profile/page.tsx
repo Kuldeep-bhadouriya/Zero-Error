@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Shield, Key, AlertTriangle } from 'lucide-react'
 import { ProfileClient } from './profile-client'
+import ZEClubLayout from '@/components/ze-club/ZEClubLayout'
 
 export default async function ProfilePage() {
   const session = await auth()
@@ -69,18 +70,20 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen py-8 sm:py-12 px-3 sm:px-4 lg:px-6">
-      <div className="container mx-auto max-w-7xl space-y-4 sm:space-y-6 lg:space-y-8">
-        {/* Page Header */}
-        <div className="mb-4 sm:mb-6 lg:mb-8">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 sm:mb-3 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-            My Profile
-          </h1>
-          <p className="text-gray-400 text-sm sm:text-base lg:text-lg">Manage your ZE Club profile and settings</p>
-        </div>
+    <ZEClubLayout>
+      <div className="min-h-screen py-8 sm:py-12 px-3 sm:px-4 lg:px-6">
+        <div className="container mx-auto max-w-7xl space-y-4 sm:space-y-6 lg:space-y-8">
+          {/* Page Header */}
+          <div className="mb-4 sm:mb-6 lg:mb-8">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 sm:mb-3 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              My Profile
+            </h1>
+            <p className="text-gray-400 text-sm sm:text-base lg:text-lg">Manage your ZE Club profile and settings</p>
+          </div>
 
-        <ProfileClient profile={profile} stats={stats} />
+          <ProfileClient profile={profile} stats={stats} />
+        </div>
       </div>
-    </div>
+    </ZEClubLayout>
   )
 }

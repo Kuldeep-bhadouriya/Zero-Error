@@ -19,20 +19,22 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { data: session } = useSession()
   const [userPoints, setUserPoints] = useState(0)
+  const [userZeTag, setUserZeTag] = useState<string | undefined>()
 
   useEffect(() => {
-    async function fetchUserPoints() {
+    async function fetchUserData() {
       try {
         const response = await fetch("/api/ze-club/user/dashboard")
         if (response.ok) {
           const data = await response.json()
           setUserPoints(data.totalPoints || 0)
+          setUserZeTag(data.zeTag)
         }
       } catch (error) {
-        console.error("Failed to fetch user points:", error)
+        console.error("Failed to fetch user data:", error)
       }
     }
-    fetchUserPoints()
+    fetchUserData()
   }, [])
 
   const navItems = [
@@ -136,12 +138,9 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-            <div className="flex items-center gap-2.5 sm:gap-3 mb-3">
-              <div className="bg-gradient-to-br from-red-500 to-orange-600 p-2 rounded-full shrink-0">
-                <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-              </div>
+            <div className="mb-3">
               <div className="flex-1 min-w-0">
-                <p className="text-xs sm:text-sm font-semibold text-white truncate leading-tight">@{session.user.zeTag || 'Set username'}</p>
+                <p className="text-xs sm:text-sm font-semibold text-white truncate leading-tight">@{userZeTag || session.user.zeTag || 'Set username'}</p>
                 <p className="text-[10px] sm:text-xs text-gray-400 truncate mt-0.5">{session.user.email}</p>
               </div>
             </div>
