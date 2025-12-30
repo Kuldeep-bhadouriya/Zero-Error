@@ -11,7 +11,8 @@ import { Menu, X, LayoutDashboard, Trophy, Gift, Target, HeadphonesIcon, User, S
 import { Button } from "@/components/ui/button"
 import { useSession } from "next-auth/react"
 import { GlassCard } from "@/components/ui/GlassCard"
-import { MenuItem, MenuContainer } from "@/components/ui/fluid-menu"
+import { RadialNavigationMenu } from "@/components/ze-club/RadialNavigationMenu"
+import { RadialMenuItem } from "@/types/radial-menu"
 
 function ZEClubLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -58,54 +59,31 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
     router.push(href)
   }
 
+  // Prepare radial menu items for mobile
+  const radialMenuItems: RadialMenuItem[] = [
+    { id: "dashboard", icon: LayoutDashboard, label: "Dashboard", onClick: () => handleNavigate('/ze-club') },
+    { id: "profile", icon: User, label: "Profile", onClick: () => handleNavigate('/profile') },
+    { id: "leaderboard", icon: Trophy, label: "Leaderboard", onClick: () => handleNavigate('/ze-club/leaderboard') },
+    { id: "rewards", icon: Gift, label: "Rewards", onClick: () => handleNavigate('/ze-club/rewards') },
+    { id: "missions", icon: Target, label: "Missions", onClick: () => handleNavigate('/ze-club/missions') },
+  ]
+
+  // Add admin menu item if user is admin
+  if (session?.user?.roles?.includes('admin')) {
+    radialMenuItems.push({
+      id: "admin",
+      icon: Shield,
+      label: "Admin Portal",
+      onClick: () => handleNavigate('/admin/ze-club'),
+      variant: "admin"
+    })
+  }
+
   return (
     <div className="relative flex min-h-screen z-10">
-      {/* Fluid Menu for mobile */}
+      {/* Radial Navigation Menu for mobile */}
       {isMobile && (
-        <div className="fixed left-4 bottom-4 z-50">
-          <MenuContainer>
-            <MenuItem 
-              icon={
-                <div className="relative w-5 h-5">
-                  <div className="absolute inset-0 transition-all duration-300 ease-in-out origin-center opacity-100 scale-100 rotate-0 [div[data-expanded=true]_&]:opacity-0 [div[data-expanded=true]_&]:scale-0 [div[data-expanded=true]_&]:rotate-180">
-                    <Menu size={20} strokeWidth={1.5} className="text-white" />
-                  </div>
-                  <div className="absolute inset-0 transition-all duration-300 ease-in-out origin-center opacity-0 scale-0 -rotate-180 [div[data-expanded=true]_&]:opacity-100 [div[data-expanded=true]_&]:scale-100 [div[data-expanded=true]_&]:rotate-0">
-                    <X size={20} strokeWidth={1.5} className="text-white" />
-                  </div>
-                </div>
-              } 
-            />
-            <MenuItem 
-              icon={<LayoutDashboard size={20} strokeWidth={1.5} className="text-white" />} 
-              onClick={() => handleNavigate('/ze-club')}
-            />
-            <MenuItem 
-              icon={<User size={20} strokeWidth={1.5} className="text-white" />} 
-              onClick={() => handleNavigate('/profile')}
-            />
-            <MenuItem 
-              icon={<Trophy size={20} strokeWidth={1.5} className="text-white" />} 
-              onClick={() => handleNavigate('/ze-club/leaderboard')}
-            />
-            <MenuItem 
-              icon={<Gift size={20} strokeWidth={1.5} className="text-white" />} 
-              onClick={() => handleNavigate('/ze-club/rewards')}
-            />
-            <MenuItem 
-              icon={<Target size={20} strokeWidth={1.5} className="text-white" />} 
-              onClick={() => handleNavigate('/ze-club/missions')}
-            />
-            {/* Admin Panel - Only visible to admins */}
-            {session?.user?.roles?.includes('admin') && (
-              <MenuItem 
-                icon={<Shield size={20} strokeWidth={1.5} className="text-white" />} 
-                onClick={() => handleNavigate('/admin/ze-club')}
-                className="admin-button"
-              />
-            )}
-          </MenuContainer>
-        </div>
+        <RadialNavigationMenu items={radialMenuItems} position="left" />
       )}
 
       {/* Sidebar - Hidden on mobile, always visible on desktop */}
