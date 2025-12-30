@@ -29,6 +29,17 @@ const MissionSubmissionSchema = new Schema({
   },
 })
 
+// Create compound index to ensure one approved/pending submission per user per mission
+MissionSubmissionSchema.index(
+  { user: 1, mission: 1, status: 1 },
+  { 
+    unique: true,
+    partialFilterExpression: { 
+      status: { $in: ['pending', 'approved'] } 
+    }
+  }
+)
+
 const MissionSubmission =
   models.MissionSubmission ||
   model('MissionSubmission', MissionSubmissionSchema)

@@ -35,6 +35,9 @@ interface Mission {
   maxCompletions?: number
   currentCompletions: number
   featured: boolean
+  isCompleted?: boolean
+  isPending?: boolean
+  isAvailable?: boolean
 }
 
 const difficultyConfig = {
@@ -77,17 +80,27 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
       transition={{ duration: 0.4, delay: index * 0.1 }}
     >
       <GlassCard 
-        hover 
-        className={`text-white p-4 sm:p-5 md:p-6 bg-gradient-to-br ${diffConfig.gradient} backdrop-blur-md bg-black/20 relative overflow-hidden`}
+        hover={!mission.isCompleted && !mission.isPending}
+        className={`text-white p-4 sm:p-5 md:p-6 bg-gradient-to-br ${diffConfig.gradient} backdrop-blur-md ${mission.isCompleted || mission.isPending ? 'bg-black/40 opacity-75' : 'bg-black/20'} relative overflow-hidden`}
       >
-        {/* Featured Badge */}
-        {mission.featured && (
-          <div className="absolute top-3 right-3">
+        {/* Status Badges */}
+        <div className="absolute top-3 right-3 flex flex-col gap-2">
+          {mission.featured && (
             <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 shadow-lg">
               ⭐ Featured
             </Badge>
-          </div>
-        )}
+          )}
+          {mission.isCompleted && (
+            <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-lg">
+              ✓ Completed
+            </Badge>
+          )}
+          {mission.isPending && (
+            <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 shadow-lg">
+              ⏳ Pending Review
+            </Badge>
+          )}
+        </div>
 
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
@@ -199,6 +212,18 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
             </motion.div>
           )}
         </div>
+
+        {/* Completion/Pending Message */}
+        {(mission.isCompleted || mission.isPending) && (
+          <div className="mt-4 p-3 rounded-lg bg-black/40 border border-white/20 text-center">
+            {mission.isCompleted && (
+              <p className="text-green-400 font-semibold">✓ You have already completed this mission</p>
+            )}
+            {mission.isPending && (
+              <p className="text-blue-400 font-semibold">⏳ Your submission is pending admin review</p>
+            )}
+          </div>
+        )}
       </GlassCard>
     </motion.div>
   )

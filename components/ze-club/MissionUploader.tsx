@@ -28,6 +28,8 @@ interface Mission {
   isTimeLimited?: boolean
   daysRemaining?: number | null
   isAvailable?: boolean
+  isCompleted?: boolean
+  isPending?: boolean
 }
 
 /**
@@ -55,7 +57,11 @@ export default function MissionUploader() {
         const response = await fetch('/api/ze-club/missions')
         if (response.ok) {
           const fetchedMissions = await response.json()
-          setMissions(fetchedMissions)
+          // Only show missions that are available (not completed or pending)
+          const availableMissions = fetchedMissions.filter(
+            (m: Mission) => !m.isCompleted && !m.isPending
+          )
+          setMissions(availableMissions)
         } else {
           console.error('Failed to fetch missions')
         }
@@ -172,7 +178,14 @@ export default function MissionUploader() {
         }, 2000)
       } else {
         const errorData = await response.json()
-        alert(`Submission failed: ${errorData.error}`)
+        const errorMessage = errorData.error || 'Submission failed'
+        alert(errorMessage)
+        
+        // If mission is already completed/pending, remove it from the list
+        if (errorMessage.includes('already')) {
+          setMissions(prev => prev.filter(m => m._id !== selectedMission))
+          setSelectedMission('')
+        }
       }
     } catch (error) {
       console.error('Upload error:', error)
@@ -216,27 +229,36 @@ export default function MissionUploader() {
               <Label htmlFor="mission" className="text-white text-sm sm:text-base mb-2 block">
                 Select Mission
               </Label>
-              <Select
-                value={selectedMission}
-                onValueChange={setSelectedMission}
-                required
-              >
-                <SelectTrigger id="mission" className="bg-black/60 border-white/10 text-white">
-                  <SelectValue placeholder="Choose a mission to complete" />
-                </SelectTrigger>
-                <SelectContent>
-                  {missions.map((mission) => (
-                    <SelectItem key={mission._id} value={mission._id}>
-                      <div className="flex items-center justify-between w-full gap-4">
-                        <span>{mission.name}</span>
-                        <Badge variant="secondary" className="bg-red-600/20 text-red-400">
-                          {mission.points} pts
-                        </Badge>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {missions.length === 0 ? (
+                <Alert className="bg-blue-500/10 border-blue-500/30">
+                  <AlertCircle className="h-4 w-4 text-blue-400" />
+                  <AlertDescription className="text-blue-200 text-sm">
+                    No missions available. You may have completed all current missions or have pending submissions.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <Select
+                  value={selectedMission}
+                  onValueChange={setSelectedMission}
+                  required
+                >
+                  <SelectTrigger id="mission" className="bg-black/60 border-white/10 text-white">
+                    <SelectValue placeholder="Choose a mission to complete" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {missions.map((mission) => (
+                      <SelectItem key={mission._id} value={mission._id}>
+                        <div className="flex items-center justify-between w-full gap-4">
+                          <span>{mission.name}</span>
+                          <Badge variant="secondary" className="bg-red-600/20 text-red-400">
+                            {mission.points} pts
+                          </Badge>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               
               {selectedMissionData && (
                 <motion.div

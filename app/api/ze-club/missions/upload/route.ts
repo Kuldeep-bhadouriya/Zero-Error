@@ -42,6 +42,24 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Check if user already has a pending or approved submission for this mission
+    const existingSubmission = await MissionSubmission.findOne({
+      user: user._id,
+      mission: missionId,
+      status: { $in: ['pending', 'approved'] }
+    })
+
+    if (existingSubmission) {
+      return NextResponse.json(
+        { 
+          error: existingSubmission.status === 'approved' 
+            ? 'You have already completed this mission' 
+            : 'You already have a pending submission for this mission'
+        },
+        { status: 400 }
+      )
+    }
+
     // Create submission record in database
     const newSubmission = new MissionSubmission({
       user: user._id,
