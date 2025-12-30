@@ -20,6 +20,8 @@ interface ProfileHeaderProps {
     rank: string
     rankIcon: string
     points: number
+    zeCoins?: number
+    experience?: number
     accountCreatedAt?: Date
   }
   onUpdate: () => void
@@ -82,7 +84,7 @@ export function ProfileHeader({ profile, onUpdate }: ProfileHeaderProps) {
 
             {/* Profile Info Section */}
             <div className="flex-1 space-y-4 sm:space-y-6 w-full">
-              {/* Name and Points */}
+              {/* Name and Currencies */}
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                 <div className="min-w-0">
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1 sm:mb-2 truncate">{displayName}</h1>
@@ -90,11 +92,21 @@ export function ProfileHeader({ profile, onUpdate }: ProfileHeaderProps) {
                     <span className="text-xs sm:text-sm">Member since {memberSince}</span>
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-xl p-3 sm:p-4 text-center min-w-[120px] sm:min-w-[140px]">
-                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
-                    {profile.points.toLocaleString()}
+                <div className="flex gap-3">
+                  {/* ZE Coins */}
+                  <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-xl p-3 sm:p-4 text-center min-w-[110px] sm:min-w-[130px]">
+                    <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                      {(profile.zeCoins || profile.points).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1 font-medium uppercase tracking-wider">💰 Coins</div>
                   </div>
-                  <div className="text-xs text-gray-400 mt-1 font-medium uppercase tracking-wider">Total Points</div>
+                  {/* Experience */}
+                  <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl p-3 sm:p-4 text-center min-w-[110px] sm:min-w-[130px]">
+                    <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                      {(profile.experience || profile.points).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1 font-medium uppercase tracking-wider">⭐ XP</div>
+                  </div>
                 </div>
               </div>
 

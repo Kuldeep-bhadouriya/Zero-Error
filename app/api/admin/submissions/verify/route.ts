@@ -61,25 +61,26 @@ function calculateRankProgress(currentPoints: number, currentRank: string) {
 }
 
 /**
- * Updates a user's rank based on their current points.
+ * Updates a user's rank based on their current experience.
  * Checks against the ranks array and assigns the highest rank the user qualifies for.
  * Also calculates progress to next rank and assigns appropriate rank icon.
+ * NOTE: Rank is now based on EXPERIENCE only, not ZE Coins.
  */
 async function updateUserRank(user: any) {
   let newRank = user.rank
   let rankIcon = user.rankIcon
   
-  // Find the highest rank the user qualifies for
+  // Find the highest rank the user qualifies for based on EXPERIENCE
   for (let i = ranks.length - 1; i >= 0; i--) {
-    if (user.points >= ranks[i].points) {
+    if (user.experience >= ranks[i].points) {
       newRank = ranks[i].name
       rankIcon = ranks[i].icon
       break
     }
   }
 
-  // Calculate rank progress
-  const progress = calculateRankProgress(user.points, newRank)
+  // Calculate rank progress based on EXPERIENCE
+  const progress = calculateRankProgress(user.experience, newRank)
   
   // Update user fields
   user.rank = newRank
@@ -126,16 +127,19 @@ export async function PATCH(req: Request) {
     submission.status = status
     await submission.save()
 
-    // If approved, award points to the user
+    // If approved, award ZE Coins and Experience to the user
     if (status === 'approved') {
       const user = await User.findById(submission.user)
       const mission = await Mission.findById(submission.mission)
 
       if (user && mission) {
-        // Add mission points to user's total
-        user.points += mission.points
+        // Award mission points as BOTH ZE Coins (for redemption) and Experience (for ranking)
+        user.zeCoins += mission.points
+        user.experience += mission.points
+        // Keep points in sync for backward compatibility
+        user.points = user.experience
         
-        // Check and update user's rank based on new points
+        // Check and update user's rank based on new experience
         await updateUserRank(user)
         
         await user.save()

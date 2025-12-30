@@ -5,8 +5,9 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { motion } from 'framer-motion';
-import { Gift, Coins, ShoppingBag, Star, Sparkles, TrendingUp, Package } from 'lucide-react';
+import { Gift, Coins, ShoppingBag, Star, Sparkles, TrendingUp, Package, Target } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { RedemptionDialog } from './RedemptionDialog';
 
 interface Reward {
   _id: string;
@@ -20,7 +21,9 @@ export default function Rewards() {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userPoints, setUserPoints] = useState(0);
+  const [userCoins, setUserCoins] = useState(0);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,7 +43,10 @@ export default function Rewards() {
 
         if (dashboardResponse.ok) {
           const dashboardData = await dashboardResponse.json();
-          setUserPoints(dashboardData.totalPoints || 0);
+          // Use zeCoins if it exists (even if 0), fallback to totalPoints, default to 0
+          const coins = dashboardData.zeCoins !== undefined ? dashboardData.zeCoins : (dashboardData.totalPoints || 0);
+          console.log('💰 User ZE Coins loaded:', coins); // Debug log
+          setUserCoins(coins);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -53,50 +59,50 @@ export default function Rewards() {
   }, []);
 
   async function handleRedeem(rewardId: string, cost: number) {
-    if (userPoints < cost) {
+    console.log('🎁 Attempting redemption - User Coins:', userCoins, 'Required:', cost); // Debug log
+    
+    if (userCoins < cost) {
       toast({
-        title: 'Insufficient Points',
-        description: `You need ${cost - userPoints} more points to redeem this reward.`,
+        title: 'Insufficient ZE Coins 💰',
+        description: `You need ${cost - userCoins} more ZE Coins to redeem this reward. Complete missions to earn more coins!`,
         variant: 'destructive',
       });
       return;
     }
 
-    try {
-      const response = await fetch('/api/ze-club/rewards/redeem', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ rewardId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to redeem reward');
-      }
-
-      toast({
-        title: 'Success! 🎉',
-        description: 'Reward redeemed successfully. Check your email for details.',
-      });
-      
-      // Update local state
-      setRewards(prevRewards => 
-        prevRewards.map(r => 
-          r._id === rewardId ? { ...r, stock: r.stock - 1 } : r
-        ).filter(r => r.stock > 0)
-      );
-      setUserPoints(prev => prev - cost);
-
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: err instanceof Error ? err.message : 'An unknown error occurred',
-        variant: 'destructive',
-      });
+    // Find the reward and open dialog
+    const reward = rewards.find(r => r._id === rewardId);
+    if (reward) {
+      setSelectedReward(reward);
+      setDialogOpen(true);
     }
+  }
+
+  function handleRedemptionSuccess() {
+    // Refresh data after successful redemption
+    async function refreshData() {
+      try {
+        const [rewardsResponse, dashboardResponse] = await Promise.all([
+          fetch('/api/ze-club/rewards'),
+          fetch('/api/ze-club/user/dashboard')
+        ]);
+
+        if (rewardsResponse.ok) {
+          const rewardsData = await rewardsResponse.json();
+          setRewards(rewardsData);
+        }
+
+        if (dashboardResponse.ok) {
+          const dashboardData = await dashboardResponse.json();
+          // Use zeCoins if it exists (even if 0), fallback to totalPoints, default to 0
+          const coins = dashboardData.zeCoins !== undefined ? dashboardData.zeCoins : (dashboardData.totalPoints || 0);
+          setUserCoins(coins);
+        }
+      } catch (err) {
+        console.error('Error refreshing data:', err);
+      }
+    }
+    refreshData();
   }
 
   if (loading) {
@@ -149,10 +155,10 @@ export default function Rewards() {
         >
           🎁 Rewards Store
         </motion.h1>
-        <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg">Redeem your hard-earned points for exclusive rewards</p>
+        <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg">Redeem your ZE Coins for exclusive rewards</p>
       </div>
 
-      {/* User Points Card */}
+      {/* User ZE Coins Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -166,10 +172,11 @@ export default function Rewards() {
                   <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-xs sm:text-sm text-gray-400">Your Balance</p>
+                  <p className="text-xs sm:text-sm text-gray-400">Your ZE Coins</p>
                   <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    {userPoints} Points
+                    {userCoins} Coins
                   </p>
+                  <p className="text-xs text-gray-500 mt-0.5">💡 Rank protected!</p>
                 </div>
               </div>
               <div className="text-left sm:text-right">
@@ -179,6 +186,31 @@ export default function Rewards() {
             </div>
           </GlassCard>
       </motion.div>
+
+      {/* Low Coins Warning */}
+      {userCoins === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mb-4 sm:mb-6"
+        >
+          <GlassCard variant="intense" gradient="blue" className="p-4 sm:p-5 md:p-6 border-blue-500/30">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-blue-500/20">
+                <Target className="h-5 w-5 text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-white font-semibold mb-1">Need ZE Coins?</h3>
+                <p className="text-sm text-gray-300">
+                  You currently have 0 ZE Coins. Complete missions to earn coins and unlock these awesome rewards! 
+                  Head to the <a href="/ze-club/missions" className="text-blue-400 hover:text-blue-300 underline">Missions</a> page to get started.
+                </p>
+              </div>
+            </div>
+          </GlassCard>
+        </motion.div>
+      )}
 
       {/* Rewards Grid */}
       {rewards.length === 0 ? (
@@ -216,7 +248,7 @@ export default function Rewards() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                 {rewards.filter(r => r.name.includes('Prize')).map((reward, index) => {
-                  const canAfford = userPoints >= reward.cost;
+                  const canAfford = userCoins >= reward.cost;
                   const isLowStock = reward.stock <= 3;
                   const prizeLabel = reward.name.includes('1st') ? '1ST PRIZE' : reward.name.includes('2nd') ? '2ND PRIZE' : '3RD PRIZE';
                   
@@ -274,7 +306,7 @@ export default function Rewards() {
                           {!canAfford && (
                             <div className="text-center mb-2">
                               <Badge variant="outline" className="text-xs border-red-500/50 text-red-400">
-                                Need {reward.cost - userPoints} more
+                                Need {reward.cost - userCoins} more coins
                               </Badge>
                             </div>
                           )}
@@ -297,7 +329,7 @@ export default function Rewards() {
                                 : 'bg-black/60 cursor-not-allowed'
                             }`}
                           >
-                            {reward.stock <= 0 ? '❌ Out of Stock' : canAfford ? '🎁 Redeem Now' : '🔒 Not Enough Points'}
+                            {reward.stock <= 0 ? '❌ Out of Stock' : canAfford ? '🎁 Redeem Now' : '🔒 Not Enough Coins'}
                           </Button>
                         </div>
                       </GlassCard>
@@ -317,13 +349,13 @@ export default function Rewards() {
             >
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-white mb-2">More Rewards</h2>
-                <p className="text-gray-400">Additional items to redeem with your points</p>
+                <p className="text-gray-400">Additional items to redeem with your ZE Coins</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {rewards.filter(r => !r.name.includes('Prize')).map((reward, index) => {
             const Icon = rewardIcons[index % rewardIcons.length];
-            const canAfford = userPoints >= reward.cost;
+            const canAfford = userCoins >= reward.cost;
             const isLowStock = reward.stock <= 3;
             
             return (
@@ -370,7 +402,7 @@ export default function Rewards() {
                       </div>
                       {!canAfford && (
                         <Badge variant="outline" className="text-xs border-red-500/50 text-red-400">
-                          Need {reward.cost - userPoints} more
+                          Need {reward.cost - userCoins} more
                         </Badge>
                       )}
                     </div>
@@ -393,7 +425,7 @@ export default function Rewards() {
                           : 'bg-black/60 cursor-not-allowed'
                       }`}
                     >
-                      {reward.stock <= 0 ? '❌ Out of Stock' : canAfford ? '🎁 Redeem Now' : '🔒 Not Enough Points'}
+                      {reward.stock <= 0 ? '❌ Out of Stock' : canAfford ? '🎁 Redeem Now' : '🔒 Not Enough Coins'}
                     </Button>
                   </div>
                 </GlassCard>
@@ -405,6 +437,15 @@ export default function Rewards() {
           )}
         </>
       )}
+
+      {/* Redemption Dialog */}
+      <RedemptionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        reward={selectedReward}
+        userCoins={userCoins}
+        onSuccess={handleRedemptionSuccess}
+      />
     </motion.div>
   );
 }

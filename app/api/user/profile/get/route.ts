@@ -44,7 +44,9 @@ export async function GET() {
         zeTag: user.zeTag,
         bio: user.bio,
         profilePhotoUrl: user.profilePhotoUrl,
-        points: user.points,
+        points: user.points, // Kept for backward compatibility
+        zeCoins: user.zeCoins || user.points, // For redemption
+        experience: user.experience || user.points, // For ranking
         rank: user.rank,
         rankIcon: user.rankIcon,
         progressToNextRank: user.progressToNextRank,
@@ -58,6 +60,8 @@ export async function GET() {
         completedMissions,
         pendingMissions,
         totalPoints: user.points,
+        zeCoins: user.zeCoins || user.points,
+        experience: user.experience || user.points,
         leaderboardPosition,
       },
     })

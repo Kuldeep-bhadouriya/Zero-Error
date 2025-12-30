@@ -37,11 +37,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Reward is out of stock' }, { status: 400 });
     }
 
-    if (user.points < reward.cost) {
-      return NextResponse.json({ message: 'Insufficient points' }, { status: 400 });
+    // Check if user has enough ZE Coins (not experience!)
+    if (user.zeCoins < reward.cost) {
+      return NextResponse.json({ 
+        message: 'Insufficient ZE Coins', 
+        required: reward.cost,
+        current: user.zeCoins
+      }, { status: 400 });
     }
 
-    user.points -= reward.cost;
+    // Deduct ZE Coins only (experience remains unchanged - rank protected!)
+    user.zeCoins -= reward.cost;
+    // Keep points in sync with experience (not zeCoins)
+    user.points = user.experience;
     reward.stock -= 1;
 
     await Promise.all([user.save(), reward.save()]);

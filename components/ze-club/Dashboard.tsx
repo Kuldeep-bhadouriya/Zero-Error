@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react"
 import { Progress } from "@/components/ui/progress"
 import { motion } from "framer-motion"
-import { TrendingUp, Award, Star, Zap, Target, Clock, Trophy, Medal } from "lucide-react"
+import { TrendingUp, Award, Star, Zap, Target, Clock, Trophy, Medal, Coins } from "lucide-react"
 import { GlassCard } from "@/components/ui/GlassCard"
 import RankCard from "./RankCard"
 import FeaturedMissions from "./FeaturedMissions"
 
 interface UserDashboard {
-  totalPoints: number
+  totalPoints: number // Deprecated: kept for compatibility
+  zeCoins: number // For redemption/purchasing
+  experience: number // For ranking
   rank: string
   badge: string
   progress: number
@@ -120,9 +122,9 @@ function Dashboard() {
   }
 
   const achievements = [
-    { icon: Trophy, label: "Total Points", value: dashboardData.totalPoints, gradient: "from-yellow-500 to-orange-600" },
-    { icon: Medal, label: "Current Rank", value: dashboardData.rank, gradient: "from-purple-500 to-pink-600" },
-    { icon: Star, label: "Badge", value: dashboardData.badge, gradient: "from-red-500 to-orange-600" },
+    { icon: Coins, label: "ZE Coins", value: dashboardData.zeCoins, gradient: "from-yellow-500 to-orange-600", description: "For Redemption" },
+    { icon: Star, label: "Experience", value: dashboardData.experience, gradient: "from-purple-500 to-pink-600", description: "For Ranking" },
+    { icon: Medal, label: "Current Rank", value: dashboardData.rank, gradient: "from-red-500 to-orange-600", description: "Your Level" },
   ]
 
   return (
@@ -150,7 +152,7 @@ function Dashboard() {
         <RankCard
           rank={dashboardData.rank}
           rankIcon={dashboardData.rankIcon}
-          currentPoints={dashboardData.totalPoints}
+          currentPoints={dashboardData.experience}
           currentRankPoints={dashboardData.currentRankPoints}
           nextRankPoints={dashboardData.nextRankPoints}
           progressToNextRank={dashboardData.progressToNextRank}
@@ -195,6 +197,9 @@ function Dashboard() {
                       stat.value
                     )}
                   </div>
+                  {stat.description && (
+                    <p className="text-xs text-gray-500 mt-1">{stat.description}</p>
+                  )}
                 </div>
               </GlassCard>
             </motion.div>

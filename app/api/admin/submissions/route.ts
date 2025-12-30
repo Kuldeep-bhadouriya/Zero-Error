@@ -2,6 +2,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
 import MissionSubmission from '@/models/missionSubmission'
+import Mission from '@/models/mission'
+import User from '@/models/user'
 import dbConnect from '@/lib/mongodb'
 
 export async function GET(req: Request) {
@@ -14,6 +16,10 @@ export async function GET(req: Request) {
   await dbConnect()
 
   try {
+    // Ensure models are registered by referencing them
+    const _ = Mission.modelName
+    const __ = User.modelName
+    
     const submissions = await MissionSubmission.find({ status: 'pending' })
       .populate('user', 'zeTag email')
       .populate('mission', 'name points')

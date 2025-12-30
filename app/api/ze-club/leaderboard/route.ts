@@ -6,8 +6,8 @@ export async function GET() {
   await dbConnect();
 
   try {
-    const users = await User.find({}, 'zeTag points rank rankIcon profilePhotoUrl image')
-      .sort({ points: -1 })
+    const users = await User.find({}, 'zeTag points experience zeCoins rank rankIcon profilePhotoUrl image')
+      .sort({ experience: -1 }) // Sort by experience for ranking
       .limit(100)
       .lean();
 
@@ -18,6 +18,8 @@ export async function GET() {
       rankIcon: user.rankIcon || '/images/ranks/rookie.svg',
       profilePhoto: user.profilePhotoUrl || user.image || null,
       zeTag: user.zeTag || 'UnknownUser',
+      experience: user.experience || user.points, // Use experience for display
+      zeCoins: user.zeCoins || user.points, // Show ZE Coins separately
     }));
 
     return NextResponse.json(leaderboard);

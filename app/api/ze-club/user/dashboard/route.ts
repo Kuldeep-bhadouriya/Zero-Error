@@ -28,7 +28,9 @@ export async function GET() {
 
     // Prepare dashboard data
     const dashboardData = {
-      totalPoints: user.points,
+      totalPoints: user.points, // Kept for backward compatibility
+      zeCoins: user.zeCoins !== undefined ? user.zeCoins : user.points, // For redemption
+      experience: user.experience !== undefined ? user.experience : user.points, // For ranking
       rank: user.rank,
       badge: user.badge,
       progress: user.progress,

@@ -8,8 +8,9 @@ import EventManager from '@/components/admin/EventManager'
 import AnnouncementManager from '@/components/admin/AnnouncementManager'
 import MissionManager from '@/components/admin/MissionManager'
 import UserRoleManager from '@/components/admin/UserRoleManager'
+import RedemptionManager from '@/components/admin/RedemptionManager'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shield, Zap, Video, Calendar, ListChecks, Megaphone, Target, Users, Menu, X } from 'lucide-react'
+import { Shield, Zap, Video, Calendar, ListChecks, Megaphone, Target, Users, Menu, X, Gift } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { MenuItem, MenuContainer } from '@/components/ui/fluid-menu'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -62,6 +63,7 @@ export default function AdminZEClubPage() {
   const navItems = [
     { id: 'submissions', label: 'Submissions', icon: ListChecks, description: 'Verify mission submissions' },
     { id: 'missions', label: 'Mission Manager', icon: Target, description: 'Create & edit missions' },
+    { id: 'redemptions', label: 'Redemptions', icon: Gift, description: 'Manage reward redemptions' },
     { id: 'events', label: 'Events', icon: Calendar, description: 'Manage events' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, description: 'Post announcements' },
     { id: 'video', label: 'Background Video', icon: Video, description: 'Update hero video' },
@@ -74,6 +76,8 @@ export default function AdminZEClubPage() {
         return <SubmissionVerifier />
       case 'missions':
         return <MissionManager />
+      case 'redemptions':
+        return <RedemptionManager />
       case 'events':
         return <EventManager />
       case 'announcements':

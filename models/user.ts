@@ -7,7 +7,9 @@ export interface IUser extends Document {
   emailVerified?: Date
   discordId: string
   zeClubId: string
-  points: number
+  points: number // DEPRECATED: Use zeCoins and experience instead
+  zeCoins: number // For redemption/purchasing rewards
+  experience: number // For ranking (never decreases)
   rank: string
   badge: string
   progress: number
@@ -33,7 +35,9 @@ const UserSchema: Schema = new Schema({
   emailVerified: { type: Date },
   discordId: { type: String, unique: true, sparse: true },
   zeClubId: { type: String, unique: true, sparse: true },
-  points: { type: Number, default: 0 },
+  points: { type: Number, default: 0 }, // DEPRECATED: Kept for backward compatibility
+  zeCoins: { type: Number, default: 0 }, // For redemption/purchasing
+  experience: { type: Number, default: 0 }, // For ranking (never decreases)
   rank: { type: String, default: 'Rookie' },
   badge: { type: String, default: '🥉' },
   progress: { type: Number, default: 0 },
