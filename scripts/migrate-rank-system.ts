@@ -18,12 +18,12 @@ import dbConnect from '../lib/mongodb'
 import User from '../models/user'
 
 const ranks = [
-  { name: 'Rookie', points: 0, icon: '/images/ranks/rookie.svg' },
-  { name: 'Bronze', points: 500, icon: '/images/ranks/bronze.svg' },
-  { name: 'Silver', points: 1000, icon: '/images/ranks/silver.svg' },
-  { name: 'Gold', points: 5000, icon: '/images/ranks/gold.svg' },
-  { name: 'Platinum', points: 10000, icon: '/images/ranks/platinum.svg' },
-  { name: 'Diamond', points: 20000, icon: '/images/ranks/diamond.svg' },
+  { name: 'Rookie', points: 0, icon: '/images/ranks/rookie.png' },
+  { name: 'Bronze', points: 500, icon: '/images/ranks/bronze.png' },
+  { name: 'Silver', points: 1000, icon: '/images/ranks/silver.png' },
+  { name: 'Gold', points: 5000, icon: '/images/ranks/gold.png' },
+  { name: 'Platinum', points: 10000, icon: '/images/ranks/platinum.png' },
+  { name: 'Diamond', points: 20000, icon: '/images/ranks/diamond.png' },
 ]
 
 function calculateRankProgress(currentPoints: number, currentRank: string) {
@@ -56,7 +56,7 @@ function calculateRankProgress(currentPoints: number, currentRank: string) {
 
 function getRankIcon(rank: string): string {
   const rankData = ranks.find(r => r.name === rank)
-  return rankData?.icon || '/images/ranks/rookie.svg'
+  return rankData?.icon || '/images/ranks/rookie.png'
 }
 
 async function migrateRankSystem() {
