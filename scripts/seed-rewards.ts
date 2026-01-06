@@ -1,9 +1,10 @@
 import mongoose from 'mongoose'
 import Reward from '../models/reward'
 import * as dotenv from 'dotenv'
+import path from 'path'
 
 // Load environment variables from .env.local
-dotenv.config({ path: '.env.local' })
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') })
 
 const MONGODB_URI = process.env.MONGODB_URI!
 
@@ -20,67 +21,96 @@ async function seedRewards() {
     await Reward.deleteMany({})
     console.log('Cleared existing rewards')
 
-    // Errorless Legend Exclusive Rewards
     const rewards = [
+      // --- Errorless Legend (Top 3) ---
       {
         name: 'Gaming Headphone (1st Prize)',
-        description: 'Premium RGB Gaming Headphone - Exclusive Errorless Legend Reward. Experience immersive audio with crystal-clear sound quality and comfortable over-ear design.',
-        cost: 1000,
-        stock: 5,
+        description: 'Gaming headphone. Exclusive reward for the #1 Errorless Legend.',
+        cost: 0, 
+        stock: 1,
+        requiredRank: 'Errorless Legend',
+        exclusiveToTop3: true,
+        discountable: false,
       },
       {
         name: 'Gaming Mouse (2nd Prize)',
-        description: 'High-Performance RGB Gaming Mouse - Exclusive Errorless Legend Reward. Precision gaming with customizable DPI settings and ergonomic design.',
-        cost: 1000,
-        stock: 10,
+        description: 'Gaming mouse. Exclusive reward for the #2 Errorless Legend.',
+        cost: 0,
+        stock: 1,
+        requiredRank: 'Errorless Legend',
+        exclusiveToTop3: true,
+        discountable: false,
       },
       {
         name: 'Gaming Mousepad (3rd Prize)',
-        description: 'Extended RGB Gaming Mousepad - Exclusive Errorless Legend Reward. Large surface area with smooth glide and vibrant RGB lighting.',
-        cost: 1000,
-        stock: 15,
+        description: 'Gaming mousepad. Exclusive reward for the #3 Errorless Legend.',
+        cost: 0,
+        stock: 1,
+        requiredRank: 'Errorless Legend',
+        exclusiveToTop3: true,
+        discountable: false,
+      },
+
+      // --- Vanguard ---
+      {
+        name: '10% Discount Perk',
+        description: '10% discount coupon on points on claimable rewards.',
+        cost: 0, // Informational item
+        stock: 9999,
+        requiredRank: 'Vanguard',
+        exclusiveToTop3: false,
+        discountable: false,
       },
       {
-        name: 'ZE Exclusive Hoodie',
-        description: 'Limited Edition Zero Error Esports Hoodie. Premium quality fabric with embroidered logo. Available in multiple sizes.',
-        cost: 800,
-        stock: 20,
-      },
-      {
-        name: 'ZE Gaming T-Shirt',
-        description: 'Official Zero Error Esports Gaming T-Shirt. Comfortable cotton blend with modern design.',
+        name: 'Game Night Slot',
+        description: 'Can claim slot at Game night with Zero error official members.',
         cost: 500,
-        stock: 50,
+        stock: 10,
+        requiredRank: 'Vanguard',
+        exclusiveToTop3: false,
+        discountable: true,
       },
+
+      // --- Gladiator ---
       {
-        name: 'ZE Collectible Badge',
-        description: 'Limited Edition Zero Error Esports Metal Badge. Perfect for collectors and fans.',
+        name: 'Social Media Shoutout',
+        description: 'Shoutout on ZE socials.',
         cost: 300,
-        stock: 100,
+        stock: 20,
+        requiredRank: 'Gladiator',
+        exclusiveToTop3: false,
+        discountable: true,
       },
+
+      // --- Contender ---
       {
-        name: 'Discord Nitro (1 Month)',
-        description: 'One month of Discord Nitro subscription. Unlock premium features and enhanced chat experience.',
-        cost: 600,
-        stock: 30,
-      },
-      {
-        name: 'Steam Wallet Code ($10)',
-        description: '$10 Steam Wallet code to fuel your gaming library. Redeem instantly.',
-        cost: 700,
-        stock: 25,
-      },
-      {
-        name: 'Custom Profile Badge',
-        description: 'Exclusive custom badge for your ZE Club profile. Stand out from the crowd.',
-        cost: 400,
+        name: 'Free Scrim Entry',
+        description: 'Free entry in Paid Scrims /Paid Tournaments.',
+        cost: 100,
         stock: 50,
+        requiredRank: 'Contender',
+        exclusiveToTop3: false,
+        discountable: true,
       },
       {
-        name: 'Priority Support Access',
-        description: 'Get priority support access for all ZE Club related queries. Valid for 3 months.',
-        cost: 350,
-        stock: 40,
+        name: 'Special Discord Role',
+        description: 'Discord Special Role for a Month/Season.',
+        cost: 50,
+        stock: 100,
+        requiredRank: 'Contender',
+        exclusiveToTop3: false,
+        discountable: true,
+      },
+
+      // --- Rookie ---
+      {
+        name: 'Discord Event Access',
+        description: 'Access Events and Game night in Discord VC.',
+        cost: 0, // Informational/Free
+        stock: 9999,
+        requiredRank: 'Rookie',
+        exclusiveToTop3: false,
+        discountable: false,
       },
     ]
 

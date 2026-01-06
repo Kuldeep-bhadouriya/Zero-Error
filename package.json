@@ -14,6 +14,7 @@
     "db:migrate-to-new-ranks": "ts-node scripts/migrate-to-new-ranks.ts",
     "db:migrate-coins-experience": "ts-node scripts/migrate-coins-experience.ts",
     "db:fix-indexes": "ts-node scripts/fix-mission-indexes.ts",
+    "db:fix-user-data": "ts-node scripts/fix-user-data.ts",
     "test:mission-crud": "ts-node scripts/test-mission-crud.ts"
   },
   "dependencies": {

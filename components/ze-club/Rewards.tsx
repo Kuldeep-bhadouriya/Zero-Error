@@ -5,9 +5,10 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { motion } from 'framer-motion';
-import { Gift, Coins, ShoppingBag, Star, Sparkles, TrendingUp, Package, Target } from 'lucide-react';
+import { Gift, Coins, ShoppingBag, Star, Sparkles, TrendingUp, Package, Target, Lock, ShieldAlert, Award } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { RedemptionDialog } from './RedemptionDialog';
+import { cn } from '@/lib/utils';
 
 interface Reward {
   _id: string;
@@ -15,6 +16,13 @@ interface Reward {
   description: string;
   cost: number;
   stock: number;
+  // New fields from API
+  isLocked?: boolean;
+  lockedReason?: string;
+  originalCost?: number;
+  finalCost?: number;
+  requiredRank?: string;
+  exclusiveToTop3?: boolean;
 }
 
 export default function Rewards() {
@@ -29,7 +37,6 @@ export default function Rewards() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // Fetch rewards and user points in parallel
         const [rewardsResponse, dashboardResponse] = await Promise.all([
           fetch('/api/ze-club/rewards'),
           fetch('/api/ze-club/user/dashboard')
@@ -43,9 +50,7 @@ export default function Rewards() {
 
         if (dashboardResponse.ok) {
           const dashboardData = await dashboardResponse.json();
-          // Use zeCoins if it exists (even if 0), fallback to totalPoints, default to 0
           const coins = dashboardData.zeCoins !== undefined ? dashboardData.zeCoins : (dashboardData.totalPoints || 0);
-          console.log('💰 User ZE Coins loaded:', coins); // Debug log
           setUserCoins(coins);
         }
       } catch (err) {
@@ -58,28 +63,32 @@ export default function Rewards() {
     fetchData();
   }, []);
 
-  async function handleRedeem(rewardId: string, cost: number) {
-    console.log('🎁 Attempting redemption - User Coins:', userCoins, 'Required:', cost); // Debug log
+  async function handleRedeem(reward: Reward) {
+    const cost = reward.finalCost ?? reward.cost;
     
     if (userCoins < cost) {
       toast({
         title: 'Insufficient ZE Coins 💰',
-        description: `You need ${cost - userCoins} more ZE Coins to redeem this reward. Complete missions to earn more coins!`,
+        description: `You need ${cost - userCoins} more ZE Coins.`,
         variant: 'destructive',
       });
       return;
     }
 
-    // Find the reward and open dialog
-    const reward = rewards.find(r => r._id === rewardId);
-    if (reward) {
-      setSelectedReward(reward);
-      setDialogOpen(true);
+    if (reward.isLocked) {
+       toast({
+        title: 'Reward Locked 🔒',
+        description: reward.lockedReason || 'This reward is currently locked for you.',
+        variant: 'destructive',
+      });
+      return;
     }
+
+    setSelectedReward(reward);
+    setDialogOpen(true);
   }
 
   function handleRedemptionSuccess() {
-    // Refresh data after successful redemption
     async function refreshData() {
       try {
         const [rewardsResponse, dashboardResponse] = await Promise.all([
@@ -88,13 +97,11 @@ export default function Rewards() {
         ]);
 
         if (rewardsResponse.ok) {
-          const rewardsData = await rewardsResponse.json();
-          setRewards(rewardsData);
+          setRewards(await rewardsResponse.json());
         }
 
         if (dashboardResponse.ok) {
           const dashboardData = await dashboardResponse.json();
-          // Use zeCoins if it exists (even if 0), fallback to totalPoints, default to 0
           const coins = dashboardData.zeCoins !== undefined ? dashboardData.zeCoins : (dashboardData.totalPoints || 0);
           setUserCoins(coins);
         }
@@ -107,338 +114,256 @@ export default function Rewards() {
 
   if (loading) {
     return (
-      <motion.div 
-        className="relative z-10 text-white flex items-center justify-center h-64"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="flex items-center gap-3">
-          <ShoppingBag className="h-6 w-6 text-red-500 animate-pulse" />
-          <p className="text-xl">Loading rewards...</p>
-        </div>
-      </motion.div>
+      <div className="flex items-center justify-center h-64">
+        <motion.div 
+          className="text-xl text-gray-400 flex items-center gap-3"
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          <ShoppingBag className="h-6 w-6 text-red-500" />
+          Loading rewards...
+        </motion.div>
+      </div>
     );
   }
   
   if (error) {
     return (
-      <motion.div 
-        className="relative z-10 text-white"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <GlassCard variant="intense" gradient="red" className="p-6">
-          <p className="text-xl text-red-400">Error: {error}</p>
-        </GlassCard>
-      </motion.div>
+      <GlassCard variant="intense" gradient="red" className="p-6">
+        <div className="text-red-400 flex items-center gap-2">
+          <ShieldAlert className="h-6 w-6" />
+          <span>Error: {error}</span>
+        </div>
+      </GlassCard>
     );
   }
 
-  const rewardIcons = [Gift, Star, Sparkles, Package, TrendingUp];
+  const exclusiveRewards = rewards.filter(r => r.exclusiveToTop3 || r.name.includes('Prize'));
+  const regularRewards = rewards.filter(r => !r.exclusiveToTop3 && !r.name.includes('Prize'));
+
+  const RewardCard = ({ reward, index, isExclusive = false }: { reward: Reward, index: number, isExclusive?: boolean }) => {
+    const cost = reward.finalCost ?? reward.cost;
+    const canAfford = userCoins >= cost;
+    const isDiscounted = (reward.originalCost ?? reward.cost) > cost;
+    const isLowStock = reward.stock <= 3;
+    const isLocked = reward.isLocked;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 * index }}
+        whileHover={!isLocked ? { scale: 1.03, y: -5 } : {}}
+        className="h-full"
+      >
+        <GlassCard 
+          variant={isExclusive ? "intense" : "default"} 
+          className={cn(
+            "h-full flex flex-col relative overflow-hidden group transition-all",
+            isExclusive ? "border-red-500/30" : "",
+            isLocked ? "opacity-75 grayscale-[0.5]" : "hover:border-red-400/50"
+          )}
+        >
+          {/* Discount Badge */}
+          {isDiscounted && !isLocked && (
+            <div className="absolute top-0 left-0 z-20">
+              <Badge className="rounded-tl-lg rounded-br-lg bg-green-600 text-white font-bold border-none px-3 py-1">
+                SALE
+              </Badge>
+            </div>
+          )}
+
+          {/* Locked Overlay */}
+          {isLocked && (
+            <div className="absolute inset-0 bg-black/60 z-30 flex flex-col items-center justify-center p-4 text-center backdrop-blur-[2px]">
+              <div className="p-3 rounded-full bg-black/50 border border-gray-700 mb-3">
+                <Lock className="h-6 w-6 text-gray-400" />
+              </div>
+              <p className="text-white font-semibold mb-1">Locked</p>
+              <p className="text-sm text-gray-300">{reward.lockedReason}</p>
+              {reward.requiredRank && (
+                <Badge variant="outline" className="mt-3 border-red-500/40 text-red-400">
+                  Req: {reward.requiredRank}
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {/* Low Stock Badge */}
+          {!isLocked && isLowStock && reward.stock > 0 && (
+            <div className="absolute top-4 right-4 z-10">
+              <Badge variant="destructive" className="bg-red-600/90 shadow-lg animate-pulse">
+                Only {reward.stock} left!
+              </Badge>
+            </div>
+          )}
+
+          {/* Exclusive Glow */}
+          {isExclusive && !isLocked && (
+            <>
+              <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 via-orange-500/5 to-transparent opacity-100" />
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-red-500/20 blur-3xl rounded-full" />
+            </>
+          )}
+
+          <div className="relative z-10 p-6 flex-1">
+            <div className="flex items-center justify-between mb-4">
+              <div className={cn(
+                "p-3 rounded-xl shadow-lg",
+                isExclusive ? "bg-gradient-to-br from-red-600 to-orange-600" : "bg-gradient-to-br from-gray-700 to-gray-600"
+              )}>
+                {isExclusive ? <Gift className="h-6 w-6 text-white" /> : <Package className="h-6 w-6 text-white" />}
+              </div>
+            </div>
+
+            <h3 className="text-lg font-bold text-white mb-2 leading-tight">{reward.name}</h3>
+            <p className="text-sm text-gray-400 line-clamp-3">{reward.description}</p>
+          </div>
+
+          <div className="relative z-10 px-6 pb-6 mt-auto space-y-4">
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Cost</p>
+                <div className="flex items-center gap-2">
+                  <Coins className="h-4 w-4 text-yellow-400" />
+                  <div className="flex flex-col">
+                    {isDiscounted && (
+                      <span className="text-xs text-gray-500 line-through">
+                        {reward.originalCost}
+                      </span>
+                    )}
+                    <span className={cn(
+                      "text-xl font-bold bg-clip-text text-transparent",
+                      canAfford ? "bg-gradient-to-r from-yellow-400 to-orange-400" : "bg-gray-500"
+                    )}>
+                      {cost}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-500 mb-1">Stock</p>
+                <span className={cn("text-sm font-medium", reward.stock === 0 ? "text-red-500" : "text-gray-300")}>
+                  {reward.stock} remaining
+                </span>
+              </div>
+            </div>
+
+            <Button 
+              onClick={() => handleRedeem(reward)} 
+              disabled={reward.stock <= 0 || !canAfford || isLocked}
+              className={cn(
+                "w-full font-semibold transition-all h-10",
+                canAfford && !isLocked
+                  ? "bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 shadow-md hover:shadow-red-500/25" 
+                  : "bg-gray-800 text-gray-400 hover:bg-gray-800"
+              )}
+            >
+              {reward.stock <= 0 ? 'Out of Stock' : isLocked ? 'Locked' : canAfford ? 'Redeem Now' : 'Not Enough Coins'}
+            </Button>
+          </div>
+        </GlassCard>
+      </motion.div>
+    );
+  };
+
+  const ranks = ['Errorless Legend', 'Vanguard', 'Gladiator', 'Contender', 'Rookie'];
 
   return (
     <motion.div 
-      className="relative z-10 text-white"
+      className="relative z-10 text-white space-y-12"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
       {/* Header */}
-      <div className="mb-5 sm:mb-6 md:mb-8">
-        <motion.h1 
-          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-2 leading-tight bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 bg-clip-text text-transparent"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          🎁 Rewards Store
-        </motion.h1>
-        <p className="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg">Redeem your ZE Coins for exclusive rewards</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent mb-2">
+            Rewards Store
+          </h1>
+          <p className="text-gray-400">Redeem your hard-earned ZE Coins for exclusive gear and perks.</p>
+        </div>
+        
+        <GlassCard variant="intense" className="px-5 py-3 flex items-center gap-3 bg-purple-900/20 border-purple-500/30">
+          <div className="p-2 rounded-full bg-purple-500/20">
+            <Coins className="h-5 w-5 text-purple-400" />
+          </div>
+          <div>
+            <p className="text-xs text-purple-300 font-medium">Your Balance</p>
+            <p className="text-xl font-bold text-white">{userCoins} Coins</p>
+          </div>
+        </GlassCard>
       </div>
 
-      {/* User ZE Coins Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="mb-4 sm:mb-6"
-      >
-        <GlassCard variant="intense" gradient="purple" className="pt-4 sm:pt-5 md:pt-6 px-3 sm:px-5 md:px-6 pb-4 sm:pb-5 md:pb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-              <div className="flex items-center gap-2.5 sm:gap-3">
-                <div className="p-2.5 sm:p-3 rounded-full bg-gradient-to-br from-purple-500 to-pink-600">
-                  <Coins className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-400">Your ZE Coins</p>
-                  <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    {userCoins} Coins
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">💡 Rank protected!</p>
-                </div>
-              </div>
-              <div className="text-left sm:text-right">
-                <p className="text-xs text-gray-500">Available Rewards</p>
-                <p className="text-xl sm:text-2xl font-bold text-white">{rewards.length}</p>
-              </div>
-            </div>
-          </GlassCard>
-      </motion.div>
-
-      {/* Low Coins Warning */}
       {userCoins === 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mb-4 sm:mb-6"
-        >
-          <GlassCard variant="intense" gradient="blue" className="p-4 sm:p-5 md:p-6 border-blue-500/30">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/20">
-                <Target className="h-5 w-5 text-blue-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-white font-semibold mb-1">Need ZE Coins?</h3>
-                <p className="text-sm text-gray-300">
-                  You currently have 0 ZE Coins. Complete missions to earn coins and unlock these awesome rewards! 
-                  Head to the <a href="/ze-club/missions" className="text-blue-400 hover:text-blue-300 underline">Missions</a> page to get started.
-                </p>
-              </div>
-            </div>
-          </GlassCard>
-        </motion.div>
+        <GlassCard variant="intense" gradient="blue" className="p-4 flex items-start gap-4">
+          <Target className="h-6 w-6 text-blue-400 shrink-0 mt-1" />
+          <div>
+            <h3 className="font-semibold text-white">Start Earning!</h3>
+            <p className="text-sm text-gray-300 mt-1">
+              Complete missions and participate in events to earn ZE Coins. Check the Dashboard for ways to earn.
+            </p>
+          </div>
+        </GlassCard>
       )}
 
-      {/* Rewards Grid */}
+      {/* Rewards by Rank */}
       {rewards.length === 0 ? (
-        <motion.div 
-          className="text-center py-16"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Package className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+        <div className="text-center py-16 text-gray-500">
+          <Package className="h-16 w-16 mx-auto mb-4 opacity-50" />
           <p className="text-xl text-gray-400">No rewards available at the moment.</p>
           <p className="text-sm text-gray-500 mt-2">Check back soon for new rewards!</p>
-        </motion.div>
+        </div>
       ) : (
-        <>
-          {/* Errorless Legend Exclusive Section */}
-          {rewards.some(r => r.name.includes('Prize')) && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="mb-8"
-            >
-              <div className="mb-5 sm:mb-6 text-center">
-                <div className="inline-flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-red-600/20 to-orange-600/20 px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-red-500/30 mb-2 sm:mb-3">
-                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent">
-                    EXCLUSIVE
-                  </h2>
-                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
-                </div>
-                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1 sm:mb-2">Errorless Legend Rewards</h3>
-                <p className="text-xs sm:text-sm md:text-base text-gray-400">Premium gaming gear for our top-tier players</p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                {rewards.filter(r => r.name.includes('Prize')).map((reward, index) => {
-                  const canAfford = userCoins >= reward.cost;
-                  const isLowStock = reward.stock <= 3;
-                  const prizeLabel = reward.name.includes('1st') ? '1ST PRIZE' : reward.name.includes('2nd') ? '2ND PRIZE' : '3RD PRIZE';
-                  
-                  return (
-                    <motion.div
-                      key={reward._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 0.5 + index * 0.15 }}
-                      whileHover={{ scale: 1.05, y: -10 }}
-                      className="h-full"
-                    >
-                      <GlassCard variant="intense" className="text-white h-full flex flex-col relative overflow-hidden group border-2 border-red-500/50 hover:border-red-400/70 transition-colors">
-                        {/* Animated gradient overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-red-600/30 via-orange-500/20 to-transparent opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-                        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-red-500 to-orange-600 opacity-20 group-hover:opacity-40 blur-3xl transition-opacity duration-500" />
-                        
-                        {/* Prize label */}
-                        <div className="absolute top-4 left-4 z-10">
-                          <Badge className="bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold px-3 py-1 text-xs">
-                            {prizeLabel}
-                          </Badge>
-                        </div>
-
-                        {/* Low stock badge */}
-                        {isLowStock && (
-                          <div className="absolute top-4 right-4 z-10">
-                            <Badge variant="destructive" className="bg-red-600/90 backdrop-blur-sm">
-                              Only {reward.stock} left!
-                            </Badge>
-                          </div>
-                        )}
-
-                        <div className="relative z-10 p-6 pt-14">
-                          <div className="flex items-center justify-center mb-4">
-                            <div className="p-4 rounded-xl bg-gradient-to-br from-red-600 to-orange-600 shadow-2xl shadow-red-500/50">
-                              <Gift className="h-12 w-12 text-white" />
-                            </div>
-                          </div>
-                          <h3 className="text-white text-xl font-bold mb-2 text-center">{reward.name}</h3>
-                          <p className="text-gray-300 text-sm mb-4 text-center">
-                            {reward.description}
-                          </p>
-                        </div>
-
-                        <div className="flex-1 relative z-10 px-6">
-                          <div className="flex items-center justify-center mb-2">
-                            <div className="flex items-center gap-2">
-                              <Coins className="h-6 w-6 text-yellow-400" />
-                              <span className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                                {reward.cost}+
-                              </span>
-                            </div>
-                          </div>
-                          {!canAfford && (
-                            <div className="text-center mb-2">
-                              <Badge variant="outline" className="text-xs border-red-500/50 text-red-400">
-                                Need {reward.cost - userCoins} more coins
-                              </Badge>
-                            </div>
-                          )}
-                          
-                          <div className="flex items-center justify-center gap-2 text-sm mb-4">
-                            <Package className="h-4 w-4 text-gray-400" />
-                            <span className="text-gray-400">
-                              {reward.stock} {reward.stock === 1 ? 'item' : 'items'} remaining
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="relative z-10 p-6 pt-0">
-                          <Button 
-                            onClick={() => handleRedeem(reward._id, reward.cost)} 
-                            disabled={reward.stock <= 0 || !canAfford}
-                            className={`w-full font-semibold transition-all ${
-                              canAfford 
-                                ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 shadow-lg hover:shadow-red-500/50' 
-                                : 'bg-black/60 cursor-not-allowed'
-                            }`}
-                          >
-                            {reward.stock <= 0 ? '❌ Out of Stock' : canAfford ? '🎁 Redeem Now' : '🔒 Not Enough Coins'}
-                          </Button>
-                        </div>
-                      </GlassCard>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-
-          {/* Other Rewards Section */}
-          {rewards.some(r => !r.name.includes('Prize')) && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-            >
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-white mb-2">More Rewards</h2>
-                <p className="text-gray-400">Additional items to redeem with your ZE Coins</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {rewards.filter(r => !r.name.includes('Prize')).map((reward, index) => {
-            const Icon = rewardIcons[index % rewardIcons.length];
-            const canAfford = userCoins >= reward.cost;
-            const isLowStock = reward.stock <= 3;
+        <div className="space-y-16">
+          {ranks.map((rank) => {
+            const rankRewards = rewards.filter(r => r.requiredRank === rank || (rank === 'Rookie' && !r.requiredRank));
             
+            if (rankRewards.length === 0) return null;
+
+            const isLegend = rank === 'Errorless Legend';
+            const sectionTitle = isLegend ? 'Errorless Legends Rewards' : `${rank} Rewards`;
+
             return (
-              <motion.div
-                key={reward._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-                whileHover={{ scale: 1.03, y: -8 }}
-                className="h-full"
-              >
-                <GlassCard variant="intense" hover className="text-white h-full flex flex-col relative overflow-hidden group">
-                  {/* Gradient overlay */}
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-red-500 to-orange-600 opacity-0 group-hover:opacity-20 blur-3xl transition-opacity duration-500" />
-                  
-                  {/* Low stock badge */}
-                  {isLowStock && (
-                    <div className="absolute top-4 right-4 z-10">
-                      <Badge variant="destructive" className="bg-red-600/90 backdrop-blur-sm">
-                        Only {reward.stock} left!
-                      </Badge>
-                    </div>
+              <section key={rank} className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-gray-800 pb-4">
+                  {isLegend ? (
+                    <Sparkles className="h-6 w-6 text-yellow-500" />
+                  ) : (
+                    <Award className="h-6 w-6 text-gray-400" />
                   )}
-
-                  <div className="relative z-10 p-6">
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="p-3 rounded-xl bg-gradient-to-br from-red-500 to-orange-600 shadow-lg">
-                        <Icon className="h-8 w-8 text-white" />
-                      </div>
-                    </div>
-                    <h3 className="text-white text-xl font-bold mb-2">{reward.name}</h3>
-                    <p className="text-gray-300 text-sm mb-4">
-                      {reward.description}
-                    </p>
+                  <div>
+                    <h2 className={cn(
+                      "text-2xl font-bold",
+                      isLegend ? "text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500" : "text-white"
+                    )}>
+                      {sectionTitle}
+                    </h2>
+                    {isLegend && (
+                      <Badge variant="secondary" className="mt-1 bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
+                        Top 3 Only
+                      </Badge>
+                    )}
                   </div>
-
-                  <div className="flex-1 relative z-10 px-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Coins className="h-5 w-5 text-yellow-400" />
-                        <span className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                          {reward.cost}
-                        </span>
-                      </div>
-                      {!canAfford && (
-                        <Badge variant="outline" className="text-xs border-red-500/50 text-red-400">
-                          Need {reward.cost - userCoins} more
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-sm">
-                      <Package className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-400">
-                        {reward.stock} {reward.stock === 1 ? 'item' : 'items'} remaining
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="relative z-10 p-6 pt-0">
-                    <Button 
-                      onClick={() => handleRedeem(reward._id, reward.cost)} 
-                      disabled={reward.stock <= 0 || !canAfford}
-                      className={`w-full font-semibold transition-all ${
-                        canAfford 
-                          ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 shadow-lg hover:shadow-red-500/50' 
-                          : 'bg-black/60 cursor-not-allowed'
-                      }`}
-                    >
-                      {reward.stock <= 0 ? '❌ Out of Stock' : canAfford ? '🎁 Redeem Now' : '🔒 Not Enough Coins'}
-                    </Button>
-                  </div>
-                </GlassCard>
-              </motion.div>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {rankRewards.map((reward, i) => (
+                    <RewardCard 
+                      key={reward._id} 
+                      reward={reward} 
+                      index={i} 
+                      isExclusive={isLegend} 
+                    />
+                  ))}
+                </div>
+              </section>
             );
-                })}
-              </div>
-            </motion.div>
-          )}
-        </>
+          })}
+        </div>
       )}
 
-      {/* Redemption Dialog */}
       <RedemptionDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}

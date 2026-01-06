@@ -26,17 +26,23 @@ export async function GET() {
       return NextResponse.json({ message: "User not found" }, { status: 404 })
     }
 
+    // Calculate leaderboard rank (position) based on experience
+    const userExperience = user.experience !== undefined ? user.experience : user.points;
+    const betterPlayersCount = await User.countDocuments({ experience: { $gt: userExperience } });
+    const leaderboardRank = betterPlayersCount + 1;
+
     // Prepare dashboard data
     const dashboardData = {
-      totalPoints: user.points, // Kept for backward compatibility
+      totalPoints: user.experience !== undefined ? user.experience : user.points, // Display ranking points
       zeCoins: user.zeCoins !== undefined ? user.zeCoins : user.points, // For redemption
       experience: user.experience !== undefined ? user.experience : user.points, // For ranking
-      rank: user.rank,
+      rank: user.rank || 'Rookie',
+      leaderboardRank,
       badge: user.badge,
       progress: user.progress,
       zeTag: user.zeTag,
       // Phase 1: Valorant-style rank system
-      rankIcon: user.rankIcon || '/images/ranks/rookie.svg',
+      rankIcon: user.rankIcon || '/images/ranks/rookie.png',
       progressToNextRank: user.progressToNextRank || 0,
       nextRankPoints: user.nextRankPoints || 500,
       currentRankPoints: user.currentRankPoints || 0,

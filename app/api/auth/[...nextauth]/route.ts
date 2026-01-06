@@ -5,7 +5,33 @@ import { MongoDBAdapter } from '@auth/mongodb-adapter'
 import { clientPromise } from '@/lib/mongodb'
 import dbConnect from '@/lib/mongodb'
 import User from '@/models/user'
-import { nanoid } from 'nanoid'
+import { customAlphabet, nanoid } from 'nanoid'
+
+const RANKS = [
+  { name: 'Rookie', points: 0, icon: '/images/ranks/rookie.png' },
+  { name: 'Contender', points: 100, icon: '/images/ranks/contender.png' },
+  { name: 'Gladiator', points: 250, icon: '/images/ranks/gladiator.png' },
+  { name: 'Vanguard', points: 500, icon: '/images/ranks/vanguard.png' },
+  { name: 'Errorless Legend', points: 1000, icon: '/images/ranks/errorless-legend.png' },
+] as const
+
+function getRankForExperience(experience: number) {
+  for (let i = RANKS.length - 1; i >= 0; i--) {
+    if (experience >= RANKS[i].points) return RANKS[i]
+  }
+  return RANKS[0]
+}
+
+const zeSuffix = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 8)
+
+async function generateUniqueZeTag() {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const candidate = `ze_${zeSuffix()}`
+    const exists = await User.exists({ zeTag: candidate })
+    if (!exists) return candidate
+  }
+  return `ze_${customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 12)()}`
+}
 
 // @ts-ignore - Type mismatch between NextAuth v5 beta and adapter versions
 const { handlers, auth, signIn, signOut } = NextAuth({
@@ -69,18 +95,32 @@ const { handlers, auth, signIn, signOut } = NextAuth({
           // Update provider ID if not set
           if (!dbUser.discordId && account?.provider === 'discord') {
             dbUser.discordId = account.providerAccountId
-            await dbUser.save()
           }
-          // Initialize ZE Club data if new user
+
+          // The MongoDB adapter can create users without Mongoose defaults.
+          // Ensure required ZE Club fields always exist.
           if (!dbUser.zeClubId) {
             dbUser.zeClubId = `ZE-${nanoid(8)}`
-            dbUser.points = 100
-            dbUser.rank = 'Rookie'
-            dbUser.roles = ['user']
-            // Initialize default zeTag
-            dbUser.zeTag = `ZE_${nanoid(8)}`
-            await dbUser.save()
           }
+          if (!dbUser.roles || dbUser.roles.length === 0) {
+            dbUser.roles = ['user']
+          }
+
+          const points = typeof dbUser.points === 'number' ? dbUser.points : 0
+          const experience = typeof dbUser.experience === 'number' ? dbUser.experience : points
+          dbUser.experience = experience
+          dbUser.points = experience
+
+          if (!dbUser.rank || dbUser.rank.length === 0 || !dbUser.rankIcon || dbUser.rankIcon.length === 0) {
+            const rankData = getRankForExperience(experience)
+            dbUser.rank = dbUser.rank && dbUser.rank.length > 0 ? dbUser.rank : rankData.name
+            dbUser.rankIcon = dbUser.rankIcon && dbUser.rankIcon.length > 0 ? dbUser.rankIcon : rankData.icon
+          }
+
+          if (!dbUser.zeTag || dbUser.zeTag.length === 0) {
+            dbUser.zeTag = await generateUniqueZeTag()
+          }
+
           // Update last login
           dbUser.lastLoginAt = new Date()
           await dbUser.save()
@@ -120,10 +160,24 @@ const { handlers, auth, signIn, signOut } = NextAuth({
           // Initialize ZE Club data for new users
           if (!user.zeClubId) {
             user.zeClubId = `ZE-${nanoid(8)}`
+          }
+          if (!user.zeTag || user.zeTag.length === 0) {
+            user.zeTag = await generateUniqueZeTag()
+          }
+          if (typeof user.points !== 'number') {
             user.points = 100
+          }
+          if (typeof user.experience !== 'number') {
+            user.experience = 100
+          }
+          if (!user.rank || user.rank.length === 0) {
             user.rank = 'Rookie'
+          }
+          if (!user.rankIcon || user.rankIcon.length === 0) {
+            user.rankIcon = '/images/ranks/rookie.png'
+          }
+          if (!user.roles || user.roles.length === 0) {
             user.roles = ['user']
-            user.zeTag = `ZE_${nanoid(8)}`
           }
           user.lastLoginAt = new Date()
           await user.save()
