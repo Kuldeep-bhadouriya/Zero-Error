@@ -15,7 +15,7 @@ const f = createUploadthing();
 export const ourFileRouter = {
   // Profile photo uploader endpoint
   profilePhotoUploader: f({
-    image: { maxFileSize: "5MB", maxFileCount: 1 },
+    image: { maxFileSize: "2MB", maxFileCount: 1 },
   })
     .middleware(async () => {
       // Authenticate user via NextAuth
@@ -56,8 +56,8 @@ export const ourFileRouter = {
 
   // Mission proof uploader endpoint
   missionProofUploader: f({
-    image: { maxFileSize: "16MB", maxFileCount: 1 },
-    video: { maxFileSize: "50MB", maxFileCount: 1 },
+    image: { maxFileSize: "4MB", maxFileCount: 1 },
+    video: { maxFileSize: "2GB", maxFileCount: 1 },
   })
     .middleware(async () => {
       // Authenticate user via NextAuth
@@ -87,8 +87,8 @@ export const ourFileRouter = {
 
   // Hero media uploader endpoint (admin-only)
   heroMediaUploader: f({
-    video: { maxFileSize: "50MB", maxFileCount: 1 },
-    image: { maxFileSize: "16MB", maxFileCount: 1 },
+    video: { maxFileSize: "2GB", maxFileCount: 1 },
+    image: { maxFileSize: "4MB", maxFileCount: 1 },
   })
     .middleware(async () => {
       // Authenticate and verify admin role
@@ -123,7 +123,7 @@ export const ourFileRouter = {
 
   // Event image uploader endpoint (admin-only)
   eventImageUploader: f({
-    image: { maxFileSize: "10MB", maxFileCount: 1 },
+    image: { maxFileSize: "4MB", maxFileCount: 1 },
   })
     .input(z.object({ eventId: z.string().optional() }))
     .middleware(async ({ input }) => {
@@ -172,7 +172,7 @@ export const ourFileRouter = {
 
   // Mission example image uploader endpoint (admin-only)
   missionExampleUploader: f({
-    image: { maxFileSize: "10MB", maxFileCount: 1 },
+    image: { maxFileSize: "4MB", maxFileCount: 1 },
   })
     .input(z.object({ missionId: z.string().optional() }))
     .middleware(async ({ input }) => {

@@ -1,7 +1,7 @@
 import { auth } from '@/app/api/auth/[...nextauth]/route'
 import { redirect } from 'next/navigation'
 import dbConnect from '@/lib/mongodb'
-import User from '@/models/user'
+import User, { IUser } from '@/models/user'
 import MissionSubmission from '@/models/missionSubmission'
 import { ProfileHeader } from '@/components/profile/ProfileHeader'
 import { ProfileStats } from '@/components/profile/ProfileStats'
@@ -20,7 +20,7 @@ export default async function ProfilePage() {
   }
 
   await dbConnect()
-  const user = await User.findById(session.user.id).lean()
+  const user = await User.findById(session.user.id).lean() as IUser | null
 
   if (!user) {
     redirect('/join-us')
@@ -45,7 +45,7 @@ export default async function ProfilePage() {
 
   // Convert MongoDB document to plain object
   const profile = {
-    id: user._id.toString(),
+    id: (user._id as any).toString(),
     email: user.email,
     image: user.image,
     zeTag: user.zeTag,

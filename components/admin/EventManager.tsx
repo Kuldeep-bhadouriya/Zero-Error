@@ -6,12 +6,31 @@ import { EventList } from './EventList'
 import { Button } from '@/components/ui/button'
 import { PlusCircle } from 'lucide-react'
 
+interface Event {
+  _id: string
+  title: string
+  description: string
+  eventDate: string
+  eventType: 'upcoming' | 'past' | 'current'
+  imageUrl?: string
+  location?: string
+  registrationLink?: string
+  featured: boolean
+  games: string[]
+  organizer: string
+  maxParticipants?: number
+  currentParticipants: number
+  status: 'draft' | 'published' | 'cancelled'
+  createdAt: string
+  updatedAt: string
+}
+
 function EventManager() {
-  const [editingEvent, setEditingEvent] = useState(null)
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-  function handleEdit(event) {
+  function handleEdit(event: Event) {
     setEditingEvent(event)
     setIsFormOpen(true)
   }

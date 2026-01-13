@@ -9,6 +9,8 @@ export default function PageTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { animationEnabled } = useAnimation();
 
+  const easing = [0.4, 0, 0.2, 1] as const;
+
   // Force animation reset on route change
   useEffect(() => {
     // Scroll to top on page changes
@@ -28,7 +30,7 @@ export default function PageTransition({ children }: { children: ReactNode }) {
       exit={{ opacity: 0, y: -20 }}
       transition={{
         duration: 0.4,
-        ease: "easeInOut",
+        ease: easing,
       }}
       className="w-full"
     >

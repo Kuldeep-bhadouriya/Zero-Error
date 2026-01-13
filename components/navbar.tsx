@@ -55,7 +55,6 @@ export default function Navbar() {
         "linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(75,0,0,0.8) 50%, rgba(0,0,0,0.8) 100%)",
       boxShadow: "0 8px 32px rgba(255, 0, 0, 0.25)",
       borderColor: "rgba(255, 0, 0, 0.25)",
-      transition: { duration: 0.6, ease: [0.19, 1, 0.22, 1] },
     },
     collapsed: {
       maxWidth: "78%",
@@ -64,7 +63,6 @@ export default function Navbar() {
         "linear-gradient(90deg, rgba(0,0,0,0.95) 0%, rgba(75,0,0,0.9) 50%, rgba(0,0,0,0.95) 100%)",
       boxShadow: "0 4px 20px rgba(255, 0, 0, 0.35)",
       borderColor: "rgba(255, 0, 0, 0.4)",
-      transition: { duration: 0.6, ease: [0.19, 1, 0.22, 1] },
     },
   };
 
@@ -72,19 +70,10 @@ export default function Navbar() {
     expanded: (i: number) => ({
       opacity: 1,
       y: 0,
-      transition: {
-        duration: 0.5,
-        delay: 0.05 * i,
-        ease: "easeOut",
-      },
     }),
     collapsed: {
       opacity: 0.95,
       y: 0,
-      transition: {
-        duration: 0.3,
-        ease: "easeIn",
-      },
     },
   };
 
@@ -94,19 +83,11 @@ export default function Navbar() {
       opacity: 0,
       y: -20,
       scale: 0.95,
-      transition: {
-        duration: 0.3,
-        ease: "easeInOut",
-      },
     },
     open: {
       opacity: 1,
       y: 0,
       scale: 1,
-      transition: {
-        duration: 0.4,
-        ease: "easeOut",
-      },
     },
   };
 

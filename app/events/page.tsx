@@ -89,7 +89,6 @@ export default function EventsPage() {
     visible: {
       y: 0,
       opacity: 1,
-      transition: { duration: 0.7, ease: [0.25, 0.1, 0.25, 1.0] },
     },
   };
 
@@ -287,6 +286,7 @@ export default function EventsPage() {
                         size="sm"
                         className="w-full bg-red-600 hover:bg-red-700"
                         onClick={() => {
+                          if (!event.registrationLink) return;
                           const url = event.registrationLink.startsWith('http') 
                             ? event.registrationLink 
                             : `https://${event.registrationLink}`

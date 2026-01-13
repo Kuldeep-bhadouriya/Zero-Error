@@ -78,7 +78,12 @@ const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string
-        session.user.roles = (token.roles as string)?.split(',') || ['user']
+        const roles = (token as unknown as { roles?: unknown }).roles
+        session.user.roles = Array.isArray(roles)
+          ? (roles as string[])
+          : typeof roles === 'string'
+            ? roles.split(',').filter(Boolean)
+            : ['user']
         session.user.points = token.points as number
         session.user.rank = token.rank as string
         session.user.zeClubId = token.zeClubId as string
