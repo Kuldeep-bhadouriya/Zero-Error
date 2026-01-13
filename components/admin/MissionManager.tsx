@@ -32,7 +32,7 @@ export default function MissionManager() {
       }
 
       const data = await res.json()
-      setMissions(data)
+      setMissions(data.missions || data) // Support both paginated and non-paginated response
     } catch (err: any) {
       setError(err.message)
     } finally {

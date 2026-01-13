@@ -11,7 +11,7 @@ interface GameCardProps {
   image: string;
 }
 
-const GameCard: React.FC<GameCardProps> = ({ title, image }) => {
+const GameCard: React.FC<GameCardProps> = React.memo(({ title, image }) => {
   return (
     <motion.div
       className="relative overflow-hidden rounded-xl border border-zinc-800/60 group"
@@ -30,6 +30,8 @@ const GameCard: React.FC<GameCardProps> = ({ title, image }) => {
           src={image || "/event.jpg"}
           alt={title}
           fill
+          loading="lazy"
+          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70" />
@@ -47,6 +49,8 @@ const GameCard: React.FC<GameCardProps> = ({ title, image }) => {
       />
     </motion.div>
   );
-};
+});
+
+GameCard.displayName = "GameCard";
 
 export default GameCard;

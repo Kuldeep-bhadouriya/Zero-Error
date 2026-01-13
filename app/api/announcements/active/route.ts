@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Announcement from '@/models/announcement'
 
+// ISR: Revalidate every 5 minutes (300 seconds)
+export const revalidate = 300
+
 const MAX_PER_PAGE = 3
 
 function buildDateFilter(now: Date) {

@@ -146,10 +146,10 @@ export default function HeroMediaManager() {
       return 'Invalid file type. Only MP4 and WebM are allowed.'
     }
 
-    // Check file size (100MB)
-    const maxSize = 100 * 1024 * 1024
+    // Check file size (50MB - reduced from 100MB)
+    const maxSize = 50 * 1024 * 1024
     if (file.size > maxSize) {
-      return 'Video file too large. Maximum size is 100MB.'
+      return 'Video file too large. Maximum size is 50MB. Please compress your video before uploading.'
     }
 
     return null
@@ -188,7 +188,7 @@ export default function HeroMediaManager() {
           <Alert className="bg-zinc-800/50 border-zinc-700">
             <AlertCircle className="h-4 w-4 text-gray-400" />
             <AlertDescription className="text-gray-400">
-              Recommended: MP4 or WebM format, max 100MB, 1920x1080 resolution
+              Recommended: MP4 or WebM format, max 50MB, 1920x1080 resolution. Compress videos using tools like HandBrake or FFmpeg for best performance.
             </AlertDescription>
           </Alert>
           

@@ -17,6 +17,9 @@ export async function GET(req: NextRequest) {
     await dbConnect()
 
     const { searchParams } = new URL(req.url)
+    const page = Math.max(Number(searchParams.get('page')) || 1, 1)
+    const limit = Math.min(Math.max(Number(searchParams.get('limit')) || 20, 1), 100)
+    const skip = (page - 1) * limit
     const category = searchParams.get('category')
     const difficulty = searchParams.get('difficulty')
     const active = searchParams.get('active')
@@ -56,10 +59,15 @@ export async function GET(req: NextRequest) {
       ]
     }
 
-    const missions = await Mission.find(filter)
-      .populate('createdBy', 'name email')
-      .populate('deactivatedBy', 'name email')
-      .sort({ createdAt: -1 })
+    const [missions, total] = await Promise.all([
+      Mission.find(filter)
+        .populate('createdBy', 'name email')
+        .populate('deactivatedBy', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Mission.countDocuments(filter)
+    ])
 
     // Add computed fields
     const now = new Date()
@@ -89,7 +97,15 @@ export async function GET(req: NextRequest) {
       }
     })
 
-    return NextResponse.json(missionsWithMeta)
+    return NextResponse.json({
+      missions: missionsWithMeta,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+    })
   } catch (error: any) {
     console.error('Error fetching missions:', error)
     return NextResponse.json(

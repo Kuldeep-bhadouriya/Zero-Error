@@ -69,6 +69,7 @@ const HeroSection = ({
               src={posterSrc}
               alt="Zero Error Esports"
               fill
+              sizes="100vw"
               className="object-cover opacity-70"
               priority
             />
@@ -91,6 +92,7 @@ const HeroSection = ({
               src={posterSrc}
               alt="Zero Error Esports"
               fill
+              sizes="100vw"
               className="object-cover opacity-70"
               priority
             />

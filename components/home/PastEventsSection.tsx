@@ -137,6 +137,8 @@ const PastEventsSection = () => {
                       src={event.imageUrl}
                       alt={event.title}
                       fill
+                      loading="lazy"
+                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 350px, 400px"
                       className="object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
                     />
                   ) : (

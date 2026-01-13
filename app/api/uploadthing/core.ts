@@ -56,8 +56,8 @@ export const ourFileRouter = {
 
   // Mission proof uploader endpoint
   missionProofUploader: f({
-    image: { maxFileSize: "32MB", maxFileCount: 1 },
-    video: { maxFileSize: "64MB", maxFileCount: 1 },
+    image: { maxFileSize: "16MB", maxFileCount: 1 },
+    video: { maxFileSize: "50MB", maxFileCount: 1 },
   })
     .middleware(async () => {
       // Authenticate user via NextAuth
@@ -87,7 +87,7 @@ export const ourFileRouter = {
 
   // Hero media uploader endpoint (admin-only)
   heroMediaUploader: f({
-    video: { maxFileSize: "128MB", maxFileCount: 1 },
+    video: { maxFileSize: "50MB", maxFileCount: 1 },
     image: { maxFileSize: "16MB", maxFileCount: 1 },
   })
     .middleware(async () => {

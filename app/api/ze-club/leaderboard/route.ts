@@ -37,11 +37,13 @@ export async function GET() {
 
   try {
     // Fetch users with email to validate they're real users
+    // Add pagination limit to avoid N+1 issues
     const users = await User.find(
       { email: { $exists: true, $ne: null } }, // Only fetch users with valid email
       'zeTag points experience zeCoins rank rankIcon profilePhotoUrl image email'
     )
-      .limit(200)
+      .sort({ experience: -1 }) // Sort by experience for ranking
+      .limit(50) // Limit to top 50 users for leaderboard
       .lean();
 
     // Normalize first (so sorting works even if experience is missing).
@@ -105,21 +107,19 @@ export async function GET() {
       await User.bulkWrite(ops, { ordered: false });
     }
 
-    // Sort by normalized experience (descending) for ranking.
-    const leaderboard = normalized
-      .sort((a, b) => b.experience - a.experience)
-      .slice(0, 100)
-      .map((n, index) => ({
-        _id: n.user._id,
-        rank: index + 1,
-        userRank: n.userRank,
-        rankIcon: n.rankIcon,
-        profilePhoto: n.profilePhoto,
-        zeTag: n.zeTag,
-        points: n.points,
-        experience: n.experience,
-        zeCoins: n.zeCoins,
-      }));
+    // Users are already sorted by experience from the query
+    // Just add rank numbers based on sorted order
+    const leaderboard = normalized.map((n, index) => ({
+      _id: n.user._id,
+      rank: index + 1,
+      userRank: n.userRank,
+      rankIcon: n.rankIcon,
+      profilePhoto: n.profilePhoto,
+      zeTag: n.zeTag,
+      points: n.points,
+      experience: n.experience,
+      zeCoins: n.zeCoins,
+    }));
 
     return NextResponse.json(leaderboard);
   } catch (error) {

@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Event from '@/models/event'
 
-// Make this route dynamic to prevent caching issues
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// ISR: Revalidate every 5 minutes (300 seconds) instead of force-dynamic
+export const revalidate = 300
 
 export async function GET(req: Request) {
   try {
