@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { Gift, Coins, ShoppingBag, Star, Sparkles, TrendingUp, Package, Target, Lock, ShieldAlert, Award } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
