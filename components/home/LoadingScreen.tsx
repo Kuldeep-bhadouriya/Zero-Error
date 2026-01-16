@@ -32,7 +32,14 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
   useEffect(() => {
     if (!isLoading) return;
 
-    const hasLoadedBefore = sessionStorage.getItem("hasLoadedSite");
+    let hasLoadedBefore = false;
+    try {
+      hasLoadedBefore = sessionStorage.getItem("hasLoadedSite") === "true";
+    } catch (e) {
+      // Session storage might not be available
+      console.warn("sessionStorage not available");
+    }
+
     const startTime = Date.now();
     const duration = hasLoadedBefore ? 1500 : 4000;
 
@@ -58,7 +65,11 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         clearInterval(interval);
         setFadeOut(true);
         setTimeout(() => {
-          sessionStorage.setItem("hasLoadedSite", "true");
+          try {
+            sessionStorage.setItem("hasLoadedSite", "true");
+          } catch (e) {
+            // Ignore sessionStorage errors
+          }
           onLoadingComplete();
         }, 1200);
       }
