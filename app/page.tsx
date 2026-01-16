@@ -7,7 +7,6 @@ import {
   AnimatePresence,
 } from "framer-motion";
 
-// Import components
 import ParticlesBackground from "@/components/home/ParticlesBackground";
 import LoadingScreen from "@/components/home/LoadingScreen";
 import AnimatedBackground from "@/components/home/AnimatedBackground";
@@ -26,17 +25,14 @@ export default function Home({ heroVideoUrl, heroPosterUrl }: HomeClientProps) {
   const [loading, setLoading] = useState(true);
   const { scrollYProgress } = useScroll();
 
-  // Hero media settings
   const [heroMedia, setHeroMedia] = useState({
     videoUrl: heroVideoUrl || "",
     posterUrl: heroPosterUrl || "",
   })
 
-  // For dynamic background color effect
   const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
 
   useEffect(() => {
-    // Fetch hero media settings
     async function fetchHeroMedia() {
       try {
         const response = await fetch("/api/admin/marketing/hero")
