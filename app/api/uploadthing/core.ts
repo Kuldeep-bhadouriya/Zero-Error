@@ -56,7 +56,7 @@ export const ourFileRouter = {
 
   // Mission proof uploader endpoint
   missionProofUploader: f({
-    image: { maxFileSize: "10MB", maxFileCount: 1 },
+    image: { maxFileSize: "8MB", maxFileCount: 1 },
     video: { maxFileSize: "2GB", maxFileCount: 1 },
   })
     .middleware(async () => {
