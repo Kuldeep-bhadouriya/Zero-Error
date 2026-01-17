@@ -27,6 +27,23 @@ const MissionSubmissionSchema = new Schema({
   remarks: {
     type: String,
   },
+  approvedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  },
+  approvedAt: {
+    type: Date,
+  },
+  revertedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  },
+  revertedAt: {
+    type: Date,
+  },
+  revertReason: {
+    type: String,
+  },
 })
 
 // Create compound index to ensure one approved/pending submission per user per mission

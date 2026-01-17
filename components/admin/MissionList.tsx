@@ -59,8 +59,8 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
 
   // Filter missions
   const filteredMissions = missions.filter((mission) => {
-    // Hide deleted missions (soft deleted with deactivatedAt)
-    if (mission.deactivatedAt) {
+    // Hide deleted missions (soft deleted with isDeleted flag)
+    if (mission.isDeleted) {
       return false
     }
     

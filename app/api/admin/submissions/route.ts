@@ -16,16 +16,27 @@ export async function GET(req: Request) {
   await dbConnect()
 
   try {
+    // Parse URL to get query params
+    const url = new URL(req.url)
+    const status = url.searchParams.get('status')
+    
     // Ensure models are registered by referencing them
     const _ = Mission.modelName
     const __ = User.modelName
     
-    const submissions = await MissionSubmission.find({ status: 'pending' })
+    // Build query based on status filter
+    const query = status && status !== 'all' ? { status } : {}
+    
+    const submissions = await MissionSubmission.find(query)
       .populate('user', 'zeTag email')
       .populate('mission', 'name points')
+      .populate('approvedBy', 'zeTag email')
+      .populate('revertedBy', 'zeTag email')
+      .sort({ submittedAt: -1 })
+      
     return NextResponse.json(submissions)
   } catch (error) {
-    console.error('Error fetching pending submissions:', error)
+    console.error('Error fetching submissions:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }

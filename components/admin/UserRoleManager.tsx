@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, Shield, ShieldOff, Loader2, User, Trophy, Crown } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Search, Shield, ShieldOff, Loader2, User, Trophy, Crown, Users } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -34,13 +34,41 @@ interface UserData {
 export default function UserRoleManager() {
   const [searchQuery, setSearchQuery] = useState('')
   const [users, setUsers] = useState<UserData[]>([])
+  const [admins, setAdmins] = useState<UserData[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [isLoadingAdmins, setIsLoadingAdmins] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
   const [selectedAction, setSelectedAction] = useState<'add' | 'remove'>('add')
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const { toast } = useToast()
+
+  // Fetch admins on component mount
+  useEffect(() => {
+    fetchAdmins()
+  }, [])
+
+  async function fetchAdmins() {
+    setIsLoadingAdmins(true)
+    try {
+      const res = await fetch('/api/admin/users/admins')
+      if (!res.ok) {
+        throw new Error('Failed to fetch admins')
+      }
+      const data = await res.json()
+      setAdmins(data.admins || [])
+    } catch (error: any) {
+      console.error('Error fetching admins:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load admin list',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsLoadingAdmins(false)
+    }
+  }
 
   async function handleSearch() {
     if (!searchQuery.trim()) {
@@ -110,6 +138,9 @@ export default function UserRoleManager() {
           : u
       ))
 
+      // Refresh the admin list
+      fetchAdmins()
+
       toast({
         title: 'Success',
         description: `Successfully ${selectedAction === 'add' ? 'granted' : 'revoked'} admin access for @${selectedUser.zeTag || selectedUser.email}`,
@@ -129,14 +160,115 @@ export default function UserRoleManager() {
 
   return (
     <div className="space-y-6">
+      {/* Current Admins List */}
+      <Card className="bg-zinc-900/50 border-zinc-800">
+        <CardHeader>
+          <CardTitle className="text-2xl text-white flex items-center gap-2">
+            <Users className="h-6 w-6 text-red-500" />
+            Current Admins
+          </CardTitle>
+          <CardDescription className="text-gray-400">
+            List of all users with admin privileges
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {isLoadingAdmins ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+            </div>
+          ) : admins.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">
+              No admins found
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {admins.map((admin, index) => (
+                <motion.div
+                  key={admin._id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 hover:border-zinc-600 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      {(() => {
+                        const imageUrl = admin.profilePhotoUrl || admin.image
+                        const hasValidImage = imageUrl && typeof imageUrl === 'string' && imageUrl.trim() !== '' && !imageErrors.has(admin._id)
+                        
+                        return hasValidImage ? (
+                          <img
+                            src={imageUrl}
+                            alt={admin.zeTag || admin.email}
+                            className="h-12 w-12 rounded-full border-2 border-red-700 object-cover"
+                            onError={(e) => {
+                              setImageErrors(prev => new Set(prev).add(admin._id))
+                            }}
+                          />
+                        ) : (
+                          <div className="h-12 w-12 rounded-full bg-red-900/30 border-2 border-red-700 flex items-center justify-center">
+                            <Crown className="h-6 w-6 text-red-500" />
+                          </div>
+                        )
+                      })()}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-white font-semibold truncate">@{admin.zeTag || 'No username'}</h3>
+                          <Badge className="bg-red-600 text-white">
+                            <Crown className="h-3 w-3 mr-1" />
+                            Admin
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-gray-400 mt-1 flex-wrap">
+                          <span className="text-blue-400">{admin.email}</span>
+                          <span className="flex items-center gap-1">
+                            <Trophy className="h-3 w-3" />
+                            {admin.points} pts
+                          </span>
+                          <Badge variant="outline" className="text-xs border-zinc-600">
+                            {admin.rank}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            ID: {admin._id}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => openConfirmDialog(admin, 'remove')}
+                        disabled={actionLoading === admin._id}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        {actionLoading === admin._id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <ShieldOff className="h-4 w-4 mr-2" />
+                            Remove Admin
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Search Users to Add Admin */}
       <Card className="bg-zinc-900/50 border-zinc-800">
         <CardHeader>
           <CardTitle className="text-2xl text-white flex items-center gap-2">
             <Shield className="h-6 w-6 text-red-500" />
-            User Role Management
+            Add New Admin
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Search for users by username (ZE Tag) or email to manage admin roles
+            Search for users by username (ZE Tag) or email to grant admin roles
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

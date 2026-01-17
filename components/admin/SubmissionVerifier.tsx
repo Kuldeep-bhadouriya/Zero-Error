@@ -27,10 +27,23 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
-import { CheckCircle2, XCircle, Eye, Search, Filter, TrendingUp, Users, Clock, Image as ImageIcon } from 'lucide-react'
+import { CheckCircle2, XCircle, Eye, Search, Filter, TrendingUp, Users, Clock, Image as ImageIcon, Undo2, History, AlertTriangle } from 'lucide-react'
 
 interface Submission {
   _id: string
@@ -45,6 +58,19 @@ interface Submission {
   proof: string
   status: string
   createdAt?: string
+  submittedAt?: string
+  approvedBy?: {
+    zeTag: string
+    email: string
+  }
+  approvedAt?: string
+  revertedBy?: {
+    zeTag: string
+    email: string
+  }
+  revertedAt?: string
+  revertReason?: string
+  remarks?: string
 }
 
 export default function SubmissionVerifier() {
@@ -55,10 +81,15 @@ export default function SubmissionVerifier() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState('pending')
+  const [revertDialogOpen, setRevertDialogOpen] = useState(false)
+  const [revertSubmission, setRevertSubmission] = useState<Submission | null>(null)
+  const [revertReason, setRevertReason] = useState('')
+  const [isReverting, setIsReverting] = useState(false)
 
-  async function fetchSubmissions() {
+  async function fetchSubmissions(status: string = 'all') {
     try {
-      const res = await fetch('/api/admin/submissions')
+      const res = await fetch(`/api/admin/submissions?status=${status}`)
       if (res.ok) {
         const data = await res.json()
         setSubmissions(data)
@@ -74,8 +105,16 @@ export default function SubmissionVerifier() {
   }
 
   useEffect(() => {
-    fetchSubmissions()
-  }, [])
+    // Fetch submissions based on active tab
+    const statusMap: Record<string, string> = {
+      pending: 'pending',
+      approved: 'approved',
+      rejected: 'rejected',
+      all: 'all'
+    }
+    setLoading(true)
+    fetchSubmissions(statusMap[activeTab] || 'all')
+  }, [activeTab])
 
   useEffect(() => {
     let filtered = submissions
@@ -110,13 +149,73 @@ export default function SubmissionVerifier() {
         toast.success(`Submission ${status}`, {
           description: `The submission has been ${status} successfully.`,
         })
-        fetchSubmissions() // Refresh the list
+        // Refresh current tab data
+        const statusMap: Record<string, string> = {
+          pending: 'pending',
+          approved: 'approved',
+          rejected: 'rejected',
+          all: 'all'
+        }
+        fetchSubmissions(statusMap[activeTab] || 'all')
       } else {
         const errorData = await res.json()
         toast.error(errorData.message || `Failed to ${status} submission`)
       }
     } catch (error) {
       toast.error(`An error occurred while ${status}ing the submission`)
+    }
+  }
+
+  const handleRevertClick = (submission: Submission) => {
+    setRevertSubmission(submission)
+    setRevertReason('')
+    setRevertDialogOpen(true)
+  }
+
+  const handleRevertConfirm = async () => {
+    if (!revertSubmission) return
+    
+    setIsReverting(true)
+    try {
+      const res = await fetch('/api/admin/submissions/revert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          submissionId: revertSubmission._id,
+          revertReason: revertReason.trim() || 'Approval reverted by admin'
+        }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        toast.success('Submission reverted successfully', {
+          description: `${data.details.pointsDeducted} points deducted. ${data.details.rankChanged ? `Rank changed from ${data.details.oldRank} to ${data.details.newRank}` : 'Rank unchanged'}.`,
+        })
+        setRevertDialogOpen(false)
+        setRevertSubmission(null)
+        setRevertReason('')
+        // Refresh current tab data
+        const statusMap: Record<string, string> = {
+          pending: 'pending',
+          approved: 'approved',
+          rejected: 'rejected',
+          all: 'all'
+        }
+        fetchSubmissions(statusMap[activeTab] || 'all')
+      } else {
+        if (data.error) {
+          toast.error('Cannot revert submission', {
+            description: data.error,
+          })
+        } else {
+          toast.error('Failed to revert submission')
+        }
+      }
+    } catch (error) {
+      toast.error('An error occurred while reverting the submission')
+    } finally {
+      setIsReverting(false)
     }
   }
 
@@ -205,160 +304,212 @@ export default function SubmissionVerifier() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card className="bg-zinc-900/50 border-zinc-700">
-        <CardContent className="p-3 sm:p-4 lg:pt-6 lg:px-6">
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 lg:gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
-              <Input
-                placeholder="Search by user, email, or mission..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 sm:pl-10 text-sm bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
-              />
-            </div>
-            <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[180px] bg-zinc-800 border-zinc-700 text-white text-sm">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
-                  <SelectItem value="all" className="text-white text-sm">All Status</SelectItem>
-                  <SelectItem value="pending" className="text-white text-sm">Pending</SelectItem>
-                  <SelectItem value="approved" className="text-white text-sm">Approved</SelectItem>
-                  <SelectItem value="rejected" className="text-white text-sm">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tabs for Pending and History */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="bg-zinc-900/50 border border-zinc-700">
+          <TabsTrigger value="pending" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+            <Clock className="h-4 w-4 mr-2" />
+            Pending Review
+          </TabsTrigger>
+          <TabsTrigger value="approved" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+            <History className="h-4 w-4 mr-2" />
+            Approved
+          </TabsTrigger>
+          <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+            <XCircle className="h-4 w-4 mr-2" />
+            Rejected
+          </TabsTrigger>
+          <TabsTrigger value="all" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+            <Filter className="h-4 w-4 mr-2" />
+            All
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Submissions Table */}
-      <Card className="bg-zinc-900/50 border-zinc-700">
-        <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
-          <CardTitle className="flex items-center gap-2 text-white text-sm sm:text-base lg:text-lg">
-            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
-            Submission Review ({filteredSubmissions.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto w-full">
-            <div className="min-w-[800px]">
-              <Table>
-              <TableHeader>
-                <TableRow className="border-zinc-700">
-                  <TableHead className="w-[180px] text-gray-300 text-xs sm:text-sm">User</TableHead>
-                  <TableHead className="w-[150px] text-gray-300 text-xs sm:text-sm">Mission</TableHead>
-                  <TableHead className="w-[80px] text-gray-300 text-xs sm:text-sm">Points</TableHead>
-                  <TableHead className="w-[80px] text-gray-300 text-xs sm:text-sm">Proof</TableHead>
-                  <TableHead className="w-[100px] text-gray-300 text-xs sm:text-sm">Status</TableHead>
-                  <TableHead className="w-[180px] text-gray-300 text-xs sm:text-sm">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSubmissions.length > 0 ? (
-                  filteredSubmissions.map((submission, index) => (
-                    <motion.tr
-                      key={submission._id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
-                      className="border-b border-zinc-700 transition-colors hover:bg-zinc-800/30"
-                    >
-                      <TableCell className="py-3">
-                        <div className="space-y-1">
-                          <div className="font-medium text-xs sm:text-sm text-white truncate max-w-[160px]">@{submission.user.zeTag}</div>
-                          <div className="text-xs text-gray-400 truncate max-w-[160px]">
-                            {submission.user.email}
+        <TabsContent value={activeTab} className="mt-6 space-y-4">
+          {/* Filters */}
+          <Card className="bg-zinc-900/50 border-zinc-700">
+            <CardContent className="p-3 sm:p-4 lg:pt-6 lg:px-6">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 lg:gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                  <Input
+                    placeholder="Search by user, email, or mission..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 sm:pl-10 text-sm bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Submissions Table */}
+          <Card className="bg-zinc-900/50 border-zinc-700">
+            <CardHeader className="px-3 py-3 sm:px-6 sm:py-4">
+              <CardTitle className="flex items-center gap-2 text-white text-sm sm:text-base lg:text-lg">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5" />
+                {activeTab === 'pending' && 'Pending Review'}
+                {activeTab === 'approved' && 'Approved Submissions'}
+                {activeTab === 'rejected' && 'Rejected Submissions'}
+                {activeTab === 'all' && 'All Submissions'}
+                {' '}({filteredSubmissions.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto w-full">
+                <div className="min-w-[800px]">
+                  <Table>
+                  <TableHeader>
+                    <TableRow className="border-zinc-700">
+                      <TableHead className="w-[180px] text-gray-300 text-xs sm:text-sm">User</TableHead>
+                      <TableHead className="w-[150px] text-gray-300 text-xs sm:text-sm">Mission</TableHead>
+                      <TableHead className="w-[80px] text-gray-300 text-xs sm:text-sm">Points</TableHead>
+                      <TableHead className="w-[80px] text-gray-300 text-xs sm:text-sm">Proof</TableHead>
+                      <TableHead className="w-[100px] text-gray-300 text-xs sm:text-sm">Status</TableHead>
+                      {activeTab !== 'pending' && (
+                        <TableHead className="w-[150px] text-gray-300 text-xs sm:text-sm">Details</TableHead>
+                      )}
+                      <TableHead className="w-[180px] text-gray-300 text-xs sm:text-sm">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-sm py-8">
+                          <div className="flex flex-col items-center gap-2">
+                            <Clock className="h-12 w-12 animate-spin text-red-500" />
+                            <p className="text-gray-300">Loading submissions...</p>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs sm:text-sm font-medium text-gray-300 py-3">
-                        <div className="truncate max-w-[140px]">{submission.mission.name}</div>
-                      </TableCell>
-                      <TableCell className="py-3">
-                        <Badge variant="secondary" className="bg-red-600/20 text-red-400 text-xs">
-                          +{submission.mission.points}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="py-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handlePreview(submission.proof)}
-                          className="gap-1 text-gray-300 hover:text-white hover:bg-zinc-800 text-xs h-8 px-2"
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredSubmissions.length > 0 ? (
+                      filteredSubmissions.map((submission, index) => (
+                        <motion.tr
+                          key={submission._id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                          className="border-b border-zinc-700 transition-colors hover:bg-zinc-800/30"
                         >
-                          <Eye className="h-3 w-3" />
-                          View
-                        </Button>
-                      </TableCell>
-                      <TableCell className="py-3">
-                        <Badge
-                          variant={
-                            submission.status === 'pending'
-                              ? 'secondary'
-                              : submission.status === 'approved'
-                              ? 'default'
-                              : 'destructive'
-                          }
-                          className={
-                            submission.status === 'pending'
-                              ? 'bg-yellow-600/20 text-yellow-400 text-xs'
-                              : submission.status === 'approved'
-                              ? 'bg-green-600/20 text-green-400 text-xs'
-                              : 'text-xs'
-                          }
-                        >
-                          {submission.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="py-3">
-                        {submission.status === 'pending' && (
-                          <div className="flex gap-1">
+                          <TableCell className="py-3">
+                            <div className="space-y-1">
+                              <div className="font-medium text-xs sm:text-sm text-white truncate max-w-[160px]">@{submission.user.zeTag}</div>
+                              <div className="text-xs text-gray-400 truncate max-w-[160px]">
+                                {submission.user.email}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm font-medium text-gray-300 py-3">
+                            <div className="truncate max-w-[140px]">{submission.mission.name}</div>
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <Badge variant="secondary" className="bg-red-600/20 text-red-400 text-xs">
+                              +{submission.mission.points}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="py-3">
                             <Button
+                              variant="ghost"
                               size="sm"
-                              variant="outline"
-                              onClick={() => handleVerification(submission._id, 'approved')}
-                              className="gap-1 border-green-500/50 text-green-400 hover:bg-green-500/20 text-xs h-8 px-2"
+                              onClick={() => handlePreview(submission.proof)}
+                              className="gap-1 text-gray-300 hover:text-white hover:bg-zinc-800 text-xs h-8 px-2"
                             >
-                              <CheckCircle2 className="h-3 w-3" />
-                              <span className="hidden sm:inline">Approve</span>
-                              <span className="sm:hidden">✓</span>
+                              <Eye className="h-3 w-3" />
+                              View
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleVerification(submission._id, 'rejected')}
-                              className="gap-1 border-red-500/50 text-red-400 hover:bg-red-500/20 text-xs h-8 px-2"
+                          </TableCell>
+                          <TableCell className="py-3">
+                            <Badge
+                              variant={
+                                submission.status === 'pending'
+                                  ? 'secondary'
+                                  : submission.status === 'approved'
+                                  ? 'default'
+                                  : 'destructive'
+                              }
+                              className={
+                                submission.status === 'pending'
+                                  ? 'bg-yellow-600/20 text-yellow-400 text-xs'
+                                  : submission.status === 'approved'
+                                  ? 'bg-green-600/20 text-green-400 text-xs'
+                                  : 'text-xs'
+                              }
                             >
-                              <XCircle className="h-3 w-3" />
-                              <span className="hidden sm:inline">Reject</span>
-                              <span className="sm:hidden">✗</span>
-                            </Button>
+                              {submission.status}
+                            </Badge>
+                          </TableCell>
+                          {activeTab !== 'pending' && (
+                            <TableCell className="py-3">
+                              <div className="space-y-1 text-xs text-gray-400">
+                                {submission.approvedBy && (
+                                  <div>By: @{submission.approvedBy.zeTag}</div>
+                                )}
+                                {submission.approvedAt && (
+                                  <div>{new Date(submission.approvedAt).toLocaleDateString()}</div>
+                                )}
+                                {submission.revertedBy && (
+                                  <div className="text-red-400">Reverted by: @{submission.revertedBy.zeTag}</div>
+                                )}
+                              </div>
+                            </TableCell>
+                          )}
+                          <TableCell className="py-3">
+                            {submission.status === 'pending' && (
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleVerification(submission._id, 'approved')}
+                                  className="gap-1 border-green-500/50 text-green-400 hover:bg-green-500/20 text-xs h-8 px-2"
+                                >
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  <span className="hidden sm:inline">Approve</span>
+                                  <span className="sm:hidden">✓</span>
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleVerification(submission._id, 'rejected')}
+                                  className="gap-1 border-red-500/50 text-red-400 hover:bg-red-500/20 text-xs h-8 px-2"
+                                >
+                                  <XCircle className="h-3 w-3" />
+                                  <span className="hidden sm:inline">Reject</span>
+                                  <span className="sm:hidden">✗</span>
+                                </Button>
+                              </div>
+                            )}
+                            {submission.status === 'approved' && !submission.revertedBy && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleRevertClick(submission)}
+                                className="gap-1 border-orange-500/50 text-orange-400 hover:bg-orange-500/20 text-xs h-8 px-2"
+                              >
+                                <Undo2 className="h-3 w-3" />
+                                <span className="hidden sm:inline">Revert</span>
+                              </Button>
+                            )}
+                          </TableCell>
+                        </motion.tr>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-sm py-8">
+                          <div className="flex flex-col items-center gap-2">
+                            <TrendingUp className="h-12 w-12 text-gray-400" />
+                            <p className="text-gray-300">No submissions found.</p>
                           </div>
-                        )}
-                      </TableCell>
-                    </motion.tr>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-sm py-8">
-                      <div className="flex flex-col items-center gap-2">
-                        <TrendingUp className="h-12 w-12 text-gray-400" />
-                        <p className="text-gray-300">No submissions found.</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
@@ -402,6 +553,56 @@ export default function SubmissionVerifier() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Revert Confirmation Dialog */}
+      <AlertDialog open={revertDialogOpen} onOpenChange={setRevertDialogOpen}>
+        <AlertDialogContent className="bg-zinc-900 border-zinc-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-white">
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
+              Revert Approval
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              This action will revert the approval and deduct{' '}
+              <span className="text-red-400 font-semibold">{revertSubmission?.mission.points} points</span> from{' '}
+              <span className="text-white font-semibold">@{revertSubmission?.user.zeTag}</span>.
+              The user's rank may be downgraded if their experience falls below the threshold.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-300">Reason for reverting (optional)</label>
+              <Textarea
+                value={revertReason}
+                onChange={(e) => setRevertReason(e.target.value)}
+                placeholder="Explain why you're reverting this approval..."
+                className="bg-zinc-800 border-zinc-700 text-white min-h-[100px]"
+              />
+            </div>
+            
+            <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 text-sm text-orange-300">
+              <strong>Warning:</strong> This action cannot be undone. The submission will be marked as rejected.
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700"
+              disabled={isReverting}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRevertConfirm}
+              disabled={isReverting}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+            >
+              {isReverting ? 'Reverting...' : 'Revert Approval'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   )
 }

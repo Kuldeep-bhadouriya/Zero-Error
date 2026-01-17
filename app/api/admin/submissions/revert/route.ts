@@ -1,21 +1,15 @@
-
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
 import MissionSubmission from '@/models/missionSubmission'
 import User from '@/models/user'
 import Mission from '@/models/mission'
+import RedemptionRequest from '@/models/redemptionRequest'
 import dbConnect from '@/lib/mongodb'
 import { revalidatePath } from 'next/cache'
 
 /**
  * Rank thresholds - defines the points required for each rank.
  * Users automatically progress through ranks as they accumulate points.
- * Based on ZE Club Points system:
- * - Rookie: 0-99 points
- * - Contender: 100-249 points
- * - Gladiator: 250-499 points
- * - Vanguard: 500-999 points
- * - Errorless Legend: 1000+ points
  */
 const ranks = [
   { name: 'Rookie', points: 0, icon: '/images/ranks/rookie.png' },
@@ -27,13 +21,10 @@ const ranks = [
 
 /**
  * Calculates rank progress for a user
- * Returns progress percentage and points needed for next rank
  */
 function calculateRankProgress(currentPoints: number, currentRank: string) {
-  // Find current rank index
   const currentRankIndex = ranks.findIndex(r => r.name === currentRank)
   
-  // If at max rank (Errorless Legend), return 100% progress
   if (currentRankIndex === ranks.length - 1) {
     return {
       progressToNextRank: 100,
@@ -45,9 +36,9 @@ function calculateRankProgress(currentPoints: number, currentRank: string) {
   const currentRankThreshold = ranks[currentRankIndex].points
   const nextRankThreshold = ranks[currentRankIndex + 1].points
   
-  // Calculate progress percentage
   const pointsInCurrentRank = currentPoints - currentRankThreshold
   const pointsNeededForNextRank = nextRankThreshold - currentRankThreshold
+  
   const progressPercentage = Math.min(
     Math.floor((pointsInCurrentRank / pointsNeededForNextRank) * 100),
     100
@@ -62,9 +53,7 @@ function calculateRankProgress(currentPoints: number, currentRank: string) {
 
 /**
  * Updates a user's rank based on their current experience.
- * Checks against the ranks array and assigns the highest rank the user qualifies for.
- * Also calculates progress to next rank and assigns appropriate rank icon.
- * NOTE: Rank is now based on EXPERIENCE only, not ZE Coins.
+ * This handles both rank upgrades and downgrades.
  */
 async function updateUserRank(user: any) {
   let newRank = user.rank
@@ -93,12 +82,12 @@ async function updateUserRank(user: any) {
 }
 
 /**
- * PATCH /api/admin/submissions/verify
- * Admin endpoint to approve or reject mission submissions.
- * On approval, awards points to the user and updates their rank.
+ * POST /api/admin/submissions/revert
+ * Admin endpoint to revert an approved mission submission.
+ * Deducts points from the user, recalculates rank, and updates submission status.
  * Requires admin role in the session.
  */
-export async function PATCH(req: Request) {
+export async function POST(req: Request) {
   const session = await auth()
 
   // Verify admin authentication
@@ -109,63 +98,99 @@ export async function PATCH(req: Request) {
   await dbConnect()
 
   try {
-    const { submissionId, status } = await req.json()
-
-    // Validate status value
-    if (!['approved', 'rejected'].includes(status)) {
-      return new NextResponse('Invalid status', { status: 400 })
-    }
+    const { submissionId, revertReason } = await req.json()
 
     // Find the submission
     const submission = await MissionSubmission.findById(submissionId)
+      .populate('user')
+      .populate('mission')
 
     if (!submission) {
       return new NextResponse('Submission not found', { status: 404 })
     }
 
-    // Update submission status
-    submission.status = status
-    
-    // If approved, record admin and timestamp
-    if (status === 'approved') {
-      submission.approvedBy = session.user.id
-      submission.approvedAt = new Date()
+    // Verify submission is approved
+    if (submission.status !== 'approved') {
+      return new NextResponse('Only approved submissions can be reverted', { status: 400 })
     }
+
+    const user = await User.findById(submission.user._id)
+    const mission = await Mission.findById(submission.mission._id)
+
+    if (!user || !mission) {
+      return new NextResponse('User or mission not found', { status: 404 })
+    }
+
+    // Check if user has pending/completed redemption requests that might be affected
+    const redemptionRequests = await RedemptionRequest.find({
+      userId: user._id,
+      status: { $in: ['pending', 'processing', 'completed'] }
+    })
+
+    // Calculate what the user's balance would be after revert
+    const newZeCoins = user.zeCoins - mission.points
+    
+    // Check if reverting would cause issues with redemptions
+    if (newZeCoins < 0 && redemptionRequests.length > 0) {
+      return NextResponse.json(
+        { 
+          error: 'Cannot revert: User has active redemption requests and insufficient balance',
+          details: {
+            currentZeCoins: user.zeCoins,
+            pointsToDeduct: mission.points,
+            resultingBalance: newZeCoins,
+            activeRedemptions: redemptionRequests.length
+          }
+        },
+        { status: 400 }
+      )
+    }
+
+    // Deduct points from user (both zeCoins and experience)
+    user.zeCoins = Math.max(0, user.zeCoins - mission.points)
+    user.experience = Math.max(0, user.experience - mission.points)
+    user.points = user.experience // Keep in sync for backward compatibility
+
+    // Store old rank for logging
+    const oldRank = user.rank
+
+    // Update user's rank (this may downgrade them)
+    await updateUserRank(user)
+    
+    await user.save()
+
+    // Update submission status and record revert details
+    submission.status = 'rejected'
+    submission.revertedBy = session.user.id
+    submission.revertedAt = new Date()
+    submission.revertReason = revertReason || 'Approval reverted by admin'
+    submission.remarks = revertReason || 'Approval reverted by admin'
     
     await submission.save()
 
-    // If approved, award ZE Coins and Experience to the user
-    if (status === 'approved') {
-      const user = await User.findById(submission.user)
-      const mission = await Mission.findById(submission.mission)
+    // Decrement mission completion counter
+    await Mission.findByIdAndUpdate(
+      submission.mission._id,
+      { $inc: { currentCompletions: -1 } },
+      { runValidators: false }
+    )
 
-      if (user && mission) {
-        // Award mission points as BOTH ZE Coins (for redemption) and Experience (for ranking)
-        user.zeCoins += mission.points
-        user.experience += mission.points
-        // Keep points in sync for backward compatibility
-        user.points = user.experience
-        
-        // Check and update user's rank based on new experience
-        await updateUserRank(user)
-        
-        await user.save()
-        
-        // Increment mission completion counter using findByIdAndUpdate to avoid validation
-        await Mission.findByIdAndUpdate(
-          submission.mission,
-          { $inc: { currentCompletions: 1 } },
-          { runValidators: false }
-        )
-      }
-    }
-
-    // Revalidate the leaderboard page to show updated data
+    // Revalidate the leaderboard page
     revalidatePath('/ze-club/leaderboard')
 
-    return NextResponse.json({ message: 'Submission status updated successfully' })
+    return NextResponse.json({ 
+      message: 'Submission reverted successfully',
+      details: {
+        pointsDeducted: mission.points,
+        newBalance: user.zeCoins,
+        newExperience: user.experience,
+        oldRank,
+        newRank: user.rank,
+        rankChanged: oldRank !== user.rank
+      }
+    })
   } catch (error) {
-    console.error('Error updating submission status:', error)
+    console.error('Error reverting submission:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }

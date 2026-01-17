@@ -84,16 +84,24 @@ export default function MissionUploader() {
   const handleFileChange = (selectedFile: File | null) => {
     if (!selectedFile) return
 
-    // Validate file size (64MB for UploadThing free tier)
-    if (selectedFile.size > 64 * 1024 * 1024) {
-      alert('File size must be less than 64MB')
-      return
-    }
-
-    // Validate file type
+    // Validate file type first
     const validTypes = ['image/jpeg', 'image/png', 'video/mp4']
     if (!validTypes.includes(selectedFile.type)) {
       alert('Only JPG, PNG, and MP4 files are allowed')
+      return
+    }
+
+    // Validate file size based on type
+    const maxImageSize = 10 * 1024 * 1024 // 10MB for images
+    const maxVideoSize = 2 * 1024 * 1024 * 1024 // 2GB for videos
+    
+    if (selectedFile.type.startsWith('image/') && selectedFile.size > maxImageSize) {
+      alert('Image size must be less than 10MB')
+      return
+    }
+    
+    if (selectedFile.type.startsWith('video/') && selectedFile.size > maxVideoSize) {
+      alert('Video size must be less than 2GB')
       return
     }
 
@@ -145,13 +153,24 @@ export default function MissionUploader() {
 
     try {
       // Step 1: Upload file to UploadThing
-      const uploadedFiles = await startUpload([file])
+      console.log('Starting upload for file:', file.name, 'size:', file.size, 'type:', file.type)
+      
+      let uploadedFiles
+      try {
+        uploadedFiles = await startUpload([file])
+      } catch (uploadError) {
+        console.error('UploadThing error:', uploadError)
+        throw new Error(`Upload service error: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`)
+      }
+      
+      console.log('Upload result:', uploadedFiles)
       
       if (!uploadedFiles || uploadedFiles.length === 0) {
-        throw new Error('File upload failed')
+        throw new Error('File upload failed - no files returned from UploadThing. Please check your internet connection and try again.')
       }
 
       const fileUrl = uploadedFiles[0].url
+      console.log('File uploaded successfully to:', fileUrl)
 
       // Step 2: Save submission to database
       const response = await fetch('/api/ze-club/missions/upload', {
@@ -189,7 +208,8 @@ export default function MissionUploader() {
       }
     } catch (error) {
       console.error('Upload error:', error)
-      alert('An unexpected error occurred during upload.')
+      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during upload.'
+      alert(errorMessage)
     } finally {
       setIsUploading(false)
     }

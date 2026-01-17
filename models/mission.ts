@@ -30,6 +30,9 @@ export interface IMission {
   updatedAt: Date
   deactivatedAt?: Date
   deactivatedBy?: Schema.Types.ObjectId
+  isDeleted?: boolean
+  deletedAt?: Date
+  deletedBy?: Schema.Types.ObjectId
 }
 
 const MissionSchema = new Schema<IMission>({
@@ -126,6 +129,17 @@ const MissionSchema = new Schema<IMission>({
     type: Date,
   },
   deactivatedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
+  deletedAt: {
+    type: Date,
+  },
+  deletedBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',
   },

@@ -28,11 +28,14 @@ export async function DELETE(req: NextRequest) {
       )
     }
 
-    // Soft delete - just mark as inactive and set deactivation metadata
+    // Soft delete - mark as deleted, inactive and set metadata
     const mission = await Mission.findByIdAndUpdate(
       missionId,
       {
         active: false,
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedBy: session.user.id,
         deactivatedAt: new Date(),
         deactivatedBy: session.user.id,
       },
