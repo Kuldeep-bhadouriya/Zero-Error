@@ -5,7 +5,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
-import { Gift, Coins, ShoppingBag, Star, Sparkles, TrendingUp, Package, Target, Lock, ShieldAlert, Award } from 'lucide-react';
+import { Gift, Coins, ShoppingBag, Star, Sparkles, TrendingUp, Package, Target, Lock, ShieldAlert, Award, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { RedemptionDialog } from './RedemptionDialog';
 import { cn } from '@/lib/utils';
@@ -307,6 +307,21 @@ export default function Rewards() {
           </div>
         </GlassCard>
       )}
+
+      {/* Info about redemption tracking */}
+      <GlassCard variant="intense" gradient="purple" className="p-4 flex items-start gap-4">
+        <Info className="h-6 w-6 text-purple-400 shrink-0 mt-1" />
+        <div>
+          <h3 className="font-semibold text-white">Track Your Redemptions</h3>
+          <p className="text-sm text-gray-300 mt-1">
+            After redeeming a reward, you can track its status (pending, processing, completed, or cancelled) in your{' '}
+            <a href="/profile#redemptions" className="text-purple-400 hover:text-purple-300 underline font-semibold">
+              Profile → Redemption History
+            </a>
+            . We'll keep you updated on your request progress!
+          </p>
+        </div>
+      </GlassCard>
 
       {/* Rewards by Rank */}
       {rewards.length === 0 ? (

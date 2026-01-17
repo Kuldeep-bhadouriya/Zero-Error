@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ProfileHeader } from '@/components/profile/ProfileHeader'
 import { ProfileStats } from '@/components/profile/ProfileStats'
 import { EditProfileForm } from '@/components/profile/EditProfileForm'
+import { RedemptionHistory } from '@/components/profile/RedemptionHistory'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -200,6 +201,9 @@ export function ProfileClient({ profile, stats }: ProfileClientProps) {
           </div>
         </GlassCard>
       </div>
+
+      {/* Redemption History Section */}
+      <RedemptionHistory />
     </div>
   )
 }

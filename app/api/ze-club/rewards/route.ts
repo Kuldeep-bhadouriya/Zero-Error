@@ -40,28 +40,25 @@ export async function GET() {
       let lockedReason = '';
       let finalCost = reward.cost;
 
-      // Check Rank Requirement
-      if (userRankValue < rewardRankValue) {
-        isLocked = true;
-        lockedReason = `Requires ${reward.requiredRank} rank`;
-      }
-
-      // Check Top 3 Requirement
-      if (reward.exclusiveToTop3) {
-        if (!isTop3) {
-          isLocked = true;
-          lockedReason = 'Exclusive to Top 3 Errorless Legends';
-        } else if (user?.rank !== 'Errorless Legend') {
-           // Should be covered by rank check, but double check
-           isLocked = true;
-           lockedReason = 'Exclusive to Errorless Legends';
-        }
-      }
-
-      // Check Authentication
+      // Check Authentication first
       if (!user) {
         isLocked = true;
         lockedReason = 'Sign in to claim';
+      }
+      // Check Rank Requirement - Higher ranks CAN redeem lower rank rewards
+      else if (userRankValue < rewardRankValue) {
+        isLocked = true;
+        lockedReason = `Requires ${reward.requiredRank} rank or higher`;
+      }
+      // Check Top 3 Requirement for exclusive rewards
+      else if (reward.exclusiveToTop3) {
+        if (user?.rank !== 'Errorless Legend') {
+          isLocked = true;
+          lockedReason = 'Exclusive to Errorless Legends only';
+        } else if (!isTop3) {
+          isLocked = true;
+          lockedReason = 'Exclusive to Top 3 Errorless Legends';
+        }
       }
 
       // Apply Discount for Vanguard+

@@ -20,12 +20,12 @@ export async function GET() {
 
     // Get statistics
     const completedMissions = await MissionSubmission.countDocuments({
-      userId: session.user.id,
+      user: session.user.id,
       status: 'approved',
     })
 
     const pendingMissions = await MissionSubmission.countDocuments({
-      userId: session.user.id,
+      user: session.user.id,
       status: 'pending',
     })
 

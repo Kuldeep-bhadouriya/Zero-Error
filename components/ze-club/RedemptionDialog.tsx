@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,7 @@ interface RedemptionDialogProps {
 
 export function RedemptionDialog({ open, onOpenChange, reward, userCoins, onSuccess }: RedemptionDialogProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     contactName: '',
@@ -95,7 +97,7 @@ export function RedemptionDialog({ open, onOpenChange, reward, userCoins, onSucc
 
       toast({
         title: 'Success! 🎉',
-        description: 'Your redemption request has been submitted. We will contact you soon!',
+        description: 'Your redemption request has been submitted. Redirecting to your profile to track status...',
       });
 
       // Reset form
@@ -109,6 +111,11 @@ export function RedemptionDialog({ open, onOpenChange, reward, userCoins, onSucc
 
       onOpenChange(false);
       onSuccess();
+
+      // Redirect to profile page with redemptions section
+      setTimeout(() => {
+        router.push('/profile#redemptions');
+      }, 1000);
 
     } catch (error) {
       console.error('Redemption error:', error);
