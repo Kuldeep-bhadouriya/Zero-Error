@@ -133,13 +133,13 @@ export function RedemptionHistory() {
             return (
               <div
                 key={redemption._id}
-                className={`border ${config.borderColor} ${config.bgColor} rounded-lg p-4 transition-all hover:scale-[1.01]`}
+                className={`border ${config.borderColor} ${config.bgColor} rounded-lg p-3 sm:p-4 transition-all hover:scale-[1.01]`}
               >
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-lg font-bold text-white">{redemption.rewardName}</h3>
-                      <span className="text-yellow-400 text-sm font-semibold">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4 mb-3">
+                  <div className="flex-1 w-full">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+                      <h3 className="text-base sm:text-lg font-bold text-white">{redemption.rewardName}</h3>
+                      <span className="text-yellow-400 text-xs sm:text-sm font-semibold">
                         {redemption.rewardCost} ZE Coins
                       </span>
                     </div>
@@ -154,33 +154,33 @@ export function RedemptionHistory() {
                     </p>
                   </div>
                   
-                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${config.bgColor} border ${config.borderColor}`}>
-                    <Icon className={`w-4 h-4 ${config.color}`} />
-                    <span className={`text-sm font-semibold ${config.color}`}>
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${config.bgColor} border ${config.borderColor} self-start`}>
+                    <Icon className={`w-3 h-3 sm:w-4 sm:h-4 ${config.color}`} />
+                    <span className={`text-xs sm:text-sm font-semibold ${config.color}`}>
                       {config.label}
                     </span>
                   </div>
                 </div>
 
-                <p className={`text-sm ${config.color} mb-3`}>
+                <p className={`text-xs sm:text-sm ${config.color} mb-3`}>
                   {config.description}
                 </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                  <div className="truncate">
                     <span className="text-gray-400">Contact:</span>
                     <span className="text-white ml-2">{redemption.contactName}</span>
                   </div>
-                  <div>
+                  <div className="truncate">
                     <span className="text-gray-400">Email:</span>
-                    <span className="text-white ml-2">{redemption.contactEmail}</span>
+                    <span className="text-white ml-2 break-all">{redemption.contactEmail}</span>
                   </div>
-                  <div>
+                  <div className="truncate">
                     <span className="text-gray-400">Phone:</span>
                     <span className="text-white ml-2">{redemption.contactPhone}</span>
                   </div>
                   {redemption.processedAt && (
-                    <div>
+                    <div className="truncate">
                       <span className="text-gray-400">Processed:</span>
                       <span className="text-white ml-2">
                         {new Date(redemption.processedAt).toLocaleDateString('en-US', {
@@ -195,22 +195,22 @@ export function RedemptionHistory() {
 
                 {redemption.address && (
                   <div className="mt-3 pt-3 border-t border-white/5">
-                    <span className="text-gray-400 text-sm">Delivery Address:</span>
-                    <p className="text-white text-sm mt-1">{redemption.address}</p>
+                    <span className="text-gray-400 text-xs sm:text-sm">Delivery Address:</span>
+                    <p className="text-white text-xs sm:text-sm mt-1 break-words">{redemption.address}</p>
                   </div>
                 )}
 
                 {redemption.additionalNotes && (
                   <div className="mt-3 pt-3 border-t border-white/5">
-                    <span className="text-gray-400 text-sm">Your Notes:</span>
-                    <p className="text-white text-sm mt-1">{redemption.additionalNotes}</p>
+                    <span className="text-gray-400 text-xs sm:text-sm">Your Notes:</span>
+                    <p className="text-white text-xs sm:text-sm mt-1 break-words">{redemption.additionalNotes}</p>
                   </div>
                 )}
 
                 {redemption.adminNotes && (
                   <div className="mt-3 pt-3 border-t border-white/5">
-                    <span className="text-gray-400 text-sm">Admin Notes:</span>
-                    <p className="text-white text-sm mt-1">{redemption.adminNotes}</p>
+                    <span className="text-gray-400 text-xs sm:text-sm">Admin Notes:</span>
+                    <p className="text-white text-xs sm:text-sm mt-1 break-words">{redemption.adminNotes}</p>
                   </div>
                 )}
               </div>

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
+import { useIsMobile } from '@/hooks/use-mobile'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,6 +44,7 @@ export default function UserRoleManager() {
   const [selectedAction, setSelectedAction] = useState<'add' | 'remove'>('add')
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const { toast } = useToast()
+  const isMobile = useIsMobile()
 
   // Fetch admins on component mount
   useEffect(() => {
@@ -162,36 +164,36 @@ export default function UserRoleManager() {
     <div className="space-y-6">
       {/* Current Admins List */}
       <Card className="bg-zinc-900/50 border-zinc-800">
-        <CardHeader>
-          <CardTitle className="text-2xl text-white flex items-center gap-2">
-            <Users className="h-6 w-6 text-red-500" />
+        <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
+          <CardTitle className="text-xl sm:text-2xl text-white flex items-center gap-2">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
             Current Admins
           </CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardDescription className="text-sm sm:text-base text-gray-400">
             List of all users with admin privileges
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4 px-4 pb-4 sm:px-6 sm:pb-6">
           {isLoadingAdmins ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+            <div className="flex items-center justify-center py-6 sm:py-8">
+              <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-red-500" />
             </div>
           ) : admins.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">
+            <p className="text-center text-sm sm:text-base text-gray-500 py-6 sm:py-8">
               No admins found
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {admins.map((admin, index) => (
                 <motion.div
                   key={admin._id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 hover:border-zinc-600 transition-colors"
+                  className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-3 sm:p-4 hover:border-zinc-600 transition-colors"
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 w-full">
                       {(() => {
                         const imageUrl = admin.profilePhotoUrl || admin.image
                         const hasValidImage = imageUrl && typeof imageUrl === 'string' && imageUrl.trim() !== '' && !imageErrors.has(admin._id)
@@ -200,27 +202,27 @@ export default function UserRoleManager() {
                           <img
                             src={imageUrl}
                             alt={admin.zeTag || admin.email}
-                            className="h-12 w-12 rounded-full border-2 border-red-700 object-cover"
+                            className="h-10 w-10 sm:h-12 sm:w-12 rounded-full border-2 border-red-700 object-cover flex-shrink-0"
                             onError={(e) => {
                               setImageErrors(prev => new Set(prev).add(admin._id))
                             }}
                           />
                         ) : (
-                          <div className="h-12 w-12 rounded-full bg-red-900/30 border-2 border-red-700 flex items-center justify-center">
-                            <Crown className="h-6 w-6 text-red-500" />
+                          <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-red-900/30 border-2 border-red-700 flex items-center justify-center flex-shrink-0">
+                            <Crown className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
                           </div>
                         )
                       })()}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-white font-semibold truncate">@{admin.zeTag || 'No username'}</h3>
-                          <Badge className="bg-red-600 text-white">
+                          <h3 className="text-sm sm:text-base text-white font-semibold truncate">@{admin.zeTag || 'No username'}</h3>
+                          <Badge className="bg-red-600 text-white text-xs">
                             <Crown className="h-3 w-3 mr-1" />
                             Admin
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-gray-400 mt-1 flex-wrap">
-                          <span className="text-blue-400">{admin.email}</span>
+                        <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400 mt-1 flex-wrap">
+                          <span className="text-blue-400 truncate max-w-[150px] sm:max-w-none">{admin.email}</span>
                           <span className="flex items-center gap-1">
                             <Trophy className="h-3 w-3" />
                             {admin.points} pts
@@ -228,26 +230,26 @@ export default function UserRoleManager() {
                           <Badge variant="outline" className="text-xs border-zinc-600">
                             {admin.rank}
                           </Badge>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 hidden sm:inline">
                             ID: {admin._id}
                           </span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-2 w-full sm:w-auto shrink-0">
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => openConfirmDialog(admin, 'remove')}
                         disabled={actionLoading === admin._id}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-red-600 hover:bg-red-700 w-full sm:w-auto text-xs sm:text-sm h-9 sm:h-10"
                       >
                         {actionLoading === admin._id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <>
-                            <ShieldOff className="h-4 w-4 mr-2" />
-                            Remove Admin
+                            <ShieldOff className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                            {isMobile ? 'Remove' : 'Remove Admin'}
                           </>
                         )}
                       </Button>
@@ -262,32 +264,32 @@ export default function UserRoleManager() {
 
       {/* Search Users to Add Admin */}
       <Card className="bg-zinc-900/50 border-zinc-800">
-        <CardHeader>
-          <CardTitle className="text-2xl text-white flex items-center gap-2">
-            <Shield className="h-6 w-6 text-red-500" />
+        <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
+          <CardTitle className="text-xl sm:text-2xl text-white flex items-center gap-2">
+            <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
             Add New Admin
           </CardTitle>
-          <CardDescription className="text-gray-400">
+          <CardDescription className="text-sm sm:text-base text-gray-400">
             Search for users by username (ZE Tag) or email to grant admin roles
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
+        <CardContent className="space-y-3 sm:space-y-4 px-4 pb-4 sm:px-6 sm:pb-6">
+          <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
                 type="text"
-                placeholder="Search by username or email..."
+                placeholder={isMobile ? "Search users..." : "Search by username or email..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="pl-10 bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
+                className="pl-10 bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500 h-10 sm:h-11 text-sm sm:text-base"
               />
             </div>
             <Button
               onClick={handleSearch}
               disabled={isSearching || !searchQuery.trim()}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-700 text-white h-10 sm:h-11 text-sm sm:text-base px-6"
             >
               {isSearching ? (
                 <>
@@ -301,22 +303,22 @@ export default function UserRoleManager() {
           </div>
 
           {users.length === 0 && searchQuery && !isSearching && (
-            <p className="text-center text-gray-500 py-8">
+            <p className="text-center text-sm sm:text-base text-gray-500 py-6 sm:py-8">
               No users found matching "{searchQuery}". Try searching by username or email.
             </p>
           )}
 
           {users.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {users.map((user) => (
                 <motion.div
                   key={user._id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 hover:border-zinc-600 transition-colors"
+                  className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-3 sm:p-4 hover:border-zinc-600 transition-colors"
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 w-full">
                       {(() => {
                         const imageUrl = user.profilePhotoUrl || user.image
                         const hasValidImage = imageUrl && typeof imageUrl === 'string' && imageUrl.trim() !== '' && !imageErrors.has(user._id)
@@ -325,7 +327,7 @@ export default function UserRoleManager() {
                           <img
                             src={imageUrl}
                             alt={user.zeTag || user.email}
-                            className="h-12 w-12 rounded-full border-2 border-zinc-700 object-cover"
+                            className="h-10 w-10 sm:h-12 sm:w-12 rounded-full border-2 border-zinc-700 object-cover flex-shrink-0"
                             onError={(e) => {
                               console.error('Image failed to load for user:', user.zeTag || user.email, {
                                 profilePhotoUrl: user.profilePhotoUrl,
@@ -336,23 +338,23 @@ export default function UserRoleManager() {
                             }}
                           />
                         ) : (
-                          <div className="h-12 w-12 rounded-full bg-zinc-700 flex items-center justify-center">
-                            <User className="h-6 w-6 text-gray-400" />
+                          <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-zinc-700 flex items-center justify-center flex-shrink-0">
+                            <User className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
                           </div>
                         )
                       })()}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-white font-semibold truncate">@{user.zeTag || 'No username'}</h3>
+                          <h3 className="text-sm sm:text-base text-white font-semibold truncate">@{user.zeTag || 'No username'}</h3>
                           {user.roles.includes('admin') && (
-                            <Badge className="bg-red-600 text-white">
+                            <Badge className="bg-red-600 text-white text-xs">
                               <Crown className="h-3 w-3 mr-1" />
                               Admin
                             </Badge>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-gray-400 mt-1 flex-wrap">
-                          <span className="text-blue-400">{user.email}</span>
+                        <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400 mt-1 flex-wrap">
+                          <span className="text-blue-400 truncate max-w-[150px] sm:max-w-none">{user.email}</span>
                           <span className="flex items-center gap-1">
                             <Trophy className="h-3 w-3" />
                             {user.points} pts
@@ -363,21 +365,21 @@ export default function UserRoleManager() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-2 w-full sm:w-auto shrink-0">
                       {user.roles.includes('admin') ? (
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => openConfirmDialog(user, 'remove')}
                           disabled={actionLoading === user._id}
-                          className="bg-red-600 hover:bg-red-700"
+                          className="bg-red-600 hover:bg-red-700 w-full sm:w-auto text-xs sm:text-sm h-9 sm:h-10"
                         >
                           {actionLoading === user._id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <>
-                              <ShieldOff className="h-4 w-4 mr-2" />
-                              Remove Admin
+                              <ShieldOff className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                              {isMobile ? 'Remove' : 'Remove Admin'}
                             </>
                           )}
                         </Button>
@@ -386,14 +388,14 @@ export default function UserRoleManager() {
                           size="sm"
                           onClick={() => openConfirmDialog(user, 'add')}
                           disabled={actionLoading === user._id}
-                          className="bg-green-600 hover:bg-green-700 text-white"
+                          className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto text-xs sm:text-sm h-9 sm:h-10"
                         >
                           {actionLoading === user._id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <>
-                              <Shield className="h-4 w-4 mr-2" />
-                              Make Admin
+                              <Shield className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                              {isMobile ? 'Make Admin' : 'Make Admin'}
                             </>
                           )}
                         </Button>

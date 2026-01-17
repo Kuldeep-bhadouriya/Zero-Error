@@ -60,13 +60,27 @@ export default function EventsPage() {
         })
       ])
       
+      if (!upcomingRes.ok) {
+        console.error('Failed to fetch upcoming events:', upcomingRes.status, upcomingRes.statusText)
+      }
+      if (!pastRes.ok) {
+        console.error('Failed to fetch past events:', pastRes.status, pastRes.statusText)
+      }
+      
       const [upcomingData, pastData] = await Promise.all([
         upcomingRes.json(),
         pastRes.json()
       ])
       
-      if (upcomingData.success) setUpcomingEvents(upcomingData.events)
-      if (pastData.success) setPastEvents(pastData.events)
+      console.log('Upcoming events response:', upcomingData)
+      console.log('Past events response:', pastData)
+      
+      if (upcomingData.success) {
+        setUpcomingEvents(upcomingData.events || [])
+      }
+      if (pastData.success) {
+        setPastEvents(pastData.events || [])
+      }
     } catch (error) {
       console.error('Error fetching events:', error)
     } finally {

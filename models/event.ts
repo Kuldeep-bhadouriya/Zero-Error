@@ -99,11 +99,7 @@ const EventSchema = new Schema<IEvent>(
 EventSchema.index({ eventType: 1, status: 1, eventDate: 1 })
 EventSchema.index({ featured: 1, status: 1, eventDate: 1 })
 
-// Delete the cached model if it exists to ensure schema updates are applied
-if (mongoose.models.Event) {
-  delete mongoose.models.Event
-}
-
-const Event: Model<IEvent> = mongoose.model<IEvent>('Event', EventSchema)
+// Prevent model recompilation in development
+const Event: Model<IEvent> = mongoose.models.Event || mongoose.model<IEvent>('Event', EventSchema)
 
 export default Event

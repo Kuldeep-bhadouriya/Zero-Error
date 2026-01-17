@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { useIsMobile } from '@/hooks/use-mobile'
 import {
   Select,
   SelectContent,
@@ -86,6 +87,7 @@ export default function SubmissionVerifier() {
   const [revertSubmission, setRevertSubmission] = useState<Submission | null>(null)
   const [revertReason, setRevertReason] = useState('')
   const [isReverting, setIsReverting] = useState(false)
+  const isMobile = useIsMobile()
 
   async function fetchSubmissions(status: string = 'all') {
     try {
@@ -306,21 +308,24 @@ export default function SubmissionVerifier() {
 
       {/* Tabs for Pending and History */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-zinc-900/50 border border-zinc-700">
-          <TabsTrigger value="pending" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-            <Clock className="h-4 w-4 mr-2" />
-            Pending Review
+        <TabsList className="bg-zinc-900/50 border border-zinc-700 grid grid-cols-2 sm:grid-cols-4 w-full">
+          <TabsTrigger value="pending" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
+            <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Pending Review</span>
+            <span className="sm:hidden">Pending</span>
           </TabsTrigger>
-          <TabsTrigger value="approved" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-            <History className="h-4 w-4 mr-2" />
-            Approved
+          <TabsTrigger value="approved" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
+            <History className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Approved</span>
+            <span className="sm:hidden">✓</span>
           </TabsTrigger>
-          <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-            <XCircle className="h-4 w-4 mr-2" />
-            Rejected
+          <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
+            <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Rejected</span>
+            <span className="sm:hidden">✗</span>
           </TabsTrigger>
-          <TabsTrigger value="all" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-            <Filter className="h-4 w-4 mr-2" />
+          <TabsTrigger value="all" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
+            <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             All
           </TabsTrigger>
         </TabsList>
@@ -356,7 +361,108 @@ export default function SubmissionVerifier() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto w-full">
+              {/* Mobile Card View */}
+              <div className="md:hidden">
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Clock className="h-8 w-8 animate-spin text-red-500" />
+                  </div>
+                ) : filteredSubmissions.length > 0 ? (
+                  <div className="divide-y divide-zinc-700">
+                    {filteredSubmissions.map((submission, index) => (
+                      <motion.div
+                        key={submission._id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        className="p-4 space-y-3 hover:bg-zinc-800/30"
+                      >
+                        {/* User Info */}
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1 flex-1">
+                            <div className="font-medium text-sm text-white">@{submission.user.zeTag}</div>
+                            <div className="text-xs text-gray-400 truncate">{submission.user.email}</div>
+                          </div>
+                          <Badge
+                            variant={submission.status === 'pending' ? 'secondary' : submission.status === 'approved' ? 'default' : 'destructive'}
+                            className={`text-xs ${submission.status === 'pending' ? 'bg-yellow-600/20 text-yellow-400' : submission.status === 'approved' ? 'bg-green-600/20 text-green-400' : ''}`}
+                          >
+                            {submission.status}
+                          </Badge>
+                        </div>
+                        
+                        {/* Mission Info */}
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm text-gray-300">{submission.mission.name}</div>
+                          <Badge variant="secondary" className="bg-red-600/20 text-red-400 text-xs">+{submission.mission.points}</Badge>
+                        </div>
+                        
+                        {/* Details for approved/rejected */}
+                        {activeTab !== 'pending' && submission.approvedBy && (
+                          <div className="text-xs text-gray-400 space-y-1">
+                            <div>By: @{submission.approvedBy.zeTag}</div>
+                            {submission.approvedAt && <div>{new Date(submission.approvedAt).toLocaleDateString()}</div>}
+                            {submission.revertedBy && <div className="text-red-400">Reverted by: @{submission.revertedBy.zeTag}</div>}
+                          </div>
+                        )}
+                        
+                        {/* Actions */}
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handlePreview(submission.proof)}
+                            className="flex-1 gap-1 text-gray-300 hover:text-white hover:bg-zinc-800 text-xs h-9"
+                          >
+                            <Eye className="h-3 w-3" />
+                            View Proof
+                          </Button>
+                          {submission.status === 'pending' && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleVerification(submission._id, 'approved')}
+                                className="flex-1 gap-1 bg-green-600 hover:bg-green-700 text-xs h-9"
+                              >
+                                <CheckCircle2 className="h-3 w-3" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleVerification(submission._id, 'rejected')}
+                                className="flex-1 gap-1 text-xs h-9"
+                              >
+                                <XCircle className="h-3 w-3" />
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          {submission.status === 'approved' && !submission.revertedBy && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRevertClick(submission)}
+                              className="flex-1 gap-1 border-orange-500/50 text-orange-400 hover:bg-orange-500/20 text-xs h-9"
+                            >
+                              <Undo2 className="h-3 w-3" />
+                              Revert
+                            </Button>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-300">No submissions found.</p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto w-full">
                 <div className="min-w-[800px]">
                   <Table>
                   <TableHeader>
