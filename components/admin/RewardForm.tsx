@@ -127,12 +127,20 @@ export default function RewardForm({ reward, onSuccess, onCancel }: RewardFormPr
           <Input
             id="name"
             placeholder="e.g., Discord Nitro 1 Month"
-            {...register('name', { required: 'Reward name is required' })}
+            {...register('name', { 
+              required: 'Reward name is required',
+              onBlur: (e) => {
+                if (errors.name) {
+                  toast({
+                    title: 'Validation Error',
+                    description: errors.name.message,
+                    variant: 'destructive',
+                  })
+                }
+              }
+            })}
             disabled={loading}
           />
-          {errors.name && (
-            <p className="text-sm text-red-500">{errors.name.message}</p>
-          )}
         </div>
 
         {/* Description */}
@@ -144,12 +152,20 @@ export default function RewardForm({ reward, onSuccess, onCancel }: RewardFormPr
             id="description"
             placeholder="Describe the reward and how it will be delivered..."
             rows={4}
-            {...register('description', { required: 'Description is required' })}
+            {...register('description', { 
+              required: 'Description is required',
+              onBlur: (e) => {
+                if (errors.description) {
+                  toast({
+                    title: 'Validation Error',
+                    description: errors.description.message,
+                    variant: 'destructive',
+                  })
+                }
+              }
+            })}
             disabled={loading}
           />
-          {errors.description && (
-            <p className="text-sm text-red-500">{errors.description.message}</p>
-          )}
         </div>
 
         {/* Cost (ZE Coins) */}
@@ -166,12 +182,18 @@ export default function RewardForm({ reward, onSuccess, onCancel }: RewardFormPr
               required: 'Cost is required',
               min: { value: 0, message: 'Cost must be at least 0' },
               valueAsNumber: true,
+              onBlur: (e) => {
+                if (errors.cost) {
+                  toast({
+                    title: 'Validation Error',
+                    description: errors.cost.message,
+                    variant: 'destructive',
+                  })
+                }
+              }
             })}
             disabled={loading}
           />
-          {errors.cost && (
-            <p className="text-sm text-red-500">{errors.cost.message}</p>
-          )}
         </div>
 
         {/* Stock */}
@@ -188,12 +210,18 @@ export default function RewardForm({ reward, onSuccess, onCancel }: RewardFormPr
               required: 'Stock is required',
               min: { value: 0, message: 'Stock must be at least 0' },
               valueAsNumber: true,
+              onBlur: (e) => {
+                if (errors.stock) {
+                  toast({
+                    title: 'Validation Error',
+                    description: errors.stock.message,
+                    variant: 'destructive',
+                  })
+                }
+              }
             })}
             disabled={loading}
           />
-          {errors.stock && (
-            <p className="text-sm text-red-500">{errors.stock.message}</p>
-          )}
         </div>
 
         {/* Required Rank */}

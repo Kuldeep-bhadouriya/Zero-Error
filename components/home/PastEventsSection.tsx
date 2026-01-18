@@ -66,9 +66,31 @@ const PastEventsSection = () => {
 
   if (loading) {
     return (
-      <section className="py-24 relative bg-transparent">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <p className="text-zinc-500">Loading past events...</p>
+      <section className="py-12 sm:py-16 md:py-24 relative bg-transparent">
+        <div className="absolute inset-0 opacity-5 bg-[repeating-linear-gradient(45deg,#333,#333_1px,transparent_1px,transparent_10px)]"></div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 relative flex flex-col items-center">
+          <div className="flex flex-wrap justify-center items-center mb-8 sm:mb-12 md:mb-16 text-center">
+            <div>
+              <div className="h-0.5 bg-gradient-to-r from-red-600 to-transparent mb-4 max-w-[200px] mx-auto"></div>
+              <h2 className="text-2xl sm:text-3xl font-bold uppercase bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-400">
+                PAST EVENTS
+              </h2>
+              <p className="text-zinc-500 mt-2 text-sm sm:text-base">
+                Check out our previous successful tournaments and events
+              </p>
+            </div>
+          </div>
+          {/* Loading skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="relative h-[280px] w-full overflow-hidden bg-zinc-900/50 rounded-xl border border-zinc-800 animate-pulse"
+              >
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     )
@@ -111,7 +133,7 @@ const PastEventsSection = () => {
 
         {/* Events cards grid */}
         <motion.div
-          className="grid grid-cols-1 gap-8 justify-items-center"
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
@@ -130,14 +152,14 @@ const PastEventsSection = () => {
               }}
             >
               <Link href="/events" className="block">
-                <div className="relative h-[200px] sm:h-[240px] md:h-[280px] w-full sm:w-[350px] md:w-[400px] overflow-hidden bg-zinc-900 rounded-xl mb-5 border border-zinc-800 shadow-lg group-hover:border-red-600/50 transition-colors duration-300">
+                <div className="relative h-[280px] w-full overflow-hidden bg-zinc-900 rounded-xl mb-5 border border-zinc-800 shadow-lg group-hover:border-red-600/50 transition-colors duration-300">
                   {event.imageUrl ? (
                     <Image
                       src={event.imageUrl}
                       alt={event.title}
                       fill
                       loading="lazy"
-                      sizes="(max-width: 640px) 100vw, (max-width: 768px) 350px, 400px"
+                      sizes="(max-width: 768px) 100vw, 33vw"
                       className="object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out"
                     />
                   ) : (

@@ -17,9 +17,18 @@ import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { useToast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
-import { CalendarIcon, Upload, X, Loader2 } from 'lucide-react'
+import { CalendarIcon, Upload, X, Loader2, AlertTriangle } from 'lucide-react'
 import EventImageUploader from './EventImageUploader'
 
 interface EventFormData {
@@ -57,6 +66,7 @@ const GAME_OPTIONS = [
 ]
 
 function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [imageUrl, setImageUrl] = useState(event?.imageUrl || '')
   const [selectedGames, setSelectedGames] = useState<string[]>(event?.games || [])
@@ -64,6 +74,8 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
     event?.eventDate ? new Date(event.eventDate) : undefined
   )
   const [savedEventId, setSavedEventId] = useState(event?._id || null)
+  const [showValidationDialog, setShowValidationDialog] = useState(false)
+  const [validationMessage, setValidationMessage] = useState('')
 
   // Sync imageUrl when event prop changes
   useEffect(() => {
@@ -125,7 +137,11 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
 
   async function onSubmit(data: EventFormData) {
     if (!eventDate) {
-      alert('Please select an event date')
+      toast({
+        title: 'Validation Error',
+        description: 'Please select an event date',
+        variant: 'destructive',
+      })
       return
     }
 
@@ -164,9 +180,15 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
       // Save eventId for new events to enable image upload
       if (!event && result.event?._id) {
         setSavedEventId(result.event._id)
-        alert(result.message + ' You can now upload an image.')
+        toast({
+          title: 'Success',
+          description: result.message + ' You can now upload an image.',
+        })
       } else {
-        alert(result.message)
+        toast({
+          title: 'Success',
+          description: result.message,
+        })
         // Only call onSuccess if we're done (not waiting for image upload)
         if (eventIdToUpdate) {
           onSuccess()
@@ -174,7 +196,11 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
       }
     } catch (error: any) {
       console.error('Error saving event:', error)
-      alert(error.message || 'Failed to save event')
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to save event',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -189,13 +215,22 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
         </Label>
         <Input
           id="title"
-          {...register('title', { required: 'Title is required' })}
+          {...register('title', { 
+            required: 'Title is required',
+            onBlur: (e) => {
+              const error = errors.title
+              if (error) {
+                toast({
+                  title: 'Validation Error',
+                  description: error.message,
+                  variant: 'destructive',
+                })
+              }
+            }
+          })}
           placeholder="Enter event title"
           className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
         />
-        {errors.title && (
-          <p className="text-sm text-red-500 mt-1">{errors.title.message}</p>
-        )}
       </div>
 
       {/* Description */}
@@ -205,14 +240,23 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
         </Label>
         <Textarea
           id="description"
-          {...register('description', { required: 'Description is required' })}
+          {...register('description', { 
+            required: 'Description is required',
+            onBlur: (e) => {
+              const error = errors.description
+              if (error) {
+                toast({
+                  title: 'Validation Error',
+                  description: error.message,
+                  variant: 'destructive',
+                })
+              }
+            }
+          })}
           placeholder="Enter event description"
           rows={4}
           className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
         />
-        {errors.description && (
-          <p className="text-sm text-red-500 mt-1">{errors.description.message}</p>
-        )}
       </div>
 
       {/* Event Date */}
@@ -439,6 +483,29 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
           </Button>
         )}
       </div>
+
+      {/* Validation Dialog */}
+      <Dialog open={showValidationDialog} onOpenChange={setShowValidationDialog}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              Validation Warning
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              {validationMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowValidationDialog(false)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   )
 }

@@ -16,9 +16,17 @@ import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Calendar } from '@/components/ui/calendar'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
-import { CalendarIcon, Bold, Italic, Link as LinkIcon, Loader2, Eye } from 'lucide-react'
+import { CalendarIcon, Bold, Italic, Link as LinkIcon, Loader2, Eye, AlertTriangle } from 'lucide-react'
 
 const TYPE_OPTIONS = [
   { label: 'Info', value: 'info' },
@@ -240,11 +248,20 @@ function AnnouncementForm({ announcement, onSuccess, onCancel }: AnnouncementFor
             </Label>
             <Input
               id="title"
-              {...register('title')}
+              {...register('title', {
+                onBlur: (e) => {
+                  if (errors.title) {
+                    toast({
+                      title: 'Validation Error',
+                      description: errors.title.message,
+                      variant: 'destructive',
+                    })
+                  }
+                }
+              })}
               placeholder="e.g., ZE Carnival registrations close soon"
               className="mt-2 bg-zinc-900 text-white placeholder:text-zinc-500"
             />
-            {errors.title && <p className="mt-1 text-xs text-red-400">{errors.title.message}</p>}
           </div>
 
           <div>
@@ -269,11 +286,20 @@ function AnnouncementForm({ announcement, onSuccess, onCancel }: AnnouncementFor
             </Label>
             <Input
               id="link"
-              {...register('link')}
+              {...register('link', {
+                onBlur: (e) => {
+                  if (errors.link) {
+                    toast({
+                      title: 'Validation Error',
+                      description: errors.link.message,
+                      variant: 'destructive',
+                    })
+                  }
+                }
+              })}
               placeholder="https://"
               className="mt-2 bg-zinc-900 text-white placeholder:text-zinc-500"
             />
-            {errors.link && <p className="mt-1 text-xs text-red-400">{errors.link.message}</p>}
           </div>
 
           <div>
@@ -282,11 +308,20 @@ function AnnouncementForm({ announcement, onSuccess, onCancel }: AnnouncementFor
             </Label>
             <Input
               id="linkText"
-              {...register('linkText')}
+              {...register('linkText', {
+                onBlur: (e) => {
+                  if (errors.linkText) {
+                    toast({
+                      title: 'Validation Error',
+                      description: errors.linkText.message,
+                      variant: 'destructive',
+                    })
+                  }
+                }
+              })}
               placeholder="View details"
               className="mt-2 bg-zinc-900 text-white placeholder:text-zinc-500"
             />
-            {errors.linkText && <p className="mt-1 text-xs text-red-400">{errors.linkText.message}</p>}
           </div>
         </div>
 
@@ -334,7 +369,6 @@ function AnnouncementForm({ announcement, onSuccess, onCancel }: AnnouncementFor
               </span>
             </div>
           </div>
-          {errors.message && <p className="text-xs text-red-400">{errors.message.message}</p>}
         </div>
       </div>
 
@@ -441,9 +475,6 @@ function AnnouncementForm({ announcement, onSuccess, onCancel }: AnnouncementFor
               </Badge>
             ))}
           </div>
-          {errors.targetPages && (
-            <p className="text-xs text-red-400">{errors.targetPages.message as string}</p>
-          )}
 
           <div className="rounded-xl border border-zinc-800 bg-gradient-to-r p-4 text-white shadow-inner shadow-black/30">
             <div

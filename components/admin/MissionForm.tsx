@@ -9,11 +9,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { CalendarIcon, Upload, X, AlertCircle, CheckCircle2 } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { useToast } from '@/hooks/use-toast'
+import { CalendarIcon, Upload, X, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useUploadThing } from '@/lib/uploadthing'
@@ -41,6 +49,7 @@ const DIFFICULTIES = [
 ]
 
 export default function MissionForm({ mission, onSuccess, onCancel }: MissionFormProps) {
+  const { toast } = useToast()
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -64,8 +73,8 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
   const [exampleImagePreview, setExampleImagePreview] = useState<string>('')
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [showDateWarningDialog, setShowDateWarningDialog] = useState(false)
+  const [dateWarningMessage, setDateWarningMessage] = useState('')
 
   // UploadThing hook for example image uploads
   const { startUpload } = useUploadThing('missionExampleUploader')
@@ -133,8 +142,6 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
-    setSuccess('')
     setLoading(true)
 
     try {
@@ -154,7 +161,10 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
       if (formData.isTimeLimited) {
         if (formData.startDate && formData.endDate) {
           if (new Date(formData.endDate) <= new Date(formData.startDate)) {
-            throw new Error('End date must be after start date')
+            setDateWarningMessage('End date must be after start date. Please adjust the dates.')
+            setShowDateWarningDialog(true)
+            setLoading(false)
+            return
           }
         }
       }
@@ -196,13 +206,20 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
         throw new Error(responseData.error || `Failed to ${mission ? 'update' : 'create'} mission`)
       }
 
-      setSuccess(`Mission ${mission ? 'updated' : 'created'} successfully!`)
+      toast({
+        title: 'Success',
+        description: `Mission ${mission ? 'updated' : 'created'} successfully!`,
+      })
       setTimeout(() => {
         onSuccess?.()
       }, 1500)
     } catch (err: any) {
       console.error('Mission form error:', err)
-      setError(err.message || 'An unexpected error occurred')
+      toast({
+        title: 'Error',
+        description: err.message || 'An unexpected error occurred',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -210,20 +227,6 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {success && (
-        <Alert className="border-green-500 text-green-500">
-          <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
-
       {/* Basic Info */}
       <Card>
         <CardHeader>
@@ -577,6 +580,29 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
           </Button>
         )}
       </div>
+
+      {/* Date Validation Dialog */}
+      <Dialog open={showDateWarningDialog} onOpenChange={setShowDateWarningDialog}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              Date Validation Error
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              {dateWarningMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowDateWarningDialog(false)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   )
 }
