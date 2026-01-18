@@ -196,46 +196,7 @@ export default function TeamsPage() {
             excellence happen every day
           </motion.p>
 
-          <motion.div
-            className="mt-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <motion.button
-              className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-md flex items-center shadow-[0_0_15px_rgba(150,0,0,0.3)] relative overflow-hidden group"
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0 0 25px rgba(220,0,0,0.4)",
-              }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => {
-                const teamSection = document.getElementById("team-members");
-                if (teamSection) {
-                  teamSection.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
-                }
-              }}
-            >
-              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-red-600/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-              <span className="relative z-10 flex items-center font-bold">
-                MEET THE TEAM
-                <motion.span
-                  initial={{ x: 0 }}
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{
-                    repeat: Infinity,
-                    repeatDelay: 2,
-                    duration: 1,
-                  }}
-                >
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </motion.span>
-              </span>
-            </motion.button>
-          </motion.div>
+
         </div>
       </section>
 

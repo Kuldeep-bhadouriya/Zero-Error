@@ -172,7 +172,7 @@ const CurrentEventsSection = () => {
           </div>
 
           <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-red-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Happening Right Now
+            Active Events
           </h2>
           <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
             Join the action! These events are currently underway

@@ -308,24 +308,57 @@ export default function SubmissionVerifier() {
 
       {/* Tabs for Pending and History */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-zinc-900/50 border border-zinc-700 grid grid-cols-2 sm:grid-cols-4 w-full">
-          <TabsTrigger value="pending" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
-            <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Pending Review</span>
-            <span className="sm:hidden">Pending</span>
+        {/* Mobile: Dropdown Select */}
+        <div className="sm:hidden mb-4">
+          <Select value={activeTab} onValueChange={setActiveTab}>
+            <SelectTrigger className="w-full bg-zinc-900/50 border-zinc-700 text-white">
+              <SelectValue placeholder="Select filter" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-900 border-zinc-700">
+              <SelectItem value="pending" className="text-white hover:bg-zinc-800">
+                <div className="flex items-center">
+                  <Clock className="h-4 w-4 mr-2" />
+                  Pending Review
+                </div>
+              </SelectItem>
+              <SelectItem value="approved" className="text-white hover:bg-zinc-800">
+                <div className="flex items-center">
+                  <History className="h-4 w-4 mr-2" />
+                  Approved
+                </div>
+              </SelectItem>
+              <SelectItem value="rejected" className="text-white hover:bg-zinc-800">
+                <div className="flex items-center">
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Rejected
+                </div>
+              </SelectItem>
+              <SelectItem value="all" className="text-white hover:bg-zinc-800">
+                <div className="flex items-center">
+                  <Filter className="h-4 w-4 mr-2" />
+                  All
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Desktop: Tabs */}
+        <TabsList className="hidden sm:grid bg-zinc-900/50 border border-zinc-700 grid-cols-4 w-full">
+          <TabsTrigger value="pending" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-sm px-3">
+            <Clock className="h-4 w-4 mr-2" />
+            Pending Review
           </TabsTrigger>
-          <TabsTrigger value="approved" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
-            <History className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Approved</span>
-            <span className="sm:hidden">✓</span>
+          <TabsTrigger value="approved" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-sm px-3">
+            <History className="h-4 w-4 mr-2" />
+            Approved
           </TabsTrigger>
-          <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
-            <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Rejected</span>
-            <span className="sm:hidden">✗</span>
+          <TabsTrigger value="rejected" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-sm px-3">
+            <XCircle className="h-4 w-4 mr-2" />
+            Rejected
           </TabsTrigger>
-          <TabsTrigger value="all" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-3">
-            <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+          <TabsTrigger value="all" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-sm px-3">
+            <Filter className="h-4 w-4 mr-2" />
             All
           </TabsTrigger>
         </TabsList>
