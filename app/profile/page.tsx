@@ -37,9 +37,9 @@ export default async function ProfilePage() {
     status: 'pending',
   })
 
-  // Get leaderboard position
+  // Get leaderboard position (based on experience for consistency with ranking system)
   const higherRankedUsers = await User.countDocuments({
-    points: { $gt: user.points },
+    experience: { $gt: user.experience },
   })
   const leaderboardPosition = higherRankedUsers + 1
 
@@ -52,6 +52,8 @@ export default async function ProfilePage() {
     bio: user.bio,
     profilePhotoUrl: user.profilePhotoUrl,
     points: user.points,
+    zeCoins: user.zeCoins,
+    experience: user.experience,
     rank: user.rank,
     rankIcon: user.rankIcon,
     progressToNextRank: user.progressToNextRank,

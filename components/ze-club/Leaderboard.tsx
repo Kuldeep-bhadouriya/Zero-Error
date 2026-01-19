@@ -222,7 +222,7 @@ export default function Leaderboard() {
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="md:order-1"
+                    className="md:order-1 z-10"
                   >
                     <GlassCard variant="intense" className="text-center p-6 h-full relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-gray-400 to-gray-500 opacity-20 blur-3xl" />
@@ -255,7 +255,7 @@ export default function Leaderboard() {
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="md:order-2"
+                    className="md:order-2 z-20"
                   >
                     <GlassCard variant="intense" gradient="orange" className="text-center p-6 md:scale-110 h-full relative overflow-hidden border-yellow-500/60 shadow-2xl shadow-yellow-500/20">
                       <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-yellow-400 to-orange-500 opacity-20 blur-3xl" />
@@ -288,7 +288,7 @@ export default function Leaderboard() {
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
-                    className="md:order-3"
+                    className="md:order-3 z-10"
                   >
                     <GlassCard variant="intense" className="text-center p-6 h-full relative overflow-hidden border-orange-600/50">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500 to-orange-600 opacity-20 blur-3xl" />

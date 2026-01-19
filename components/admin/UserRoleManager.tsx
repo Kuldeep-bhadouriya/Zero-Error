@@ -43,6 +43,7 @@ export default function UserRoleManager() {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
   const [selectedAction, setSelectedAction] = useState<'add' | 'remove'>('add')
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
+  const [isFixingRanks, setIsFixingRanks] = useState(false)
   const { toast } = useToast()
   const isMobile = useIsMobile()
 
@@ -160,18 +161,70 @@ export default function UserRoleManager() {
     }
   }
 
+  async function handleFixRanks() {
+    setIsFixingRanks(true)
+    try {
+      const res = await fetch('/api/admin/users/fix-ranks', {
+        method: 'POST',
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to fix user ranks')
+      }
+
+      toast({
+        title: 'Success',
+        description: `Successfully updated ${data.updatedCount} users out of ${data.totalUsers} total users`,
+      })
+
+      // Refresh admin list to see updated ranks
+      fetchAdmins()
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to fix user ranks. Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsFixingRanks(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Current Admins List */}
       <Card className="bg-zinc-900/50 border-zinc-800">
         <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
-          <CardTitle className="text-xl sm:text-2xl text-white flex items-center gap-2">
-            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
-            Current Admins
-          </CardTitle>
-          <CardDescription className="text-sm sm:text-base text-gray-400">
-            List of all users with admin privileges
-          </CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle className="text-xl sm:text-2xl text-white flex items-center gap-2">
+                <Users className="h-5 w-5 sm:h-6 sm:w-6 text-red-500" />
+                Current Admins
+              </CardTitle>
+              <CardDescription className="text-sm sm:text-base text-gray-400">
+                List of all users with admin privileges
+              </CardDescription>
+            </div>
+            <Button
+              onClick={handleFixRanks}
+              disabled={isFixingRanks}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white h-9 sm:h-10 text-xs sm:text-sm"
+            >
+              {isFixingRanks ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Fixing Ranks...
+                </>
+              ) : (
+                <>
+                  <Trophy className="h-4 w-4 mr-2" />
+                  Fix All User Ranks
+                </>
+              )}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3 sm:space-y-4 px-4 pb-4 sm:px-6 sm:pb-6">
           {isLoadingAdmins ? (

@@ -74,12 +74,15 @@ export default function EventsPage() {
       
       console.log('Upcoming events response:', upcomingData)
       console.log('Past events response:', pastData)
+      console.log('Past events count:', pastData.events?.length || 0)
+      console.log('Past events data:', pastData.events)
       
       if (upcomingData.success) {
         setUpcomingEvents(upcomingData.events || [])
       }
       if (pastData.success) {
         setPastEvents(pastData.events || [])
+        console.log('Set past events state:', pastData.events?.length || 0)
       }
     } catch (error) {
       console.error('Error fetching events:', error)
