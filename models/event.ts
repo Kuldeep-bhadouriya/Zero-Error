@@ -95,6 +95,27 @@ const EventSchema = new Schema<IEvent>(
   }
 )
 
+// Automatically set eventType based on eventDate
+EventSchema.pre('save', function(next) {
+  const now = new Date()
+  const eventDate = new Date(this.eventDate)
+  
+  // Check if event is today
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const todayEnd = new Date(todayStart)
+  todayEnd.setDate(todayEnd.getDate() + 1)
+  
+  if (eventDate < todayStart) {
+    this.eventType = 'past'
+  } else if (eventDate >= todayStart && eventDate < todayEnd) {
+    this.eventType = 'current'
+  } else {
+    this.eventType = 'upcoming'
+  }
+  
+  next()
+})
+
 // Index for efficient querying
 EventSchema.index({ eventType: 1, status: 1, eventDate: 1 })
 EventSchema.index({ featured: 1, status: 1, eventDate: 1 })
