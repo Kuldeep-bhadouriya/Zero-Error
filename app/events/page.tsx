@@ -110,7 +110,7 @@ export default function EventsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
+    <div className="min-h-screen bg-black text-white overflow-x-hidden">
       {/* Hero Section */}
       <section className="relative h-[400px] overflow-hidden pt-24">
         {/* Background grid effect */}
@@ -357,9 +357,8 @@ export default function EventsPage() {
           <motion.div
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto"
             variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            initial="visible"
+            animate="visible"
           >
             {/* API Past Events */}
             {pastEvents.map((event) => (
