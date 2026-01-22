@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Announcement from '@/models/announcement'
 
-// ISR: Revalidate every 5 minutes (300 seconds)
-export const revalidate = 300
+// Force dynamic rendering since we need to read query parameters
+export const dynamic = 'force-dynamic'
 
 const MAX_PER_PAGE = 3
 
