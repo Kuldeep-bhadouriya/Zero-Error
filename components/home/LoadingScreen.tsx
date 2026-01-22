@@ -146,37 +146,6 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
             </Suspense>
           </motion.div>
 
-          {/* Simplified Spinner Animation (removed) */}
-
-          {/* Progress Bar */}
-          <div className="w-80 max-w-[90vw] space-y-4">
-            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-red-600 to-orange-500 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.3 }}
-              />
-            </div>
-
-            {/* Loading Text */}
-            <motion.div
-              key={loadingText}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="text-center text-gray-400 text-sm font-mono tracking-wider"
-            >
-              {loadingText}
-            </motion.div>
-
-            {/* Progress Percentage */}
-            <div className="text-center text-red-500 text-xl font-bold font-mono">
-              {Math.round(progress)}%
-            </div>
-          </div>
-
           {/* Decorative Elements */}
           <motion.div
             className="absolute top-1/4 left-1/4 w-2 h-2 bg-red-500 rounded-full"

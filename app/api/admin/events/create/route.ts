@@ -55,10 +55,22 @@ export async function POST(req: Request) {
 
     await dbConnect()
 
+    // Parse date to preserve the local date (not UTC shifted)
+    // Extract year, month, day from the ISO string and create date at midnight UTC
+    const parsedDate = new Date(eventDate)
+    const eventDateAtMidnight = new Date(
+      Date.UTC(
+        parsedDate.getUTCFullYear(),
+        parsedDate.getUTCMonth(),
+        parsedDate.getUTCDate(),
+        0, 0, 0, 0
+      )
+    )
+
     const event = await Event.create({
       title,
       description,
-      eventDate: new Date(eventDate),
+      eventDate: eventDateAtMidnight,
       eventType,
       imageUrl,
       location,

@@ -84,6 +84,25 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
     }
   }, [event?.imageUrl])
 
+  // Helper to check if eventType matches the date
+  const validateEventTypeWithDate = (type: string, date: Date): string | null => {
+    const today = new Date()
+    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+    const eventDateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    
+    const diffTime = eventDateOnly.getTime() - todayDateOnly.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (type === 'current' && diffDays !== 0) {
+      return `Warning: Event date is ${diffDays > 0 ? diffDays + ' days in the future' : Math.abs(diffDays) + ' days in the past'}. Consider using "${diffDays > 0 ? 'upcoming' : 'past'}" instead, or keep "current" if this is intentional.`
+    } else if (type === 'past' && diffDays >= 0) {
+      return `Warning: Event date is ${diffDays === 0 ? 'today' : diffDays + ' days in the future'}. Consider using "${diffDays === 0 ? 'current' : 'upcoming'}" instead.`
+    } else if (type === 'upcoming' && diffDays <= 0) {
+      return `Warning: Event date is ${diffDays === 0 ? 'today' : Math.abs(diffDays) + ' days in the past'}. Consider using "${diffDays === 0 ? 'current' : 'past'}" instead.`
+    }
+    return null
+  }
+
   const {
     register,
     handleSubmit,
@@ -148,9 +167,25 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
     setLoading(true)
 
     try {
+      // Validation check for eventType vs date mismatch
+      const validationWarning = validateEventTypeWithDate(data.eventType, eventDate)
+      if (validationWarning) {
+        setValidationMessage(validationWarning)
+        setShowValidationDialog(true)
+        setLoading(false)
+        return
+      }
+
+      // Convert to ISO format while preserving local date (not UTC shifted)
+      // This ensures the date stored matches what the admin selected
+      const year = eventDate.getFullYear()
+      const month = String(eventDate.getMonth() + 1).padStart(2, '0')
+      const day = String(eventDate.getDate()).padStart(2, '0')
+      const dateString = `${year}-${month}-${day}T00:00:00.000Z`
+
       const payload: any = {
         ...data,
-        eventDate: eventDate.toISOString(),
+        eventDate: dateString,
         games: selectedGames,
       }
 
@@ -490,18 +525,89 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-yellow-500" />
-              Validation Warning
+              Event Type Mismatch
             </DialogTitle>
             <DialogDescription className="text-zinc-400">
               {validationMessage}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
+              variant="outline"
               onClick={() => setShowValidationDialog(false)}
+              className="border-zinc-700"
+            >
+              Go Back & Edit
+            </Button>
+            <Button
+              onClick={async () => {
+                setShowValidationDialog(false)
+                setLoading(true)
+                // Continue with submission
+                const data = watch()
+                
+                // Convert to ISO format while preserving local date
+                const year = eventDate!.getFullYear()
+                const month = String(eventDate!.getMonth() + 1).padStart(2, '0')
+                const day = String(eventDate!.getDate()).padStart(2, '0')
+                const dateString = `${year}-${month}-${day}T00:00:00.000Z`
+
+                try {
+                  const payload: any = {
+                    ...data,
+                    eventDate: dateString,
+                    games: selectedGames,
+                  }
+
+                  if (imageUrl) {
+                    payload.imageUrl = imageUrl
+                  }
+
+                  const eventIdToUpdate = event?._id || savedEventId
+                  const endpoint = eventIdToUpdate
+                    ? '/api/admin/events/update'
+                    : '/api/admin/events/create'
+
+                  const response = await fetch(endpoint, {
+                    method: eventIdToUpdate ? 'PATCH' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(eventIdToUpdate ? { eventId: eventIdToUpdate, ...payload } : payload),
+                  })
+
+                  const result = await response.json()
+
+                  if (!response.ok) {
+                    throw new Error(result.error || 'Failed to save event')
+                  }
+
+                  if (!event && result.event?._id) {
+                    setSavedEventId(result.event._id)
+                    toast({
+                      title: 'Success',
+                      description: result.message + ' You can now upload an image.',
+                    })
+                  } else {
+                    toast({
+                      title: 'Success',
+                      description: result.message,
+                    })
+                    if (eventIdToUpdate) {
+                      onSuccess()
+                    }
+                  }
+                } catch (error: any) {
+                  toast({
+                    title: 'Error',
+                    description: error.message || 'Failed to save event',
+                    variant: 'destructive',
+                  })
+                } finally {
+                  setLoading(false)
+                }
+              }}
               className="bg-red-600 hover:bg-red-700"
             >
-              OK
+              Save Anyway
             </Button>
           </DialogFooter>
         </DialogContent>

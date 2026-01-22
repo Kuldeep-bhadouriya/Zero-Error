@@ -43,6 +43,19 @@ export async function PATCH(req: Request) {
 
     await dbConnect()
 
+    // Parse eventDate if provided to preserve the local date
+    if (updateData.eventDate) {
+      const parsedDate = new Date(updateData.eventDate)
+      updateData.eventDate = new Date(
+        Date.UTC(
+          parsedDate.getUTCFullYear(),
+          parsedDate.getUTCMonth(),
+          parsedDate.getUTCDate(),
+          0, 0, 0, 0
+        )
+      )
+    }
+
     const event = await Event.findByIdAndUpdate(
       eventId,
       { $set: updateData },

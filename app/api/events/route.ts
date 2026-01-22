@@ -20,21 +20,11 @@ export async function GET(req: Request) {
 
     // Build query - only show published events
     const query: any = { status: 'published' }
-    const now = new Date()
 
-    // Filter by date instead of manual eventType field
-    if (eventType === 'past') {
-      // Events with date in the past
-      query.eventDate = { $lt: now }
-    } else if (eventType === 'upcoming') {
-      // Events with date in the future
-      query.eventDate = { $gte: now }
-    } else if (eventType === 'current') {
-      // Events happening today
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      const todayEnd = new Date(todayStart)
-      todayEnd.setDate(todayEnd.getDate() + 1)
-      query.eventDate = { $gte: todayStart, $lt: todayEnd }
+    // Use the eventType field directly if specified
+    // This allows admins to manually override date-based categorization
+    if (eventType) {
+      query.eventType = eventType
     }
 
     if (featured) {

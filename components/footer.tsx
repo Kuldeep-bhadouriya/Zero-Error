@@ -27,14 +27,14 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Twitter */}
+          {/* X (Twitter) */}
           <div className="group">
             <div className="bg-black p-2 rounded-full transition-colors duration-300 group-hover:bg-[#42444b]">
               <SocialIcon
                 url="https://x.com/ZeroErrorES"
                 target="_blank"
                 className="transition-transform duration-300 hover:scale-125"
-                aria-label="Twitter"
+                aria-label="X"
                 bgColor="transparent"
                 style={{ height: 60, width: 60 }}
               />
