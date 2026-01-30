@@ -172,7 +172,7 @@ const ServiceCard = ({
             </ul>
 
             <Link
-              href={`/services/${service.id}`}
+              href="/contact"
               className="inline-block w-full"
             >
               <button className="w-full text-sm font-medium bg-red-600/20 hover:bg-red-600/30 text-red-400 px-4 py-3 rounded-md transition-all duration-300 flex items-center justify-center">
@@ -389,7 +389,7 @@ export default function ServicesPage() {
                           </ul>
 
                           <Link
-                            href={`/services/${service.id}`}
+                            href="/contact"
                             className="inline-block w-full"
                           >
                             <button className="w-full text-sm font-medium bg-red-600/20 hover:bg-red-600/30 text-red-400 px-4 py-3 rounded-md transition-all duration-300 flex items-center justify-center">
