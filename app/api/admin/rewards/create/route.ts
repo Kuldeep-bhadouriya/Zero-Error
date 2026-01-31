@@ -24,6 +24,7 @@ export async function POST(req: Request) {
       requiredRank,
       exclusiveToTop3,
       discountable,
+      imageUrl,
     } = body
 
     // Validation
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
       requiredRank: requiredRank || 'Rookie',
       exclusiveToTop3: exclusiveToTop3 || false,
       discountable: discountable !== undefined ? discountable : true,
+      imageUrl: imageUrl || undefined,
     })
 
     // Revalidate relevant pages

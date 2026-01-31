@@ -4,6 +4,7 @@ import { auth } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/mongodb";
 import Event from "@/models/event";
 import User from "@/models/user";
+import Reward from "@/models/reward";
 import { revalidatePath } from "next/cache";
 
 const f = createUploadthing();
@@ -199,6 +200,76 @@ export const ourFileRouter = {
       // This code runs on the server after upload completes
       console.log("Mission example image upload complete by admin:", metadata.userEmail);
       console.log("File URL:", file.url);
+
+      // Return data to the client
+      return { 
+        uploadedBy: metadata.userEmail,
+        fileUrl: file.url 
+      };
+    }),
+
+  // Reward image uploader endpoint (admin-only)
+  rewardImageUploader: f({
+    image: { maxFileSize: "4MB", maxFileCount: 1 },
+  })
+    .input(z.object({ rewardId: z.string().optional() }))
+    .middleware(async ({ input }) => {
+      // Authenticate and verify admin role
+      const session = await auth();
+
+      if (!session?.user?.email) {
+        throw new Error("Unauthorized");
+      }
+
+      if (!session.user.roles?.includes('admin')) {
+        throw new Error("Admin access required");
+      }
+      
+      // Return admin data and rewardId to be available in onUploadComplete
+      return { 
+        userEmail: session.user.email,
+        userId: session.user.id,
+        isAdmin: true,
+        rewardId: input.rewardId
+      };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      // This code runs on the server after upload completes
+      console.log("🎯 Reward image upload complete by admin:", metadata.userEmail);
+      console.log("📸 File URL:", file.url);
+      console.log("🆔 Reward ID:", metadata.rewardId);
+
+      if (metadata.rewardId) {
+        try {
+          await dbConnect();
+          console.log("✅ Database connected");
+          
+          const updatedReward = await Reward.findByIdAndUpdate(
+            metadata.rewardId,
+            { $set: { imageUrl: file.url } },
+            { new: true }
+          );
+
+          if (updatedReward) {
+            console.log("✅ Reward updated successfully:", {
+              id: updatedReward._id,
+              name: updatedReward.name,
+              imageUrl: updatedReward.imageUrl
+            });
+          } else {
+            console.error("❌ Reward not found with ID:", metadata.rewardId);
+          }
+
+          // Revalidate paths
+          revalidatePath('/ze-club/rewards');
+          revalidatePath('/admin/ze-club');
+          console.log("✅ Paths revalidated");
+        } catch (error) {
+          console.error("❌ Error updating reward with image:", error);
+        }
+      } else {
+        console.warn("⚠️ No rewardId provided, skipping database update");
+      }
 
       // Return data to the client
       return { 

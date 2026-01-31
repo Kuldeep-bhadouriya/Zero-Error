@@ -8,6 +8,7 @@ export interface IReward extends Document {
   requiredRank?: string;
   exclusiveToTop3?: boolean;
   discountable?: boolean;
+  imageUrl?: string;
 }
 
 const RewardSchema: Schema = new Schema({
@@ -18,6 +19,7 @@ const RewardSchema: Schema = new Schema({
   requiredRank: { type: String, default: 'Rookie' },
   exclusiveToTop3: { type: Boolean, default: false },
   discountable: { type: Boolean, default: true },
+  imageUrl: { type: String },
 });
 
 export default mongoose.models.Reward || mongoose.model<IReward>('Reward', RewardSchema);

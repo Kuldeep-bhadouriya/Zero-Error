@@ -41,6 +41,7 @@ interface Reward {
   requiredRank?: string
   exclusiveToTop3?: boolean
   discountable?: boolean
+  imageUrl?: string
   createdAt: string
   updatedAt: string
 }
