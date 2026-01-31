@@ -32,14 +32,22 @@ interface Mission {
   isPending?: boolean
 }
 
+interface MissionUploaderProps {
+  missions?: Mission[]
+  initialMissionId?: string
+}
+
 /**
  * MissionUploader Component
  * Allows users to upload proof for completed missions.
  * Handles file validation, UploadThing upload, and submission tracking.
  */
-export default function MissionUploader() {
-  const [missions, setMissions] = useState<Mission[]>([])
-  const [selectedMission, setSelectedMission] = useState('')
+export default function MissionUploader({ missions: initialMissions, initialMissionId }: MissionUploaderProps) {
+  const [missions, setMissions] = useState<Mission[]>(() => {
+    const base = initialMissions ?? []
+    return base.filter((m) => !m.isCompleted && !m.isPending)
+  })
+  const [selectedMission, setSelectedMission] = useState(initialMissionId ?? '')
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -51,26 +59,35 @@ export default function MissionUploader() {
   const { startUpload } = useUploadThing("missionProofUploader")
 
   useEffect(() => {
-    // Fetch available missions on component mount
+    // If missions are provided by the server page, don't re-fetch.
+    if (initialMissions) {
+      const availableMissions = initialMissions.filter((m) => !m.isCompleted && !m.isPending)
+      setMissions(availableMissions)
+      return
+    }
+
     async function fetchMissions() {
       try {
         const response = await fetch('/api/ze-club/missions')
-        if (response.ok) {
-          const fetchedMissions = await response.json()
-          // Only show missions that are available (not completed or pending)
-          const availableMissions = fetchedMissions.filter(
-            (m: Mission) => !m.isCompleted && !m.isPending
-          )
-          setMissions(availableMissions)
-        } else {
+        if (!response.ok) {
           console.error('Failed to fetch missions')
+          return
         }
+        const fetchedMissions = await response.json()
+        const availableMissions = fetchedMissions.filter((m: Mission) => !m.isCompleted && !m.isPending)
+        setMissions(availableMissions)
       } catch (error) {
         console.error('Error fetching missions:', error)
       }
     }
+
     fetchMissions()
-  }, [])
+  }, [initialMissions])
+
+  useEffect(() => {
+    if (!initialMissionId) return
+    setSelectedMission(initialMissionId)
+  }, [initialMissionId])
 
   useEffect(() => {
     // Cleanup preview URL

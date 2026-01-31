@@ -1,0 +1,66 @@
+import ZEClubLayout from '@/components/ze-club/ZEClubLayout'
+import MissionUploader from '@/components/ze-club/MissionUploader'
+import { auth } from '@/app/api/auth/[...nextauth]/route'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { getMissionsForUserEmail } from '@/lib/ze-club/missions'
+import { GlassCard } from '@/components/ui/GlassCard'
+
+export default async function MissionSubmitPage({
+  searchParams,
+}: {
+  searchParams?: Record<string, string | string[] | undefined>
+}) {
+  const session = await auth()
+
+  if (!session?.user?.email) {
+    return (
+      <ZEClubLayout>
+        <GlassCard variant="intense" className="p-10 text-center text-white">
+          <h1 className="text-2xl font-semibold">Submit mission proof</h1>
+          <p className="text-gray-400 mt-2">Please sign in to upload proof.</p>
+          <div className="mt-6">
+            <Button asChild className="bg-red-600 hover:bg-red-700 text-white">
+              <Link href="/signup">Go to sign in</Link>
+            </Button>
+          </div>
+        </GlassCard>
+      </ZEClubLayout>
+    )
+  }
+
+  const allMissions = await getMissionsForUserEmail(session.user.email)
+  const missions = allMissions.filter((m: any) => !m.isCompleted && !m.isPending)
+
+  const missionIdParam = searchParams?.missionId
+  const missionId = Array.isArray(missionIdParam) ? missionIdParam[0] : missionIdParam
+  const initialMissionId = missions.some((m: any) => m._id?.toString?.() === missionId) ? missionId : undefined
+
+  return (
+    <ZEClubLayout>
+      <div className="text-white space-y-8">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="text-xs uppercase tracking-widest text-zinc-500 font-medium">
+              <Link href="/ze-club/missions" className="hover:text-zinc-300 transition-colors">
+                Missions
+              </Link>
+              <span className="mx-2">/</span>
+              <span className="text-zinc-400">Submit proof</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-semibold mt-2">Submit mission proof</h1>
+            <p className="text-gray-400 mt-2 text-sm sm:text-base">
+              Upload a clear image or video that shows the mission completion.
+            </p>
+          </div>
+
+          <Button asChild variant="ghost" className="text-zinc-300 hover:bg-white/5">
+            <Link href="/ze-club/missions">Back</Link>
+          </Button>
+        </div>
+
+        <MissionUploader missions={missions} initialMissionId={initialMissionId} />
+      </div>
+    </ZEClubLayout>
+  )
+}

@@ -1,4 +1,3 @@
-import MissionUploader from '@/components/ze-club/MissionUploader'
 import CurrentMissions from '@/components/ze-club/CurrentMissions'
 import { Suspense } from 'react'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
@@ -9,6 +8,9 @@ import Mission from '@/models/mission'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Badge } from '@/components/ui/badge'
 import ZEClubLayout from '@/components/ze-club/ZEClubLayout'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { getMissionsForUserEmail } from '@/lib/ze-club/missions'
 
 interface PopulatedSubmission {
   _id: string
@@ -43,11 +45,9 @@ async function UserSubmissions() {
   if (submissions.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-black/60 mb-4">
-          <span className="text-3xl">📋</span>
-        </div>
-        <p className="text-gray-400 text-lg">You have no submissions yet.</p>
-        <p className="text-gray-500 text-sm mt-2">Complete missions above to get started!</p>
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 border border-white/10 mb-4" />
+        <p className="text-gray-300 text-lg font-semibold">No submissions yet</p>
+        <p className="text-gray-500 text-sm mt-2">Submit proof from any mission to get started.</p>
       </div>
     )
   }
@@ -115,51 +115,122 @@ async function UserSubmissions() {
 }
 
 export default function MissionsPage() {
+  // Server fetch missions once; client components reuse this data.
+  // This avoids duplicate fetches and gives a faster first render.
+  const missionsPromise = (async () => {
+    const session = await auth()
+    return getMissionsForUserEmail(session?.user?.email)
+  })()
+
   return (
     <ZEClubLayout>
-      <div className="text-white space-y-8">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-red-500 via-orange-500 to-red-600 bg-clip-text text-transparent">
-            🎯 Missions
-          </h1>
-          <p className="text-gray-400 text-lg mb-8">Complete missions to earn points and rewards</p>
+      <div className="text-white space-y-10">
+        {/* Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-500 via-orange-500 to-red-600 bg-clip-text text-transparent">
+              Missions
+            </h1>
+            <p className="text-gray-400 mt-2 text-sm sm:text-base">
+              Complete missions to earn ZE Points and unlock rewards.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button asChild className="bg-red-600 hover:bg-red-700 text-white">
+              <Link href="/ze-club/missions/submit">Submit Proof</Link>
+            </Button>
+          </div>
         </div>
-        
-        {/* Current Missions Section */}
-        <div>
-          <Suspense fallback={
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-white">Current Missions</h2>
-              <div className="text-gray-400">Loading missions...</div>
+
+        {/* Summary strip */}
+        <Suspense
+          fallback={
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[1, 2, 3].map((i) => (
+                <GlassCard key={i} className="p-4 h-[92px]" variant="subtle" />
+              ))}
             </div>
-          }>
-            <CurrentMissions />
-          </Suspense>
-        </div>
+          }
+        >
+          <MissionsSummary missionsPromise={missionsPromise} />
+        </Suspense>
 
-        {/* Divider */}
-        <div className="border-t border-white/10"></div>
-        
-        {/* Upload Mission Proof Section */}
-        <div>
-          <h2 className="text-2xl font-bold mb-4 text-white">📤 Upload Mission Proof</h2>
-          <p className="text-gray-400 mb-4">Select a mission from above and upload your proof of completion</p>
-          <Suspense fallback={<div className="text-gray-400">Loading uploader...</div>}>
-            <MissionUploader />
-          </Suspense>
-        </div>
+        {/* Missions */}
+        <Suspense
+          fallback={
+            <div className="space-y-4">
+              <div className="h-6 w-40 bg-white/5 rounded" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <GlassCard key={i} className="p-6 h-56" variant="intense" />
+                ))}
+              </div>
+            </div>
+          }
+        >
+          <MissionsSection missionsPromise={missionsPromise} />
+        </Suspense>
 
-        {/* Divider */}
-        <div className="border-t border-white/10"></div>
-        
-        {/* My Submissions Section */}
-        <div>
-          <h2 className="text-2xl font-bold mb-4 text-white">📋 My Submissions</h2>
-          <Suspense fallback={<div className="text-gray-400">Loading submissions...</div>}>
+        <div className="border-t border-white/10" />
+
+        {/* Submissions */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-semibold text-white">My Submissions</h2>
+              <p className="text-gray-500 text-sm mt-1">
+                Track review status and admin feedback.
+              </p>
+            </div>
+          </div>
+          <Suspense fallback={<div className="text-gray-400">Loading submissions…</div>}>
             <UserSubmissions />
           </Suspense>
         </div>
       </div>
     </ZEClubLayout>
   )
+}
+
+async function MissionsSummary({
+  missionsPromise,
+}: {
+  missionsPromise: Promise<any[]>
+}) {
+  const missions = await missionsPromise
+  const availableCount = missions.filter((m) => m.isAvailable).length
+  const completedCount = missions.filter((m) => m.isCompleted).length
+  const pendingCount = missions.filter((m) => m.isPending).length
+
+  const items = [
+    { label: 'Available', value: availableCount, accent: 'text-emerald-400' },
+    { label: 'Completed', value: completedCount, accent: 'text-blue-400' },
+    { label: 'Pending', value: pendingCount, accent: 'text-amber-400' },
+  ]
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {items.map((item) => (
+        <GlassCard key={item.label} variant="subtle" className="p-4">
+          <div className="text-xs uppercase tracking-widest text-zinc-500 font-medium">
+            {item.label}
+          </div>
+          <div className={`mt-2 text-2xl font-bold tabular-nums ${item.accent}`}>
+            {item.value}
+          </div>
+          <div className="mt-1 text-xs text-zinc-500">This week</div>
+        </GlassCard>
+      ))}
+    </div>
+  )
+}
+
+async function MissionsSection({
+  missionsPromise,
+}: {
+  missionsPromise: Promise<any[]>
+}) {
+  const missions = await missionsPromise
+  return <CurrentMissions missions={missions} />
 }
