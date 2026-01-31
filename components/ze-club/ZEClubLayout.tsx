@@ -246,7 +246,7 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <main className={cn(
-        "flex-1 relative z-10 transition-all duration-300 min-h-screen",
+        "flex-1 relative z-10 transition-all duration-300 min-h-screen overflow-x-hidden",
         !isMobile && "ml-72",
         "p-4 sm:p-6 lg:p-8 pt-0 sm:pt-6"
       )}>

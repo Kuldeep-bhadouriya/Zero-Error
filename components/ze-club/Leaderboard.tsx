@@ -1,21 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { motion } from 'framer-motion';
-import { Trophy, Medal, Crown, TrendingUp, Search } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy, Crown, Search, Shield } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import RankBadge from './RankBadge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 interface LeaderboardUser {
   _id: string;
@@ -27,14 +19,16 @@ interface LeaderboardUser {
   profilePhoto?: string | null;
 }
 
+const RANKS = ['all', 'Errorless Legend', 'Vanguard', 'Gladiator', 'Contender', 'Rookie'];
+
 export default function Leaderboard() {
   const [users, setUsers] = useState<LeaderboardUser[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
   const [rankFilter, setRankFilter] = useState<string>('all');
+  const [viewState, setViewState] = useState<'all' | 'top10'>('all');
 
   useEffect(() => {
     async function fetchLeaderboard() {
@@ -71,322 +65,361 @@ export default function Leaderboard() {
       filtered = filtered.filter(user => user.userRank === rankFilter);
     }
     
-    // Category filter (can be extended)
-    if (activeFilter === 'top10') {
+    // View state filter (Top 10 vs All)
+    if (viewState === 'top10') {
       filtered = filtered.slice(0, 10);
     }
     
     setFilteredUsers(filtered);
-  }, [searchQuery, activeFilter, rankFilter, users]);
-
-  const getRankIcon = (rank: number) => {
-    switch (rank) {
-      case 1:
-        return <Crown className="h-6 w-6 text-yellow-400" />;
-      case 2:
-        return <Medal className="h-6 w-6 text-gray-300" />;
-      case 3:
-        return <Medal className="h-6 w-6 text-orange-600" />;
-      default:
-        return <Trophy className="h-5 w-5 text-gray-500" />;
-    }
-  };
-
-  const getRankColor = (rank: number) => {
-    switch (rank) {
-      case 1:
-        return 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border-yellow-500/50';
-      case 2:
-        return 'bg-gradient-to-r from-gray-400/20 to-gray-500/20 border-gray-400/50';
-      case 3:
-        return 'bg-gradient-to-r from-orange-500/20 to-orange-600/20 border-orange-500/50';
-      default:
-        return 'hover:bg-gray-800/30';
-    }
-  };
-
-  const getRankTierColor = (userRank: string) => {
-    const colors = {
-      "Errorless Legend": 'bg-yellow-500/10 hover:bg-yellow-500/20 border-l-2 border-yellow-500/50',
-      Vanguard: 'bg-red-400/10 hover:bg-red-400/20 border-l-2 border-red-400/50',
-      Gladiator: 'bg-red-500/10 hover:bg-red-500/20 border-l-2 border-red-500/50',
-      Contender: 'bg-red-600/10 hover:bg-red-600/20 border-l-2 border-red-600/50',
-      Rookie: 'bg-red-700/10 hover:bg-red-700/20 border-l-2 border-red-700/50',
-    };
-    return colors[userRank as keyof typeof colors] || 'hover:bg-gray-800/30';
-  };
+  }, [searchQuery, rankFilter, viewState, users]);
 
   const topThree = filteredUsers.slice(0, 3);
   const restUsers = filteredUsers.slice(3);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="text-white"
-    >
-      {/* Header */}
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 bg-gradient-to-r from-yellow-500 via-red-500 to-orange-500 bg-clip-text text-transparent">
-          🏆 Leaderboard
-        </h1>
-        <p className="text-gray-400 text-sm sm:text-base md:text-lg">See where you stand among the champions</p>
+    <div className="text-white min-h-screen pb-24 w-full overflow-x-hidden">
+      <HeaderSection />
+
+      {/* Controls Section */}
+      <div className="z-20 relative bg-transparent py-4 mb-8">
+        <div className="flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center w-full max-w-full">
+            <div className="relative w-full md:w-80 group flex-shrink-0">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-red-500 transition-colors" />
+                <Input
+                    placeholder="Search by ZeTag..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 bg-transparent border-white/20 text-white placeholder:text-gray-500 h-10 text-sm focus:ring-1 focus:ring-red-500/50 transition-all rounded-xl hover:border-white/30"
+                />
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
+                <div className="flex bg-black/20 p-1 rounded-xl border border-white/10 backdrop-blur-sm flex-shrink-0">
+                    <button
+                        onClick={() => setViewState('all')}
+                        className={cn(
+                            "px-3 md:px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap",
+                            viewState === 'all' ? "bg-red-600 text-white shadow-lg shadow-red-900/20" : "text-gray-400 hover:text-white"
+                        )}
+                    >
+                        All
+                    </button>
+                    <button
+                        onClick={() => setViewState('top10')}
+                        className={cn(
+                            "px-3 md:px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap",
+                            viewState === 'top10' ? "bg-red-600 text-white shadow-lg shadow-red-900/20" : "text-gray-400 hover:text-white"
+                        )}
+                    >
+                        Top 10
+                    </button>
+                </div>
+                
+                <div className="h-8 w-[1px] bg-white/10 mx-2 hidden md:block flex-shrink-0" />
+
+                <div className="flex bg-black/20 p-1 rounded-xl border border-white/10 backdrop-blur-sm flex-shrink-0">
+                   {/* Mobile Dropdown for Ranks could go here, but for now horizontal scroll works well */}
+                    <div className="flex gap-1 flex-nowrap">
+                        {['all', 'Errorless Legend', 'Vanguard', 'Gladiator'].map((r) => (
+                             <button
+                                key={r}
+                                onClick={() => setRankFilter(r)}
+                                className={cn(
+                                    "px-2 md:px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all",
+                                    rankFilter === r ? "bg-white/10 text-white border border-white/10" : "text-gray-400 hover:text-white hover:bg-white/5"
+                                )}
+                            >
+                                {r === 'all' ? 'All Ranks' : r}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
       </div>
 
-      {/* Search and Filters */}
-      <GlassCard variant="intense" className="mb-4 sm:mb-6">
-        <div className="pt-4 sm:pt-6 px-3 sm:px-6 pb-4 sm:pb-6">
-          <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 md:gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
-              <Input
-                placeholder="Search players..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 sm:pl-10 bg-black/60 border-white/10 text-white placeholder:text-gray-500 h-10 sm:h-11 text-sm sm:text-base"
-              />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant={activeFilter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setActiveFilter('all')}
-                className={`h-10 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm touch-manipulation active:scale-95 ${activeFilter === 'all' ? 'bg-red-600 hover:bg-red-700' : 'bg-black/60 border-white/10 hover:bg-black/80 text-white'}`}
-              >
-                All Players
-              </Button>
-              <Button
-                variant={activeFilter === 'top10' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setActiveFilter('top10')}
-                className={`h-10 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm touch-manipulation active:scale-95 ${activeFilter === 'top10' ? 'bg-red-600 hover:bg-red-700' : 'bg-black/60 border-white/10 hover:bg-black/80 text-white'}`}
-              >
-                Top 10
-              </Button>
-            </div>
-          </div>
-          
-          {/* Rank Filter */}
-          <div className="flex items-start sm:items-center gap-2 flex-wrap pt-3 sm:pt-4 border-t border-gray-700/50">
-            <span className="text-xs sm:text-sm text-gray-400 w-full sm:w-auto mb-1 sm:mb-0">Filter by rank:</span>
-            {['all', 'Errorless Legend', 'Vanguard', 'Gladiator', 'Contender', 'Rookie'].map((rankType) => (
-              <Button
-                key={rankType}
-                variant={rankFilter === rankType ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setRankFilter(rankType)}
-                className={`h-9 sm:h-8 px-2.5 sm:px-3 text-xs touch-manipulation active:scale-95 ${rankFilter === rankType ? 'bg-red-600 hover:bg-red-700' : 'bg-black/60 border-white/10 hover:bg-black/80 text-white'}`}
-              >
-                {rankType === 'all' ? 'All Ranks' : rankType}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </GlassCard>
-
       {loading ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex items-center justify-center h-64"
-        >
-          <div className="text-xl text-gray-400 flex items-center gap-3">
-            <TrendingUp className="h-6 w-6 text-red-500 animate-pulse" />
-            Loading leaderboard...
-          </div>
-        </motion.div>
+        <LeaderboardSkeleton />
       ) : error ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <GlassCard variant="intense" gradient="red" className="p-6">
-            <p className="text-red-400">Error: {error}</p>
-          </GlassCard>
-        </motion.div>
+        <div className="text-center py-20 text-red-400 bg-red-900/10 rounded-2xl border border-red-500/20">
+            <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <h3 className="text-lg font-semibold">Unable to load rankings</h3>
+            <p className="opacity-70">{error}</p>
+        </div>
       ) : (
-        <>
-          {/* Top 3 Podium */}
-          {topThree.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="mb-6 sm:mb-8"
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-                {/* 2nd Place */}
-                {topThree[1] && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="md:order-1 z-10"
-                  >
-                    <GlassCard variant="intense" className="text-center p-6 h-full relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-gray-400 to-gray-500 opacity-20 blur-3xl" />
-                      <div className="relative z-10">
-                        <div className="flex justify-center mb-4">
-                          <div className="relative">
-                            <Avatar className="h-20 w-20 border-4 border-gray-400 shadow-xl">
-                              <AvatarImage src={topThree[1].profilePhoto || undefined} alt={topThree[1].zeTag} />
-                              <AvatarFallback className="bg-black/70 text-white text-2xl font-bold">
-                                {topThree[1].zeTag.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="absolute -bottom-2 -right-2 bg-black/90 rounded-full px-3 py-1 text-xs font-bold border-2 border-gray-400 text-gray-200">
-                              2nd
-                            </div>
-                          </div>
+        <div className="space-y-8">
+          <AnimatePresence mode="wait">
+            {filteredUsers.length === 0 ? (
+                <EmptyState />
+            ) : (
+                <>
+                {/* Podium Section - Only show if current page includes top ranks */}
+                {!searchQuery && viewState === 'all' && rankFilter === 'all' && (
+                    <Podium topThree={topThree} />
+                )}
+
+                {/* List Section */}
+                <div className="space-y-3 w-full">
+                    <div className="flex items-center justify-between px-2 md:px-6 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <div className="flex items-center gap-12">
+                            <span className="w-8 text-center">#</span>
+                            <span>Player</span>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2 drop-shadow-lg">@{topThree[1].zeTag}</h3>
-                        <p className="text-2xl font-bold text-gray-200 drop-shadow-md">
-                          {topThree[1].points} pts
-                        </p>
-                      </div>
-                    </GlassCard>
-                  </motion.div>
+                        <div className="flex items-center gap-8 md:gap-16">
+                            <span className="hidden md:block">Rank Tier</span>
+                            <span className="w-20 text-right">Points</span>
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        {(searchQuery || rankFilter !== 'all' ? filteredUsers : restUsers).map((user) => (
+                            <LeaderboardRow 
+                                key={user._id} 
+                                user={user} 
+                            />
+                        ))}
+                    </div>
+                </div>
+                </>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HeaderSection() {
+    return (
+        <div className="pt-4 pb-6 text-center space-y-3 relative overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-32 bg-red-600/20 blur-[100px] pointer-events-none" />
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative z-10"
+            >
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold tracking-wider uppercase mb-3">
+                    <Trophy className="h-3 w-3" />
+                    Season 1 Rankings
+                </div>
+                <h1 className="text-3xl md:text-5xl lg:text-6xl font-black italic tracking-tight text-white uppercase leading-tight">
+                    Hall of <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Champions</span>
+                </h1>
+                <p className="text-gray-400 max-w-lg mx-auto text-xs md:text-sm lg:text-base mt-3 font-medium leading-relaxed px-4">
+                    Compete, climb the ranks, and earn your place among the Zero Error elite.
+                </p>
+            </motion.div>
+        </div>
+    )
+}
+
+function Podium({ topThree }: { topThree: LeaderboardUser[] }) {
+    if (topThree.length === 0) return null;
+
+    const [first, second, third] = [topThree[0], topThree[1], topThree[2]];
+
+    return (
+        <div className="relative py-6 mb-4 md:mb-8 mt-2 md:mt-6 overflow-hidden">
+            <div className="flex flex-row items-end justify-center gap-2 md:gap-6 max-w-4xl mx-auto px-2">
+                {/* 2nd Place */}
+                {second && (
+                     <motion.div 
+                        initial={{ opacity: 0, y: 40 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="order-1 w-1/3 md:flex-1 relative z-10"
+                    >
+                         <PodiumCard user={second} rank={2} color="slate" />
+                    </motion.div>
                 )}
 
                 {/* 1st Place */}
-                {topThree[0] && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="md:order-2 z-20"
-                  >
-                    <GlassCard variant="intense" gradient="orange" className="text-center p-6 md:scale-110 h-full relative overflow-hidden border-yellow-500/60 shadow-2xl shadow-yellow-500/20">
-                      <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-yellow-400 to-orange-500 opacity-20 blur-3xl" />
-                      <div className="relative z-10">
-                        <div className="flex justify-center mb-4">
-                          <div className="relative">
-                            <Avatar className="h-24 w-24 border-4 border-yellow-400 shadow-2xl shadow-yellow-500/50">
-                              <AvatarImage src={topThree[0].profilePhoto || undefined} alt={topThree[0].zeTag} />
-                              <AvatarFallback className="bg-yellow-600 text-white text-3xl font-bold">
-                                {topThree[0].zeTag.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="absolute -bottom-2 -right-2 bg-black/90 rounded-full px-3 py-1 text-sm font-bold border-2 border-yellow-400 text-yellow-300">
-                              1st
-                            </div>
-                          </div>
-                        </div>
-                        <h3 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">@{topThree[0].zeTag}</h3>
-                        <p className="text-3xl font-bold text-yellow-400 drop-shadow-md">
-                          {topThree[0].points} pts
-                        </p>
-                      </div>
-                    </GlassCard>
-                  </motion.div>
+                {first && (
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9, y: 40 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        className="order-2 w-1/3 md:w-1/3 z-20 pb-4 md:pb-0 md:-mt-12 relative"
+                    >
+                        <PodiumCard user={first} rank={1} color="yellow" isFirst />
+                    </motion.div>
                 )}
 
                 {/* 3rd Place */}
-                {topThree[2] && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="md:order-3 z-10"
-                  >
-                    <GlassCard variant="intense" className="text-center p-6 h-full relative overflow-hidden border-orange-600/50">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500 to-orange-600 opacity-20 blur-3xl" />
-                      <div className="relative z-10">
-                        <div className="flex justify-center mb-4">
-                          <div className="relative">
-                            <Avatar className="h-20 w-20 border-4 border-orange-600 shadow-xl shadow-orange-500/30">
-                              <AvatarImage src={topThree[2].profilePhoto || undefined} alt={topThree[2].zeTag} />
-                              <AvatarFallback className="bg-orange-700 text-white text-2xl font-bold">
-                                {topThree[2].zeTag.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="absolute -bottom-2 -right-2 bg-black/90 rounded-full px-3 py-1 text-xs font-bold border-2 border-orange-600 text-orange-300">
-                              3rd
-                            </div>
-                          </div>
-                        </div>
-                        <h3 className="text-xl font-bold text-white mb-2 drop-shadow-lg">@{topThree[2].zeTag}</h3>
-                        <p className="text-2xl font-bold text-orange-400 drop-shadow-md">
-                          {topThree[2].points} pts
-                        </p>
-                      </div>
-                    </GlassCard>
-                  </motion.div>
+                {third && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 40 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="order-3 w-1/3 md:flex-1 relative z-10"
+                    >
+                        <PodiumCard user={third} rank={3} color="orange" />
+                    </motion.div>
                 )}
-              </div>
-            </motion.div>
-          )}
+            </div>
+            
+            {/* Ambient Base Glow */}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-gradient-to-t from-red-600/10 to-transparent blur-3xl pointer-events-none" />
+        </div>
+    )
+}
 
-          {/* Rest of Leaderboard */}
-          <GlassCard variant="intense" className="overflow-hidden">
-            <div className="px-3 sm:px-6 pt-4 sm:pt-6">
-              <h3 className="text-lg sm:text-xl md:text-2xl text-white font-bold">All Rankings</h3>
-            </div>
-            <div className="overflow-x-auto p-0 sm:p-6 -mx-3 sm:mx-0">
-              {filteredUsers.length === 0 ? (
-                <p className="text-center text-gray-400 py-8">No players found.</p>
-              ) : (
-                <div className="min-w-full">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="border-gray-700/50 hover:bg-transparent">
-                        <TableHead className="w-[100px] text-gray-400">Rank</TableHead>
-                        <TableHead className="text-gray-400">Player</TableHead>
-                        <TableHead className="text-gray-400">Tier</TableHead>
-                        <TableHead className="text-right text-gray-400">Points</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {(topThree.length > 0 ? restUsers : filteredUsers).map((user, index) => (
-                        <motion.tr
-                          key={user._id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.3, delay: (index + 3) * 0.05 }}
-                          className={`border-gray-700/50 transition-all ${getRankColor(user.rank)} ${getRankTierColor(user.userRank)}`}
-                        >
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              {getRankIcon(user.rank)}
-                              <span className="text-white font-bold">#{user.rank}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10 border-2 border-white/20">
-                                <AvatarImage src={user.profilePhoto || undefined} alt={user.zeTag} />
-                                <AvatarFallback className="bg-black/70 text-white font-bold">
-                                  {user.zeTag.charAt(0).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-white font-medium">@{user.zeTag}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <RankBadge
-                              rank={user.userRank}
-                              rankIcon={user.rankIcon}
-                              size="sm"
-                              showLabel={false}
-                              animated={false}
-                            />
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <span className="text-red-400 font-bold text-lg">
-                              {user.points}
-                            </span>
-                          </TableCell>
-                        </motion.tr>
-                      ))}
-                    </TableBody>
-                  </Table>
+function PodiumCard({ user, rank, color, isFirst = false }: { user: LeaderboardUser, rank: number, color: 'yellow' | 'slate' | 'orange', isFirst?: boolean }) {
+    const borderColor = {
+        yellow: 'border-yellow-500/50',
+        slate: 'border-slate-400/30',
+        orange: 'border-orange-700/50'
+    }[color];
+
+    const shadowColor = {
+        yellow: 'shadow-yellow-500/20',
+        slate: 'shadow-slate-500/10',
+        orange: 'shadow-orange-500/10'
+    }[color];
+
+    const iconColor = {
+        yellow: 'text-yellow-400',
+        slate: 'text-slate-300',
+        orange: 'text-orange-400'
+    }[color];
+
+    const bgGradient = {
+        yellow: 'from-yellow-500/10 to-yellow-900/10',
+        slate: 'from-slate-500/10 to-slate-900/10',
+        orange: 'from-orange-500/10 to-orange-900/10'
+    }[color];
+
+    return (
+        <div className={cn(
+            "relative flex flex-col items-center p-2 md:p-6 rounded-2xl bg-transparent backdrop-blur-sm border",
+            borderColor,
+           "shadow-2xl", shadowColor,
+            isFirst ? "py-4 md:py-10" : "py-3 md:py-6"
+        )}>
+             {/* Crown/Rank Indicator */}
+             <div className="absolute -top-2 md:-top-5">
+                {rank === 1 ? (
+                     <div className="bg-yellow-500 text-black p-1.5 md:p-3 rounded-full shadow-lg shadow-yellow-500/50">
+                        <Crown className="w-3 h-3 md:w-6 md:h-6 fill-current" />
+                     </div>
+                ) : (
+                    <div className={cn("px-1.5 py-0.5 md:px-4 md:py-1 rounded-full text-[10px] md:text-sm font-bold border bg-[#09090b]", borderColor, iconColor)}>
+                        #{rank}
+                    </div>
+                )}
+             </div>
+
+             {/* Background Effects */}
+             <div className={cn("absolute inset-0 rounded-2xl bg-gradient-to-b opacity-50 pointer-events-none", bgGradient)} />
+
+             <Avatar className={cn(
+                 "border-2 md:border-4 mb-1.5 md:mb-4", 
+                 isFirst ? "w-12 h-12 sm:w-24 sm:h-24" : "w-10 h-10 sm:w-16 sm:h-16",
+                 borderColor
+            )}>
+                <AvatarImage src={user.profilePhoto || undefined} alt={user.zeTag} className="object-cover" />
+                <AvatarFallback className="bg-neutral-900 text-white font-bold text-xs md:text-xl">{user.zeTag[0].toUpperCase()}</AvatarFallback>
+            </Avatar>
+
+            <div className="text-center relative z-10 space-y-0.5 md:space-y-1 w-full">
+                <h3 className={cn("font-bold text-white tracking-tight truncate w-full px-1 text-center", isFirst ? "text-xs sm:text-xl" : "text-[10px] md:text-base")}>
+                    {user.zeTag}
+                </h3>
+                <div className="flex items-center justify-center gap-1.5 opacity-80 scale-[0.65] md:scale-100">
+                     <Badge variant="outline" className={cn("text-[9px] md:text-[10px] uppercase tracking-wider border-white/10 bg-white/5", iconColor)}>
+                        {user.userRank}
+                     </Badge>
                 </div>
-              )}
+                <div className={cn("font-mono font-bold mt-0.5 md:mt-2", isFirst ? "text-sm sm:text-2xl text-yellow-500" : "text-xs md:text-lg text-white/90")}>
+                    {user.points.toLocaleString()} <span className="hidden md:inline text-[10px] sm:text-sm font-sans font-medium opacity-50">XP</span>
+                </div>
             </div>
-          </GlassCard>
-        </>
-      )}
-    </motion.div>
-  );
+        </div>
+    )
+}
+
+function LeaderboardRow({ user }: { user: LeaderboardUser }) {
+    const rank = user.rank;
+    
+    return (
+        <motion.div 
+            layout
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="group relative flex items-center justify-between p-2.5 md:p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-white/10 transition-all duration-300"
+        >
+            <div className="flex items-center gap-2 md:gap-12">
+                <div className="w-6 md:w-8 flex justify-center">
+                    <span className={cn(
+                        "font-mono font-bold text-sm md:text-lg",
+                        rank <= 3 ? "text-yellow-500" : "text-gray-500"
+                    )}>
+                        #{rank}
+                    </span>
+                </div>
+                
+                <div className="flex items-center gap-2 md:gap-4">
+                    <Avatar className="h-8 w-8 md:h-12 md:w-12 border border-white/10 group-hover:border-red-500/50 transition-colors">
+                        <AvatarImage src={user.profilePhoto || undefined} />
+                        <AvatarFallback className="bg-neutral-800 text-[10px] md:text-xs">{user.zeTag.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    
+                    <div>
+                        <div className="font-bold text-white text-xs md:text-base group-hover:text-red-400 transition-colors">
+                            {user.zeTag}
+                        </div>
+                        <div className="text-[10px] md:text-xs text-gray-500 md:hidden">
+                            {user.userRank}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex items-center gap-4 md:gap-16 text-right">
+                <div className="hidden md:block text-xs md:text-sm text-gray-400 font-medium">
+                    {user.userRank}
+                </div>
+                
+                <div className="w-16 md:w-20">
+                    <span className="font-mono font-bold text-sm md:text-base text-white group-hover:text-yellow-400 transition-colors">
+                        {user.points.toLocaleString()}
+                    </span>
+                    <span className="text-[9px] md:text-[10px] text-gray-600 block leading-none mt-0.5 md:mt-1">XP</span>
+                </div>
+            </div>
+        </motion.div>
+    )
+}
+
+function LeaderboardSkeleton() {
+    return (
+        <div className="space-y-6">
+            {/* Podium Skeleton */}
+            <div className="flex justify-center items-end gap-4 h-64 mb-12">
+                <Skeleton className="w-1/3 h-48 rounded-t-2xl opacity-50" />
+                <Skeleton className="w-1/3 h-64 rounded-t-2xl opacity-75" />
+                <Skeleton className="w-1/3 h-40 rounded-t-2xl opacity-50" />
+            </div>
+            
+            {/* List Skeleton */}
+            <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                    <div key={i} className="h-20 bg-white/5 rounded-xl animate-pulse" />
+                ))}
+            </div>
+        </div>
+    )
+}
+
+function EmptyState() {
+    return (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="h-20 w-20 bg-white/5 rounded-full flex items-center justify-center mb-6">
+                <Search className="h-8 w-8 text-gray-500" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">No players found</h3>
+            <p className="text-gray-500 max-w-sm">
+                We couldn't find any players matching your current filters. Try adjusting your search criteria.
+            </p>
+        </div>
+    )
 }

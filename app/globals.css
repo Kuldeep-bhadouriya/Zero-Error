@@ -76,6 +76,16 @@ body {
   .hover\:scrollbar-thumb-red-500\/70:hover::-webkit-scrollbar-thumb {
     background: rgba(239, 68, 68, 0.7);
   }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
 }
 
 /* Gaming animations and effects */
