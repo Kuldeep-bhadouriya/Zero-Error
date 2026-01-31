@@ -313,7 +313,7 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
               <Label htmlFor="difficulty">Difficulty</Label>
               <Select
                 value={formData.difficulty}
-                onValueChange={(value) => setFormData({ ...formData, difficulty: value })}
+                onValueChange={(value) => setFormData({ ...formData, difficulty: value as 'Easy' | 'Medium' | 'Hard' })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -388,7 +388,7 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
               <Label htmlFor="requiredProofType">Proof Type</Label>
               <Select
                 value={formData.requiredProofType}
-                onValueChange={(value) => setFormData({ ...formData, requiredProofType: value })}
+                onValueChange={(value) => setFormData({ ...formData, requiredProofType: value as 'image' | 'video' | 'both' })}
               >
                 <SelectTrigger>
                   <SelectValue />
