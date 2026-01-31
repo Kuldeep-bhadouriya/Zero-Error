@@ -441,112 +441,8 @@ export default function EventsPage() {
             ))}
 
             {/* Hardcoded Legacy Events */}
-            <motion.div
-              className="bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden group hover:border-red-500/50 transition-all duration-300 shadow-2xl"
-              variants={itemVariants}
-              whileHover={{ scale: 1.02, y: -5 }}
-            >
-              {/* Event Cover Image */}
-              <div className="relative w-full aspect-square overflow-hidden max-h-80">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
-                <Image
-                  src="/images/ZE_faceoff.png"
-                  alt="ZE FACEOFF Invitational"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute top-3 left-3 bg-gradient-to-r from-red-600 to-red-700 px-2 py-1 rounded-full text-xs font-bold z-20 shadow-lg">
-                  BGMI
-                </div>
-                <div className="absolute bottom-3 left-3 right-3 z-20">
-                  <h3 className="text-lg font-black uppercase text-white mb-1 drop-shadow-lg leading-tight">
-                    ZE FACEOFF Invitational
-                  </h3>
-                </div>
-              </div>
 
-              {/* Event Details */}
-              <div className="p-4 space-y-3">
-                <div className="flex items-center gap-3 text-xs text-zinc-400">
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3 w-3 text-red-500" />
-                    1v1 TDM Invitational
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3 text-red-500" />
-                    Online
-                  </span>
-                </div>
-                <div className="border-t border-zinc-800 pt-3">
-                  <span className="text-green-400 font-semibold text-sm">
-                    Winner:{" "}
-                  </span>
-                  <span className="text-white font-bold text-sm">
-                    Zoldyck Playz
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="bg-zinc-800 px-2 py-1 rounded-full text-xs text-zinc-300">
-                    Battle Royale
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-red-500 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* EAFC SHOWDOWN */}
-            <motion.div
-              className="bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden group hover:border-red-500/50 transition-all duration-300 shadow-2xl"
-              variants={itemVariants}
-              whileHover={{ scale: 1.02, y: -5 }}
-            >
-              {/* Event Cover Image */}
-              <div className="relative w-full aspect-square overflow-hidden max-h-80">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
-                <Image
-                  src="/images/EAFC_showdown.png"
-                  alt="EAFC SHOWDOWN"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute top-3 left-3 bg-gradient-to-r from-blue-600 to-blue-700 px-2 py-1 rounded-full text-xs font-bold z-20 shadow-lg">
-                  EAFC 25
-                </div>
-                <div className="absolute bottom-3 left-3 right-3 z-20">
-                  <h3 className="text-lg font-black uppercase text-white mb-1 drop-shadow-lg leading-tight">
-                    EAFC SHOWDOWN
-                  </h3>
-                </div>
-              </div>
-
-              {/* Event Details */}
-              <div className="p-4 space-y-3">
-                <div className="flex items-center gap-3 text-xs text-zinc-400">
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3 w-3 text-red-500" />
-                    1v1
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3 text-red-500" />
-                    Offline LAN
-                  </span>
-                </div>
-                <div className="border-t border-zinc-800 pt-3">
-                  <span className="text-green-400 font-semibold text-sm">
-                    Winner:{" "}
-                  </span>
-                  <span className="text-white font-bold text-sm">Harshit</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="bg-zinc-800 px-2 py-1 rounded-full text-xs text-zinc-300">
-                    Football
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-red-500 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* ZE SLAMMANIA */}
+{/* ZE SLAMMANIA */}
             <motion.div
               className="bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden group hover:border-red-500/50 transition-all duration-300 shadow-2xl"
               variants={itemVariants}
@@ -598,7 +494,59 @@ export default function EventsPage() {
               </div>
             </motion.div>
 
-            {/* ZE FFM SHOWDOWN */}
+                        {/* EAFC SHOWDOWN */}
+            <motion.div
+              className="bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden group hover:border-red-500/50 transition-all duration-300 shadow-2xl"
+              variants={itemVariants}
+              whileHover={{ scale: 1.02, y: -5 }}
+            >
+              {/* Event Cover Image */}
+              <div className="relative w-full aspect-square overflow-hidden max-h-80">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
+                <Image
+                  src="/images/EAFC_showdown.png"
+                  alt="EAFC SHOWDOWN"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute top-3 left-3 bg-gradient-to-r from-blue-600 to-blue-700 px-2 py-1 rounded-full text-xs font-bold z-20 shadow-lg">
+                  EAFC 25
+                </div>
+                <div className="absolute bottom-3 left-3 right-3 z-20">
+                  <h3 className="text-lg font-black uppercase text-white mb-1 drop-shadow-lg leading-tight">
+                    EAFC SHOWDOWN
+                  </h3>
+                </div>
+              </div>
+
+              {/* Event Details */}
+              <div className="p-4 space-y-3">
+                <div className="flex items-center gap-3 text-xs text-zinc-400">
+                  <span className="flex items-center gap-1">
+                    <Users className="h-3 w-3 text-red-500" />
+                    1v1
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3 text-red-500" />
+                    Offline LAN
+                  </span>
+                </div>
+                <div className="border-t border-zinc-800 pt-3">
+                  <span className="text-green-400 font-semibold text-sm">
+                    Winner:{" "}
+                  </span>
+                  <span className="text-white font-bold text-sm">Harshit</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="bg-zinc-800 px-2 py-1 rounded-full text-xs text-zinc-300">
+                    Football
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-red-500 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            </motion.div>
+
+                        {/* ZE FFM SHOWDOWN */}
             <motion.div
               className="bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden group hover:border-red-500/50 transition-all duration-300 shadow-2xl"
               variants={itemVariants}
@@ -641,6 +589,59 @@ export default function EventsPage() {
                   </span>
                   <span className="text-white font-bold text-sm">
                     Team Tag Elite
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="bg-zinc-800 px-2 py-1 rounded-full text-xs text-zinc-300">
+                    Battle Royale
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-red-500 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden group hover:border-red-500/50 transition-all duration-300 shadow-2xl"
+              variants={itemVariants}
+              whileHover={{ scale: 1.02, y: -5 }}
+            >
+              {/* Event Cover Image */}
+              <div className="relative w-full aspect-square overflow-hidden max-h-80">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
+                <Image
+                  src="/images/ZE_faceoff.png"
+                  alt="ZE FACEOFF Invitational"
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute top-3 left-3 bg-gradient-to-r from-red-600 to-red-700 px-2 py-1 rounded-full text-xs font-bold z-20 shadow-lg">
+                  BGMI
+                </div>
+                <div className="absolute bottom-3 left-3 right-3 z-20">
+                  <h3 className="text-lg font-black uppercase text-white mb-1 drop-shadow-lg leading-tight">
+                    ZE FACEOFF Invitational
+                  </h3>
+                </div>
+              </div>
+
+              {/* Event Details */}
+              <div className="p-4 space-y-3">
+                <div className="flex items-center gap-3 text-xs text-zinc-400">
+                  <span className="flex items-center gap-1">
+                    <Users className="h-3 w-3 text-red-500" />
+                    1v1 TDM Invitational
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3 text-red-500" />
+                    Online
+                  </span>
+                </div>
+                <div className="border-t border-zinc-800 pt-3">
+                  <span className="text-green-400 font-semibold text-sm">
+                    Winner:{" "}
+                  </span>
+                  <span className="text-white font-bold text-sm">
+                    Zoldyck Playz
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
