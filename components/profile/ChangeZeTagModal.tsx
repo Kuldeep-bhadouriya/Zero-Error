@@ -93,10 +93,10 @@ export function ChangeZeTagModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-black/95 border-white/10 text-white shadow-2xl">
+      <DialogContent className="bg-gradient-to-br from-zinc-950 to-black border border-white/10 text-white shadow-2xl rounded-2xl max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Change Username</DialogTitle>
-          <DialogDescription className="text-gray-400 text-sm">
+          <DialogTitle className="text-2xl font-bold text-white">Change Username</DialogTitle>
+          <DialogDescription className="text-gray-400 text-sm mt-2">
             Choose a unique username (3-20 characters: letters, numbers, and underscores only)
           </DialogDescription>
         </DialogHeader>
@@ -110,38 +110,41 @@ export function ChangeZeTagModal({
               placeholder="Enter your username"
               value={zeTag}
               onChange={(e) => setZeTag(e.target.value)}
-              className="bg-black/60 border-white/10 text-white placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20 h-11 font-mono"
+              className="bg-black/50 border-white/20 text-white placeholder:text-gray-500 focus:border-red-500/50 focus:ring-2 focus:ring-red-500/20 h-12 font-mono text-base rounded-xl transition-all"
               maxLength={20}
+              autoComplete="off"
             />
           </div>
 
           {/* Availability Status */}
-          <div className="min-h-[32px] bg-black/60 rounded-lg p-3 border border-white/10">
+          <div className="min-h-[48px] bg-black/40 rounded-xl p-3.5 border border-white/10 backdrop-blur-sm">
             {isChecking && debouncedZeTag.length >= 3 && (
-              <div className="flex items-center gap-2 text-gray-300">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-sm">Checking availability...</span>
+              <div className="flex items-center gap-2.5 text-gray-300">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                <span className="text-sm font-medium">Checking availability...</span>
               </div>
             )}
             {!isChecking && isAvailable === true && debouncedZeTag.length >= 3 && (
-              <div className="flex items-center gap-2 text-emerald-400">
-                <CheckCircle2 className="w-5 h-5" />
-                <span className="text-sm font-medium">This username is available!</span>
+              <div className="flex items-center gap-2.5 text-emerald-400">
+                <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm font-semibold">This username is available!</span>
               </div>
             )}
             {!isChecking && isAvailable === false && debouncedZeTag.length >= 3 && (
-              <div className="flex items-center gap-2 text-red-400">
-                <XCircle className="w-5 h-5" />
-                <span className="text-sm font-medium">{error || 'This username is not available'}</span>
+              <div className="flex items-center gap-2.5 text-red-400">
+                <XCircle className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm font-semibold">{error || 'This username is not available'}</span>
               </div>
             )}
             {debouncedZeTag.length > 0 && debouncedZeTag.length < 3 && (
-              <div className="flex items-center gap-2 text-yellow-400">
+              <div className="flex items-center gap-2.5 text-yellow-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 flex-shrink-0"></span>
                 <span className="text-sm font-medium">Username must be at least 3 characters</span>
               </div>
             )}
             {!zeTag && (
-              <div className="flex items-center gap-2 text-gray-500">
+              <div className="flex items-center gap-2.5 text-gray-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-gray-500 flex-shrink-0"></span>
                 <span className="text-sm">Enter a username to check availability</span>
               </div>
             )}
@@ -152,17 +155,17 @@ export function ChangeZeTagModal({
           <Button
             variant="outline"
             onClick={onClose}
-            className="flex-1 border-white/10 hover:bg-black/60 text-white h-11"
+            className="flex-1 border-white/20 hover:bg-white/5 text-white h-11 rounded-xl font-medium transition-all"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             disabled={!isAvailable || isSaving || zeTag === currentZeTag}
-            className="flex-1 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white font-semibold h-11 shadow-lg shadow-red-500/20"
+            className="flex-1 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white font-semibold h-11 shadow-lg shadow-red-500/30 rounded-xl transition-all hover:shadow-red-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </DialogContent>

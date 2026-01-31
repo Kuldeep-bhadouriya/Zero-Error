@@ -90,7 +90,7 @@ export function RedemptionHistory() {
 
   if (isLoading) {
     return (
-      <GlassCard variant="intense" gradient="purple" className="p-6">
+      <GlassCard variant="intense" gradient="purple" className="p-4 sm:p-6">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
         </div>
@@ -99,7 +99,7 @@ export function RedemptionHistory() {
   }
 
   return (
-    <GlassCard variant="intense" gradient="purple" className="p-4 sm:p-6" id="redemptions">
+    <GlassCard variant="intense" gradient="purple" className="p-3 sm:p-6" id="redemptions">
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="bg-purple-500/10 p-1.5 sm:p-2 rounded-lg">
@@ -136,10 +136,10 @@ export function RedemptionHistory() {
                 className={`border ${config.borderColor} ${config.bgColor} rounded-lg p-3 sm:p-4 transition-all hover:scale-[1.01]`}
               >
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4 mb-3">
-                  <div className="flex-1 w-full">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
-                      <h3 className="text-base sm:text-lg font-bold text-white">{redemption.rewardName}</h3>
-                      <span className="text-yellow-400 text-xs sm:text-sm font-semibold">
+                  <div className="flex-1 w-full min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                      <h3 className="text-base sm:text-lg font-bold text-white truncate">{redemption.rewardName}</h3>
+                      <span className="text-yellow-400 text-xs sm:text-sm font-semibold whitespace-nowrap">
                         {redemption.rewardCost} ZE Coins
                       </span>
                     </div>

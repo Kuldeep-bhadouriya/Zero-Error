@@ -198,10 +198,6 @@ function HeaderSection() {
                 animate={{ opacity: 1, y: 0 }}
                 className="relative z-10"
             >
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold tracking-wider uppercase mb-4">
-                    <Trophy className="h-3 w-3" />
-                    Season 1 Rankings
-                </div>
                 <h1 className="text-4xl md:text-6xl font-black italic tracking-tigh text-white uppercase">
                     Hall of <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Champions</span>
                 </h1>
