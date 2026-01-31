@@ -59,7 +59,7 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="relative flex min-h-screen z-10 pt-20">
+    <div className="relative flex min-h-screen z-10 pt-0">
       {/* Fluid Menu for mobile */}
       {isMobile && (
         <div className="fixed left-4 bottom-4 z-50">
@@ -248,7 +248,7 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
       <main className={cn(
         "flex-1 relative z-10 transition-all duration-300 min-h-screen",
         !isMobile && "ml-72",
-        "p-4 sm:p-6 lg:p-8"
+        "p-4 sm:p-6 lg:p-8 pt-0 sm:pt-6"
       )}>
         <AnimatePresence mode="wait" initial={false}>
           <PageTransition key={pathname}>{children}</PageTransition>

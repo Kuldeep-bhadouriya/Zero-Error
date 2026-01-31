@@ -476,7 +476,7 @@ export default function EventsPage() {
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPin className="h-3 w-3 text-red-500" />
-                    Offline LAN
+                    Lost Village Cafe, Gwalior
                   </span>
                 </div>
                 <div className="border-t border-zinc-800 pt-3">
@@ -528,7 +528,7 @@ export default function EventsPage() {
                   </span>
                   <span className="flex items-center gap-1">
                     <MapPin className="h-3 w-3 text-red-500" />
-                    Offline LAN
+                    Lost Village Cafe, Gwalior
                   </span>
                 </div>
                 <div className="border-t border-zinc-800 pt-3">
