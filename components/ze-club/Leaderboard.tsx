@@ -80,64 +80,6 @@ export default function Leaderboard() {
     <div className="text-white min-h-screen pb-24 w-full overflow-x-hidden">
       <HeaderSection />
 
-      {/* Controls Section */}
-      <div className="z-20 relative bg-transparent py-4 mb-8">
-        <div className="flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center w-full max-w-full">
-            <div className="relative w-full md:w-80 group flex-shrink-0">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-red-500 transition-colors" />
-                <Input
-                    placeholder="Search by ZeTag..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-transparent border-white/20 text-white placeholder:text-gray-500 h-10 text-sm focus:ring-1 focus:ring-red-500/50 transition-all rounded-xl hover:border-white/30"
-                />
-            </div>
-
-            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
-                <div className="flex bg-black/20 p-1 rounded-xl border border-white/10 backdrop-blur-sm flex-shrink-0">
-                    <button
-                        onClick={() => setViewState('all')}
-                        className={cn(
-                            "px-3 md:px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap",
-                            viewState === 'all' ? "bg-red-600 text-white shadow-lg shadow-red-900/20" : "text-gray-400 hover:text-white"
-                        )}
-                    >
-                        All
-                    </button>
-                    <button
-                        onClick={() => setViewState('top10')}
-                        className={cn(
-                            "px-3 md:px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap",
-                            viewState === 'top10' ? "bg-red-600 text-white shadow-lg shadow-red-900/20" : "text-gray-400 hover:text-white"
-                        )}
-                    >
-                        Top 10
-                    </button>
-                </div>
-                
-                <div className="h-8 w-[1px] bg-white/10 mx-2 hidden md:block flex-shrink-0" />
-
-                <div className="flex bg-black/20 p-1 rounded-xl border border-white/10 backdrop-blur-sm flex-shrink-0">
-                   {/* Mobile Dropdown for Ranks could go here, but for now horizontal scroll works well */}
-                    <div className="flex gap-1 flex-nowrap">
-                        {['all', 'Errorless Legend', 'Vanguard', 'Gladiator'].map((r) => (
-                             <button
-                                key={r}
-                                onClick={() => setRankFilter(r)}
-                                className={cn(
-                                    "px-2 md:px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all",
-                                    rankFilter === r ? "bg-white/10 text-white border border-white/10" : "text-gray-400 hover:text-white hover:bg-white/5"
-                                )}
-                            >
-                                {r === 'all' ? 'All Ranks' : r}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </div>
-      </div>
-
       {loading ? (
         <LeaderboardSkeleton />
       ) : error ? (
@@ -153,10 +95,67 @@ export default function Leaderboard() {
                 <EmptyState />
             ) : (
                 <>
-                {/* Podium Section - Only show if current page includes top ranks */}
-                {!searchQuery && viewState === 'all' && rankFilter === 'all' && (
+                {/* Podium Section - Show top 3 first */}
+                {topThree.length > 0 && (
                     <Podium topThree={topThree} />
                 )}
+
+                {/* Controls Section - Now after podium */}
+                <div className="z-20 relative bg-transparent py-4">
+                  <div className="flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center w-full max-w-full">
+                      <div className="relative w-full md:w-80 group flex-shrink-0">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-red-500 transition-colors" />
+                          <Input
+                              placeholder="Search by ZeTag..."
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              className="pl-10 bg-transparent border-white/20 text-white placeholder:text-gray-500 h-10 text-sm focus:ring-1 focus:ring-red-500/50 transition-all rounded-xl hover:border-white/30"
+                          />
+                      </div>
+
+                      <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
+                          <div className="flex bg-black/20 p-1 rounded-xl border border-white/10 backdrop-blur-sm flex-shrink-0">
+                              <button
+                                  onClick={() => setViewState('all')}
+                                  className={cn(
+                                      "px-3 md:px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap",
+                                      viewState === 'all' ? "bg-red-600 text-white shadow-lg shadow-red-900/20" : "text-gray-400 hover:text-white"
+                                  )}
+                              >
+                                  All
+                              </button>
+                              <button
+                                  onClick={() => setViewState('top10')}
+                                  className={cn(
+                                      "px-3 md:px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap",
+                                      viewState === 'top10' ? "bg-red-600 text-white shadow-lg shadow-red-900/20" : "text-gray-400 hover:text-white"
+                                  )}
+                              >
+                                  Top 10
+                              </button>
+                          </div>
+                          
+                          <div className="h-8 w-[1px] bg-white/10 mx-2 hidden md:block flex-shrink-0" />
+
+                          <div className="flex bg-black/20 p-1 rounded-xl border border-white/10 backdrop-blur-sm flex-shrink-0">
+                            <div className="flex gap-1 flex-nowrap">
+                                  {['all', 'Errorless Legend', 'Vanguard', 'Gladiator'].map((r) => (
+                                      <button
+                                          key={r}
+                                          onClick={() => setRankFilter(r)}
+                                          className={cn(
+                                              "px-2 md:px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all",
+                                              rankFilter === r ? "bg-white/10 text-white border border-white/10" : "text-gray-400 hover:text-white hover:bg-white/5"
+                                          )}
+                                      >
+                                          {r === 'all' ? 'All Ranks' : r}
+                                      </button>
+                                  ))}
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                </div>
 
                 {/* List Section */}
                 <div className="space-y-3 w-full">
@@ -172,7 +171,7 @@ export default function Leaderboard() {
                     </div>
                     
                     <div className="space-y-2">
-                        {(searchQuery || rankFilter !== 'all' ? filteredUsers : restUsers).map((user) => (
+                        {restUsers.map((user) => (
                             <LeaderboardRow 
                                 key={user._id} 
                                 user={user} 
@@ -198,10 +197,7 @@ function HeaderSection() {
                 animate={{ opacity: 1, y: 0 }}
                 className="relative z-10"
             >
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold tracking-wider uppercase mb-3">
-                    <Trophy className="h-3 w-3" />
-                    Season 1 Rankings
-                </div>
+
                 <h1 className="text-3xl md:text-5xl lg:text-6xl font-black italic tracking-tight text-white uppercase leading-tight">
                     Hall of <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Champions</span>
                 </h1>
@@ -219,8 +215,8 @@ function Podium({ topThree }: { topThree: LeaderboardUser[] }) {
     const [first, second, third] = [topThree[0], topThree[1], topThree[2]];
 
     return (
-        <div className="relative py-6 mb-4 md:mb-8 mt-2 md:mt-6 overflow-hidden">
-            <div className="flex flex-row items-end justify-center gap-2 md:gap-6 max-w-4xl mx-auto px-2">
+        <div className="relative py-8 md:py-12 mb-4 md:mb-8 mt-2 md:mt-6">
+            <div className="flex flex-row items-end justify-center gap-2 md:gap-6 max-w-4xl mx-auto px-4 md:px-6">
                 {/* 2nd Place */}
                 {second && (
                      <motion.div 
@@ -293,10 +289,10 @@ function PodiumCard({ user, rank, color, isFirst = false }: { user: LeaderboardU
             "relative flex flex-col items-center p-2 md:p-6 rounded-2xl bg-transparent backdrop-blur-sm border",
             borderColor,
            "shadow-2xl", shadowColor,
-            isFirst ? "py-4 md:py-10" : "py-3 md:py-6"
+            isFirst ? "pt-8 pb-4 md:py-10" : "pt-7 pb-3 md:py-6"
         )}>
              {/* Crown/Rank Indicator */}
-             <div className="absolute -top-2 md:-top-5">
+             <div className="absolute -top-4 md:-top-5">
                 {rank === 1 ? (
                      <div className="bg-yellow-500 text-black p-1.5 md:p-3 rounded-full shadow-lg shadow-yellow-500/50">
                         <Crown className="w-3 h-3 md:w-6 md:h-6 fill-current" />
