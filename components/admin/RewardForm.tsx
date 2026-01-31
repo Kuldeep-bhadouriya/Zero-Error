@@ -24,7 +24,6 @@ interface RewardFormData {
   stock: number
   requiredRank: string
   exclusiveToTop3: boolean
-  discountable: boolean
 }
 
 interface RewardFormProps {
@@ -60,19 +59,16 @@ export default function RewardForm({ reward, onSuccess, onCancel }: RewardFormPr
           stock: reward.stock,
           requiredRank: reward.requiredRank || 'Rookie',
           exclusiveToTop3: reward.exclusiveToTop3 || false,
-          discountable: reward.discountable !== undefined ? reward.discountable : true,
         }
       : {
           requiredRank: 'Rookie',
           exclusiveToTop3: false,
-          discountable: true,
           stock: 10,
           cost: 100,
         },
   })
 
   const exclusiveToTop3 = watch('exclusiveToTop3')
-  const discountable = watch('discountable')
 
   const onSubmit = async (data: RewardFormData) => {
     setLoading(true)
@@ -262,24 +258,6 @@ export default function RewardForm({ reward, onSuccess, onCancel }: RewardFormPr
             disabled={loading}
           />
         </div>
-
-        {/* Discountable */}
-        <div className="flex items-center justify-between space-x-2 rounded-lg border p-4">
-          <div className="space-y-0.5">
-            <Label htmlFor="discountable" className="cursor-pointer">
-              Discountable
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              Vanguard+ gets 10% discount
-            </p>
-          </div>
-          <Switch
-            id="discountable"
-            checked={discountable}
-            onCheckedChange={(checked) => setValue('discountable', checked)}
-            disabled={loading}
-          />
-        </div>
       </div>
 
       {/* Preview Box */}
@@ -296,7 +274,6 @@ export default function RewardForm({ reward, onSuccess, onCancel }: RewardFormPr
           <p>
             <span className="font-medium">Cost:</span>{' '}
             {watch('cost') || 0} ZE Coins
-            {discountable && ' (10% off for Vanguard+)'}
           </p>
           <p>
             <span className="font-medium">Stock:</span>{' '}
