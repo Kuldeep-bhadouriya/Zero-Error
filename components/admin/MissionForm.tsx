@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { Slider } from '@/components/ui/slider'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Calendar } from '@/components/ui/calendar'
@@ -322,15 +321,17 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="points">Points: {formData.points}</Label>
-            <Slider
+            <Label htmlFor="points">Points Awarded *</Label>
+            <Input
               id="points"
-              min={10}
-              max={10000}
-              step={10}
-              value={[formData.points]}
-              onValueChange={([value]) => setFormData({ ...formData, points: value })}
-              className="mt-2"
+              type="number"
+              min="10"
+              max="10000"
+              step="10"
+              value={formData.points}
+              onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) || 100 })}
+              placeholder="100"
+              required
             />
             <p className="text-sm text-muted-foreground mt-1">
               Easy: 50-200 | Medium: 200-500 | Hard: 500+
@@ -338,17 +339,17 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
           </div>
 
           <div>
-            <Label htmlFor="maxCompletions">Max Completions (0 = unlimited)</Label>
+            <Label htmlFor="maxCompletions">Max Completions</Label>
             <Input
               id="maxCompletions"
               type="number"
               min="0"
               value={formData.maxCompletions}
               onChange={(e) => setFormData({ ...formData, maxCompletions: parseInt(e.target.value) || 0 })}
-              placeholder="0"
+              placeholder="0 (unlimited)"
             />
             <p className="text-sm text-muted-foreground mt-1">
-              Limit total number of users who can complete this mission
+              Set to 0 for unlimited completions, or specify a limit
             </p>
           </div>
         </CardContent>

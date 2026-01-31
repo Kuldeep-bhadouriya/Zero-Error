@@ -59,7 +59,7 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="relative flex min-h-screen z-10">
+    <div className="relative flex min-h-screen z-10 pt-20">
       {/* Fluid Menu for mobile */}
       {isMobile && (
         <div className="fixed left-4 bottom-4 z-50">
@@ -116,7 +116,7 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
       {!isMobile && (
       <aside
         className={cn(
-          "fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-72 bg-[#09090b]/95 backdrop-blur-xl border-r border-white/5 overflow-hidden z-40 flex flex-col shadow-2xl transition-all duration-300"
+          "fixed left-0 top-20 h-[calc(100vh-5rem)] w-72 bg-[#09090b]/95 backdrop-blur-xl border-r border-white/5 overflow-hidden z-40 flex flex-col shadow-2xl transition-all duration-300"
         )}
       >
         {/* Scrollable container */}
@@ -248,7 +248,7 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
       <main className={cn(
         "flex-1 relative z-10 transition-all duration-300 min-h-screen",
         !isMobile && "ml-72",
-        "p-4 sm:p-6 lg:p-8 pt-24 sm:pt-24" // Increased top padding to clear the navbar
+        "p-4 sm:p-6 lg:p-8"
       )}>
         <AnimatePresence mode="wait" initial={false}>
           <PageTransition key={pathname}>{children}</PageTransition>
