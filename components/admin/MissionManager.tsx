@@ -46,6 +46,16 @@ export default function MissionManager() {
   }
 
   function handleEdit(mission: any) {
+    console.log('MissionManager: handleEdit called with mission:', {
+      id: mission._id,
+      name: mission.name,
+      description: mission.description,
+      points: mission.points,
+      category: mission.category,
+      difficulty: mission.difficulty,
+      instructions: mission.instructions,
+      fullMission: mission
+    })
     setEditingMission(mission)
     setActiveTab('form')
   }
@@ -199,6 +209,7 @@ export default function MissionManager() {
             </CardHeader>
             <CardContent>
               <MissionForm
+                key={editingMission?._id || 'new'}
                 mission={editingMission}
                 onSuccess={handleFormSuccess}
                 onCancel={handleFormCancel}

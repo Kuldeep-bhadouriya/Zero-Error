@@ -49,27 +49,53 @@ const DIFFICULTIES = [
 
 export default function MissionForm({ mission, onSuccess, onCancel }: MissionFormProps) {
   const { toast } = useToast()
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    points: 100,
-    category: 'General',
-    difficulty: 'Easy',
-    requiredProofType: 'image',
-    maxFileSize: 50,
-    instructions: '',
-    exampleImageUrl: '',
-    isTimeLimited: false,
-    startDate: null as Date | null,
-    endDate: null as Date | null,
-    daysAvailable: 0,
-    active: true,
-    featured: false,
-    maxCompletions: 0,
-  })
-
+  
+  // Initialize formData - if mission exists, use its data, otherwise use defaults
+  const getInitialFormData = (missionData?: any) => {
+    if (missionData) {
+      return {
+        name: missionData.name || '',
+        description: missionData.description || '',
+        points: missionData.points || 100,
+        category: missionData.category || 'General',
+        difficulty: (missionData.difficulty || 'Easy') as 'Easy' | 'Medium' | 'Hard',
+        requiredProofType: (missionData.requiredProofType || 'image') as 'image' | 'video' | 'both',
+        maxFileSize: missionData.maxFileSize || 50,
+        instructions: missionData.instructions || '',
+        exampleImageUrl: missionData.exampleImageUrl || '',
+        isTimeLimited: missionData.isTimeLimited || false,
+        startDate: missionData.startDate ? new Date(missionData.startDate) : null,
+        endDate: missionData.endDate ? new Date(missionData.endDate) : null,
+        daysAvailable: missionData.daysAvailable || 0,
+        active: missionData.active ?? true,
+        featured: missionData.featured || false,
+        maxCompletions: missionData.maxCompletions || 0,
+      }
+    }
+    return {
+      name: '',
+      description: '',
+      points: 100,
+      category: 'General',
+      difficulty: 'Easy' as 'Easy' | 'Medium' | 'Hard',
+      requiredProofType: 'image' as 'image' | 'video' | 'both',
+      maxFileSize: 50,
+      instructions: '',
+      exampleImageUrl: '',
+      isTimeLimited: false,
+      startDate: null as Date | null,
+      endDate: null as Date | null,
+      daysAvailable: 0,
+      active: true,
+      featured: false,
+      maxCompletions: 0,
+    }
+  }
+  
+  // Initialize state with mission data if available
+  const [formData, setFormData] = useState(() => getInitialFormData(mission))
   const [exampleImage, setExampleImage] = useState<File | null>(null)
-  const [exampleImagePreview, setExampleImagePreview] = useState<string>('')
+  const [exampleImagePreview, setExampleImagePreview] = useState<string>(mission?.exampleImageUrl || '')
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showDateWarningDialog, setShowDateWarningDialog] = useState(false)
@@ -78,31 +104,26 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
   // UploadThing hook for example image uploads
   const { startUpload } = useUploadThing('missionExampleUploader')
 
+  // Effect to update form when mission prop changes (for when switching between missions)
   useEffect(() => {
+    console.log('MissionForm: useEffect triggered, mission:', mission?._id, mission?.name)
+    
     if (mission) {
-      setFormData({
-        name: mission.name || '',
-        description: mission.description || '',
-        points: mission.points || 100,
-        category: mission.category || 'General',
-        difficulty: mission.difficulty || 'Easy',
-        requiredProofType: mission.requiredProofType || 'image',
-        maxFileSize: mission.maxFileSize || 50,
-        instructions: mission.instructions || '',
-        exampleImageUrl: mission.exampleImageUrl || '',
-        isTimeLimited: mission.isTimeLimited || false,
-        startDate: mission.startDate ? new Date(mission.startDate) : null,
-        endDate: mission.endDate ? new Date(mission.endDate) : null,
-        daysAvailable: mission.daysAvailable || 0,
-        active: mission.active ?? true,
-        featured: mission.featured || false,
-        maxCompletions: mission.maxCompletions || 0,
-      })
-      if (mission.exampleImageUrl) {
-        setExampleImagePreview(mission.exampleImageUrl)
-      }
+      // Editing mode: populate form with mission data
+      const newFormData = getInitialFormData(mission)
+      console.log('MissionForm: Setting form data for editing:', newFormData)
+      setFormData(newFormData)
+      setExampleImagePreview(mission.exampleImageUrl || '')
+      setExampleImage(null)
+    } else {
+      // Create mode: reset form to initial values
+      console.log('MissionForm: Resetting form for new mission')
+      const emptyFormData = getInitialFormData()
+      setFormData(emptyFormData)
+      setExampleImagePreview('')
+      setExampleImage(null)
     }
-  }, [mission])
+  }, [mission?._id])
 
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
