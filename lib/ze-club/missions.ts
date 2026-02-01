@@ -45,16 +45,19 @@ export async function getMissionsForUserEmail(email?: string | null): Promise<Mi
   const missions = await Mission.find(filter)
     .select('-createdBy -deactivatedBy -deactivatedAt')
     .sort({ featured: -1, createdAt: -1 })
+    .lean() // Convert to plain objects
 
   let userSubmissions: any[] = []
 
   if (email) {
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email }).lean()
     if (user) {
       userSubmissions = await MissionSubmission.find({
         user: user._id,
         status: { $in: ['pending', 'approved'] },
-      }).select('mission status')
+      })
+        .select('mission status')
+        .lean()
     }
   }
 
@@ -62,15 +65,14 @@ export async function getMissionsForUserEmail(email?: string | null): Promise<Mi
 
   const availableMissions = missions
     .map((mission: any) => {
-      const missionObj = mission.toObject()
-
       let isExpired = false
       let daysRemaining: number | null = null
 
       if (mission.isTimeLimited && mission.endDate) {
-        isExpired = mission.endDate < now
+        const endDate = new Date(mission.endDate)
+        isExpired = endDate < now
         if (!isExpired) {
-          const diffTime = mission.endDate.getTime() - now.getTime()
+          const diffTime = endDate.getTime() - now.getTime()
           daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
         }
       }
@@ -83,8 +85,14 @@ export async function getMissionsForUserEmail(email?: string | null): Promise<Mi
       const isCompleted = userSubmissionStatus === 'approved'
       const isPending = userSubmissionStatus === 'pending'
 
+      // Convert _id to string and dates to ISO strings for serialization
       return {
-        ...missionObj,
+        ...mission,
+        _id: mission._id.toString(),
+        startDate: mission.startDate ? new Date(mission.startDate).toISOString() : undefined,
+        endDate: mission.endDate ? new Date(mission.endDate).toISOString() : undefined,
+        createdAt: mission.createdAt ? new Date(mission.createdAt).toISOString() : undefined,
+        updatedAt: mission.updatedAt ? new Date(mission.updatedAt).toISOString() : undefined,
         isExpired,
         daysRemaining,
         isMaxedOut,

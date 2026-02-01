@@ -31,18 +31,31 @@ async function UserSubmissions() {
   }
 
   await dbConnect()
-  const user = await User.findOne({ email: session.user.email })
+  const user = await User.findOne({ email: session.user.email }).lean()
   if (!user) {
     return <p className="text-gray-400">User not found.</p>
   }
 
-  const submissions: PopulatedSubmission[] = await MissionSubmission.find({
+  const submissions = await MissionSubmission.find({
     user: user._id,
   })
     .populate({ path: 'mission', model: Mission, select: 'name' })
     .sort({ submittedAt: -1 })
+    .lean()
 
-  if (submissions.length === 0) {
+  const serializedSubmissions: PopulatedSubmission[] = submissions.map((sub: any) => ({
+    _id: sub._id.toString(),
+    mission: {
+      _id: sub.mission._id.toString(),
+      name: sub.mission.name,
+    },
+    proof: sub.proof,
+    status: sub.status,
+    submittedAt: new Date(sub.submittedAt),
+    remarks: sub.remarks,
+  }))
+
+  if (serializedSubmissions.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 border border-white/10 mb-4" />
@@ -54,7 +67,7 @@ async function UserSubmissions() {
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      {submissions.map((submission) => (
+      {serializedSubmissions.map((submission) => (
         <GlassCard key={submission._id} variant="intense" hover className="text-white p-4 sm:p-5 md:p-6">
           <div className="mb-4">
             <div className="flex items-start justify-between">
@@ -210,16 +223,16 @@ async function MissionsSummary({
   ]
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div className="grid grid-cols-3 gap-2 sm:gap-3">
       {items.map((item) => (
-        <GlassCard key={item.label} variant="subtle" className="p-4">
-          <div className="text-xs uppercase tracking-widest text-zinc-500 font-medium">
+        <GlassCard key={item.label} variant="subtle" className="p-3 sm:p-4">
+          <div className="text-[10px] sm:text-xs uppercase tracking-widest text-zinc-500 font-medium">
             {item.label}
           </div>
-          <div className={`mt-2 text-2xl font-bold tabular-nums ${item.accent}`}>
+          <div className={`mt-1 sm:mt-2 text-xl sm:text-2xl font-bold tabular-nums ${item.accent}`}>
             {item.value}
           </div>
-          <div className="mt-1 text-xs text-zinc-500">This week</div>
+          <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-zinc-500">This week</div>
         </GlassCard>
       ))}
     </div>

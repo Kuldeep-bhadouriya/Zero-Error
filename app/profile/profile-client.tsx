@@ -53,7 +53,7 @@ export function ProfileClient({ profile, stats }: ProfileClientProps) {
       <ProfileStats stats={stats} />
 
       {/* Tabbed Interface for Settings & History */}
-      <div className="mt-8">
+      <div className="mt-8 px-4 sm:px-0">
         <Tabs defaultValue="general" className="w-full">
           <div className="flex justify-center sm:justify-start mb-6">
             <TabsList className="bg-black/40 border border-white/5 h-12 p-1 rounded-xl glass-effect w-full sm:w-auto grid grid-cols-3 sm:flex">

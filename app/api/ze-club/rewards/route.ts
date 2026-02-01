@@ -32,7 +32,7 @@ export async function GET() {
       }
     }
 
-    const rewards = await Reward.find({ stock: { $gt: 0 } }).sort({ cost: 1 });
+    const rewards = await Reward.find({ stock: { $gt: 0 } }).sort({ cost: -1 });
 
     const processedRewards = rewards.map(reward => {
       const rewardRankValue = RANK_VALUES[reward.requiredRank || 'Rookie'] || 0;

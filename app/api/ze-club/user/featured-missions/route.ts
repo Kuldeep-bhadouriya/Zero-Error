@@ -31,21 +31,21 @@ export async function GET() {
     const missions = await Mission.find(filter)
       .select('name description points category difficulty isTimeLimited endDate maxCompletions currentCompletions')
       .sort({ createdAt: -1 })
-      .limit(6) // Return max 6 featured missions
+      .limit(6)
+      .lean() // Convert to plain objects
 
     // Add computed fields and filter out expired/maxed missions
     const availableMissions = missions
-      .map((mission) => {
-        const missionObj = mission.toObject()
-        
+      .map((mission: any) => {
         let isExpired = false
         let daysRemaining = null
         
         // Check if mission is expired
         if (mission.isTimeLimited && mission.endDate) {
-          isExpired = mission.endDate < now
+          const endDate = new Date(mission.endDate)
+          isExpired = endDate < now
           if (!isExpired) {
-            const diffTime = mission.endDate.getTime() - now.getTime()
+            const diffTime = endDate.getTime() - now.getTime()
             daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
           }
         }
@@ -56,7 +56,9 @@ export async function GET() {
           : false
 
         return {
-          ...missionObj,
+          ...mission,
+          _id: mission._id.toString(),
+          endDate: mission.endDate ? new Date(mission.endDate).toISOString() : undefined,
           isExpired,
           daysRemaining,
           isMaxedOut,

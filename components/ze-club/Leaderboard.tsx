@@ -118,9 +118,8 @@ export default function Leaderboard() {
                 <div className="h-8 w-[1px] bg-white/10 mx-2 hidden md:block flex-shrink-0" />
 
                 <div className="flex bg-black/20 p-1 rounded-xl border border-white/10 backdrop-blur-sm flex-shrink-0">
-                   {/* Mobile Dropdown for Ranks could go here, but for now horizontal scroll works well */}
-                    <div className="flex gap-1">
-                        {['all', 'Errorless Legend', 'Vanguard', 'Gladiator'].map((r) => (
+                    <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+                        {RANKS.map((r) => (
                              <button
                                 key={r}
                                 onClick={() => setRankFilter(r)}

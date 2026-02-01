@@ -73,10 +73,10 @@ export default async function ProfilePage() {
 
   return (
     <ZEClubLayout>
-      <div className="min-h-screen py-8 sm:py-12 px-3 sm:px-4 lg:px-6">
-        <div className="container mx-auto max-w-7xl space-y-4 sm:space-y-6 lg:space-y-8">
+      <div className="min-h-screen py-8 sm:py-12">
+        <div className="w-full max-w-7xl mx-auto space-y-4 sm:space-y-6 lg:space-y-8 px-0 sm:px-4 lg:px-6">
           {/* Page Header */}
-          <div className="mb-4 sm:mb-6 lg:mb-8">
+          <div className="mb-4 sm:mb-6 lg:mb-8 px-4 sm:px-0">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 sm:mb-3 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
               My Profile
             </h1>
