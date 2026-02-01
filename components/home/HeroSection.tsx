@@ -102,7 +102,7 @@ const HeroSection = ({
 
       {/* Content with opposite parallax movement */}
       <motion.div
-        className="container max-w-5xl mx-auto relative z-30 h-full flex flex-col justify-center px-4 sm:px-6 pt-24 md:pt-32"
+        className="container max-w-5xl mx-auto relative z-30 h-full flex flex-col justify-center px-4 sm:px-6 pt-0 md:pt-32"
         style={{
           y: contentTranslateY,
           opacity: contentOpacity,

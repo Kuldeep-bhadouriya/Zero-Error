@@ -108,7 +108,7 @@ export default function ContactUs({
 
   return (
     <motion.div
-      className={`bg-black text-white py-16 relative overflow-hidden ${className} pt-32`}
+      className={`bg-black text-white py-16 relative overflow-hidden ${className} pt-20 md:pt-32`}
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"

@@ -112,7 +112,7 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
       {/* Hero Section */}
-      <section className="relative h-[400px] overflow-hidden pt-24">
+      <section className="relative h-[400px] overflow-hidden pt-0 md:pt-24">
         {/* Background grid effect */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(20,20,20,0.5)_2px,transparent_2px),linear-gradient(90deg,rgba(20,20,20,0.5)_2px,transparent_2px)] bg-[size:40px_40px] opacity-30 z-10"></div>
 

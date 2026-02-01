@@ -212,7 +212,7 @@ export default function ServicesPage() {
   return (
     <div className="min-h-screen text-white overflow-hidden">
       {/* Hero Section - Using new design */}
-      <section className="relative h-[350px] sm:h-[400px] overflow-hidden pt-20 sm:pt-24">
+      <section className="relative h-[350px] sm:h-[400px] overflow-hidden pt-0 sm:pt-24">
         {/* Background grid effect */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(20,20,20,0.5)_2px,transparent_2px),linear-gradient(90deg,rgba(20,20,20,0.5)_2px,transparent_2px)] bg-[size:40px_40px] opacity-30 z-10"></div>
 
