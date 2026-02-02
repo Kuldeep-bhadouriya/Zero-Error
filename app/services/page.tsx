@@ -2,16 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import ContactForm from "@/components/contact-form"; // Adjust the import path as needed
 import { motion } from "framer-motion";
 import {
   Users,
   Trophy,
   ArrowRight,
-  Gamepad2,
-  Calendar,
   Tv,
-  Briefcase,
   Building,
   Handshake,
 } from "lucide-react";

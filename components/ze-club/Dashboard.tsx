@@ -2,18 +2,16 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
 import { 
-  TrendingUp, Award, Star, Zap, Target, Clock, Trophy, Medal, Coins, 
-  User, Monitor, MessageCircle, Crosshair, Video, BookOpen, Share2, 
-  Gamepad2, Crown, Sparkles, Rocket
+  Star, Zap, Target, Trophy, Coins, 
+  User, MessageCircle, Share2, 
+  Gamepad2, Rocket
 } from "lucide-react"
 import { GlassCard } from "@/components/ui/GlassCard"
 import RankCard from "./RankCard"
 import FeaturedMissions from "./FeaturedMissions"
-import { cn } from "@/lib/utils"
 
 interface UserDashboard {
   totalPoints: number

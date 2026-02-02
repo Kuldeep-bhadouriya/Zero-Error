@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, ArrowRight, Users, Briefcase } from "lucide-react";
+import { ChevronRight, Users, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function TeamsPage() {

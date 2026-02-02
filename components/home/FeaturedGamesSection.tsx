@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
 import GameCard from "../GameCard";
 
 const FeaturedGamesSection = () => {

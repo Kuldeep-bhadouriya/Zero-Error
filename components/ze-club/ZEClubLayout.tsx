@@ -3,14 +3,12 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence } from "framer-motion"
 import PageTransition from "@/components/page-transition"
 import { useState, useEffect } from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Menu, X, LayoutDashboard, Trophy, Gift, Target, HeadphonesIcon, User, Sparkles, Shield, Home } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Menu, X, LayoutDashboard, Trophy, Gift, Target, HeadphonesIcon, User, Shield } from "lucide-react"
 import { useSession } from "next-auth/react"
-import { GlassCard } from "@/components/ui/GlassCard"
 import { MenuItem, MenuContainer } from "@/components/ui/fluid-menu"
 
 function ZEClubLayout({ children }: { children: React.ReactNode }) {

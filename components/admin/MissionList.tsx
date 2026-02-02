@@ -14,8 +14,6 @@ import {
   Trash2, 
   TrendingUp, 
   Clock, 
-  CheckCircle2, 
-  XCircle,
   Search,
   Star,
   Users,

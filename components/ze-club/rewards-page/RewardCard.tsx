@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Coins, Package, Lock, Gift, Sparkles, AlertCircle, ShoppingBag, Zap, Clock } from 'lucide-react';
+import { Coins, Package, Lock, Gift, Sparkles, AlertCircle, Zap, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IReward } from '@/models/reward';
 

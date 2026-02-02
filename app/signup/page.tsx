@@ -4,8 +4,8 @@ import { useState } from "react"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
 import Image from "next/image"
-import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, Eye, EyeOff, ArrowRight, Mail, Lock } from "lucide-react"
+import { motion } from "framer-motion"
+import { ChevronLeft } from "lucide-react"
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)

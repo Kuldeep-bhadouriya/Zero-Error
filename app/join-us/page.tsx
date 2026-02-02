@@ -2,7 +2,7 @@
 
 import { signIn } from "next-auth/react"
 import { motion } from "framer-motion"
-import { ArrowRight, ChevronLeft } from "lucide-react"
+import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
