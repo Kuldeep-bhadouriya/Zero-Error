@@ -167,7 +167,7 @@ const PastEventsSection = () => {
                       <Calendar className="w-20 h-20 text-zinc-700" />
                     </div>
                   )}
-                  <motion.div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+                  <motion.div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent opacity-90 transition-opacity duration-500" />
                   
                   <div className="absolute bottom-0 left-0 p-5 w-full">
                     <div className="flex items-center mb-3 gap-2">
@@ -177,34 +177,34 @@ const PastEventsSection = () => {
                       >
                         <Calendar className="w-4 h-4" />
                       </motion.span>
-                      <span className="text-xs uppercase text-white font-bold tracking-wider">
+                      <span className="text-xs uppercase text-white font-bold tracking-wider drop-shadow-md">
                         Past Event
                       </span>
                       {event.featured && (
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 drop-shadow-md" />
                       )}
                     </div>
                     
-                    <h3 className="text-xl font-bold mb-2 group-hover:text-red-400 transition-colors duration-300">
+                    <h3 className="text-xl font-bold mb-2 text-white group-hover:text-red-400 transition-colors duration-300 drop-shadow-md">
                       {event.title}
                     </h3>
                     
-                    <div className="flex flex-col text-zinc-400 text-sm space-y-1">
+                    <div className="flex flex-col text-zinc-200 text-sm space-y-1 font-medium shadow-black/50">
                       <motion.span
                         initial={{ x: 0 }}
                         whileHover={{ x: 3 }}
-                        className="flex items-center"
+                        className="flex items-center drop-shadow-sm"
                       >
-                        <Calendar className="w-3 h-3 mr-2 text-zinc-500" />
+                        <Calendar className="w-3 h-3 mr-2 text-red-500" />
                         {format(new Date(event.eventDate), 'MMM dd, yyyy')}
                       </motion.span>
                       {event.location && (
                         <motion.span
                           initial={{ x: 0 }}
                           whileHover={{ x: 3 }}
-                          className="flex items-center"
+                          className="flex items-center drop-shadow-sm"
                         >
-                          <MapPin className="w-3 h-3 mr-2 text-zinc-500" />
+                          <MapPin className="w-3 h-3 mr-2 text-red-500" />
                           {event.location}
                         </motion.span>
                       )}

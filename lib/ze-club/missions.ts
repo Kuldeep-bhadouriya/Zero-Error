@@ -50,7 +50,7 @@ export async function getMissionsForUserEmail(email?: string | null): Promise<Mi
   let userSubmissions: any[] = []
 
   if (email) {
-    const user = await User.findOne({ email }).lean()
+    const user = await User.findOne({ email }).lean() as any
     if (user) {
       userSubmissions = await MissionSubmission.find({
         user: user._id,

@@ -196,14 +196,16 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
                 animate={prefersReducedMotion ? undefined : { height: 'auto', opacity: 1 }}
                 exit={prefersReducedMotion ? undefined : { height: 0, opacity: 0 }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
-                className="mt-3 p-4 rounded-lg bg-black/30 border border-white/10"
+                className="mt-3 p-4 rounded-lg bg-black/30 border border-white/10 overflow-hidden"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0 w-full">
                     <h4 className="text-white font-semibold">Instructions</h4>
-                    <p className="text-gray-300 text-sm whitespace-pre-wrap mt-2">{mission.instructions}</p>
+                    <p className="text-gray-300 text-sm whitespace-pre-wrap mt-2 break-words">
+                      {mission.instructions}
+                    </p>
                   </div>
-                  <Button asChild size="sm" className="bg-red-600 hover:bg-red-700 text-white shrink-0" disabled={!canSubmit}>
+                  <Button asChild size="sm" className="bg-red-600 hover:bg-red-700 text-white shrink-0 w-full sm:w-auto mt-2 sm:mt-0" disabled={!canSubmit}>
                     <Link href={`/ze-club/missions/submit?missionId=${mission._id}`}>Submit proof</Link>
                   </Button>
                 </div>

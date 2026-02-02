@@ -31,7 +31,7 @@ async function UserSubmissions() {
   }
 
   await dbConnect()
-  const user = await User.findOne({ email: session.user.email }).lean()
+  const user = await User.findOne({ email: session.user.email }).lean() as any
   if (!user) {
     return <p className="text-gray-400">User not found.</p>
   }
