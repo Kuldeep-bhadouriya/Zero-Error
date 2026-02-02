@@ -66,8 +66,8 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
         isTimeLimited: missionData.isTimeLimited || false,
         startDate: missionData.startDate ? new Date(missionData.startDate) : null,
         endDate: missionData.endDate ? new Date(missionData.endDate) : null,
-        daysAvailable: missionData.daysAvailable || 0,
-        active: missionData.active ?? true,
+        daysAvailable: missionData.daysAvailable || 0,      isHourlyScheduled: missionData.isHourlyScheduled || false,
+      hourlySchedule: missionData.hourlySchedule || { startHour: 9, endHour: 17, timezone: 'UTC' },        active: missionData.active ?? true,
         featured: missionData.featured || false,
         maxCompletions: missionData.maxCompletions || 0,
       }
@@ -86,6 +86,8 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
       startDate: null as Date | null,
       endDate: null as Date | null,
       daysAvailable: 0,
+      isHourlyScheduled: false,
+      hourlySchedule: { startHour: 9, endHour: 17, timezone: 'UTC' },
       active: true,
       featured: false,
       maxCompletions: 0,
@@ -186,6 +188,17 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
             setLoading(false)
             return
           }
+        }
+      }
+      
+      // Validate hourly schedule
+      if (formData.isHourlyScheduled) {
+        const { startHour, endHour } = formData.hourlySchedule
+        if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) {
+          throw new Error('Hours must be between 0 and 23')
+        }
+        if (endHour <= startHour) {
+          throw new Error('End hour must be after start hour')
         }
       }
 
@@ -540,6 +553,131 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
                 <p className="text-sm text-muted-foreground mt-1">
                   Mission will auto-expire after this many days. Overrides end date.
                 </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Hourly Schedule */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Hourly Schedule</CardTitle>
+          <CardDescription>Set specific hours when mission is active each day</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Hourly Scheduled Mission</Label>
+              <p className="text-sm text-muted-foreground">
+                Mission will only be active during specified hours each day
+              </p>
+            </div>
+            <Switch
+              checked={formData.isHourlyScheduled}
+              onCheckedChange={(checked) => setFormData({ ...formData, isHourlyScheduled: checked })}
+            />
+          </div>
+
+          {formData.isHourlyScheduled && (
+            <div className="space-y-4 pl-4 border-l-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="startHour">Start Hour (24h format)</Label>
+                  <Select
+                    value={formData.hourlySchedule.startHour.toString()}
+                    onValueChange={(value) => setFormData({ 
+                      ...formData, 
+                      hourlySchedule: { 
+                        ...formData.hourlySchedule, 
+                        startHour: parseInt(value) 
+                      } 
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <SelectItem key={i} value={i.toString()}>
+                          {i.toString().padStart(2, '0')}:00
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="endHour">End Hour (24h format)</Label>
+                  <Select
+                    value={formData.hourlySchedule.endHour.toString()}
+                    onValueChange={(value) => setFormData({ 
+                      ...formData, 
+                      hourlySchedule: { 
+                        ...formData.hourlySchedule, 
+                        endHour: parseInt(value) 
+                      } 
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <SelectItem key={i} value={i.toString()}>
+                          {i.toString().padStart(2, '0')}:00
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="timezone">Timezone</Label>
+                <Select
+                  value={formData.hourlySchedule.timezone}
+                  onValueChange={(value) => setFormData({ 
+                    ...formData, 
+                    hourlySchedule: { 
+                      ...formData.hourlySchedule, 
+                      timezone: value 
+                    } 
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    <SelectItem value="UTC">UTC</SelectItem>
+                    <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
+                    <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
+                    <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
+                    <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
+                    <SelectItem value="Europe/London">London (GMT/BST)</SelectItem>
+                    <SelectItem value="Europe/Paris">Paris (CET/CEST)</SelectItem>
+                    <SelectItem value="Asia/Dubai">Dubai (GST)</SelectItem>
+                    <SelectItem value="Asia/Kolkata">India (IST)</SelectItem>
+                    <SelectItem value="Asia/Shanghai">China (CST)</SelectItem>
+                    <SelectItem value="Asia/Tokyo">Japan (JST)</SelectItem>
+                    <SelectItem value="Australia/Sydney">Sydney (AEDT/AEST)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Mission active: {formData.hourlySchedule.startHour.toString().padStart(2, '0')}:00 - {formData.hourlySchedule.endHour.toString().padStart(2, '0')}:00 {formData.hourlySchedule.timezone}
+                </p>
+              </div>
+
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-blue-400 mt-0.5" />
+                  <div className="text-sm text-blue-200">
+                    <p className="font-medium">Hourly Schedule Info</p>
+                    <p className="text-blue-300/80 mt-1">
+                      This mission will only be available during the specified hours each day. Outside these hours, users won't be able to see or submit this mission.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}

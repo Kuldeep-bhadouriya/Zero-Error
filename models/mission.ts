@@ -18,6 +18,14 @@ export interface IMission {
   isTimeLimited: boolean
   daysAvailable?: number
   
+  // Hourly scheduling
+  isHourlyScheduled?: boolean
+  hourlySchedule?: {
+    startHour: number // 0-23
+    endHour: number   // 0-23
+    timezone?: string // Default to UTC or user timezone
+  }
+  
   // Status fields
   active: boolean
   featured: boolean
@@ -101,6 +109,28 @@ const MissionSchema = new Schema<IMission>({
   },
   daysAvailable: {
     type: Number,
+  },
+  
+  // Hourly scheduling
+  isHourlyScheduled: {
+    type: Boolean,
+    default: false,
+  },
+  hourlySchedule: {
+    startHour: {
+      type: Number,
+      min: 0,
+      max: 23,
+    },
+    endHour: {
+      type: Number,
+      min: 0,
+      max: 23,
+    },
+    timezone: {
+      type: String,
+      default: 'UTC',
+    },
   },
   
   // Status fields

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/mongodb';
 import RedemptionRequest from '@/models/redemptionRequest';
+import User from '@/models/user';
+import Reward from '@/models/reward';
 
 export async function PATCH(
   req: NextRequest,
@@ -43,14 +45,29 @@ export async function PATCH(
       return NextResponse.json({ message: 'Redemption request not found' }, { status: 404 });
     }
 
-    // Update fields
-    if (status) {
+    // Handle status changes
+    if (status && status !== redemptionRequest.status) {
+      // If cancelling a non-cancelled request, refund points and restock
+      if (status === 'cancelled' && redemptionRequest.status !== 'cancelled') {
+        // Refund ZE Coins to user
+        await User.findByIdAndUpdate(redemptionRequest.userId, {
+          $inc: { zeCoins: redemptionRequest.rewardCost }
+        });
+
+        // Restock the reward
+        await Reward.findByIdAndUpdate(redemptionRequest.rewardId, {
+          $inc: { stock: 1 }
+        });
+      }
+      
+      // Update the request status
       redemptionRequest.status = status;
       if (status !== 'pending') {
         redemptionRequest.processedAt = new Date();
         redemptionRequest.processedBy = session.user.id;
       }
     }
+
     if (adminNotes !== undefined) {
       redemptionRequest.adminNotes = adminNotes;
     }

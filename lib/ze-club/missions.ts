@@ -2,6 +2,7 @@ import dbConnect from '@/lib/mongodb'
 import Mission from '@/models/mission'
 import MissionSubmission from '@/models/missionSubmission'
 import User from '@/models/user'
+import { isMissionCurrentlyActive } from '@/lib/missionUtils'
 
 export type MissionWithComputed = {
   [key: string]: any
@@ -19,6 +20,13 @@ export type MissionWithComputed = {
   isTimeLimited?: boolean
   startDate?: string
   endDate?: string
+
+  isHourlyScheduled?: boolean
+  hourlySchedule?: {
+    startHour: number
+    endHour: number
+    timezone?: string
+  }
 
   maxCompletions?: number
   currentCompletions?: number
@@ -85,6 +93,9 @@ export async function getMissionsForUserEmail(email?: string | null): Promise<Mi
       const isCompleted = userSubmissionStatus === 'approved'
       const isPending = userSubmissionStatus === 'pending'
 
+      // Check if mission is currently active (including hourly schedule)
+      const isCurrentlyActive = isMissionCurrentlyActive(mission, now)
+
       // Convert _id to string and dates to ISO strings for serialization
       return {
         ...mission,
@@ -98,10 +109,10 @@ export async function getMissionsForUserEmail(email?: string | null): Promise<Mi
         isMaxedOut,
         isCompleted,
         isPending,
-        isAvailable: !isExpired && !isMaxedOut && !isCompleted && !isPending,
+        isAvailable: isCurrentlyActive && !isExpired && !isMaxedOut && !isCompleted && !isPending,
       } as MissionWithComputed
     })
-    .filter((mission: MissionWithComputed) => !mission.isExpired && !mission.isMaxedOut)
+    .filter((mission: MissionWithComputed) => mission.isAvailable)
 
   return availableMissions
 }
