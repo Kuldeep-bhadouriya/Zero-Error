@@ -11,7 +11,7 @@ export default function PageTransition({ children }: { children: ReactNode }) {
 
   const easing = [0.4, 0, 0.2, 1] as const;
 
-  // Force animation reset on route change
+  // Force animation reset on route changes
   useEffect(() => {
     // Scroll to top on page changes
     window.scrollTo(0, 0);
