@@ -7,7 +7,6 @@ import {
   AnimatePresence,
 } from "framer-motion";
 
-import ParticlesBackground from "@/components/home/ParticlesBackground";
 import LoadingScreen from "@/components/home/LoadingScreen";
 import AnimatedBackground from "@/components/home/AnimatedBackground";
 import HeroSection from "@/components/home/HeroSection";
@@ -24,8 +23,6 @@ export default function HomeClient() {
     videoUrl: "",
     posterUrl: "",
   });
-
-  const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
 
   useEffect(() => {
     async function fetchHeroMedia() {
@@ -44,19 +41,6 @@ export default function HomeClient() {
     }
 
     fetchHeroMedia();
-  }, []);
-
-  useEffect(() => {
-    // Track mouse movement for dynamic effects
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: e.clientX / window.innerWidth,
-        y: e.clientY / window.innerHeight,
-      });
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   const handleLoadingComplete = () => {
@@ -83,15 +67,11 @@ export default function HomeClient() {
             {/* Background layers */}
             <div className="absolute inset-0 z-0">
               {/* Animated gradient background */}
-              <AnimatedBackground mousePosition={mousePosition} />
-
-              {/* Particle effects layer */}
-              <ParticlesBackground />
+              <AnimatedBackground />
             </div>
             {/* Hero Section with Video Background */}
             <HeroSection
               scrollYProgress={scrollYProgress}
-              mousePosition={mousePosition}
               heroVideoUrl={heroMedia.videoUrl}
               heroPosterUrl={heroMedia.posterUrl}
             />

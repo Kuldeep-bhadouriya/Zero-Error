@@ -57,6 +57,7 @@ export function ProfileHeader({ profile, onUpdate }: ProfileHeaderProps) {
                       fill
                       className="object-cover"
                       priority
+                      unoptimized
                     />
                  </div>
                  

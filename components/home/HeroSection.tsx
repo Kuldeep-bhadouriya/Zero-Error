@@ -8,14 +8,12 @@ import Image from "next/image";
 
 interface HeroSectionProps {
   scrollYProgress: any;
-  mousePosition: { x: number; y: number };
   heroVideoUrl?: string;
   heroPosterUrl?: string;
 }
 
 const HeroSection = ({ 
   scrollYProgress, 
-  mousePosition, 
   heroVideoUrl, 
   heroPosterUrl 
 }: HeroSectionProps) => {

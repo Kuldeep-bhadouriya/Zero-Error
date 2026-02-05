@@ -117,6 +117,7 @@ export function ProfilePhotoUploader({
                 fill
                 className="object-cover"
                 priority
+                unoptimized
               />
               {preview && (
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">

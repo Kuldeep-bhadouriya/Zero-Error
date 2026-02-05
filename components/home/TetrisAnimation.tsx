@@ -4,13 +4,13 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 // Tetris pieces - themed for Zero Error Esports
 const TETRIS_PIECES = [
-  { shape: [[1, 1, 1, 1]], color: 'bg-red-600' },
-  { shape: [[1, 1], [1, 1]], color: 'bg-red-600' },
-  { shape: [[0, 1, 0], [1, 1, 1]], color: 'bg-red-600' },
-  { shape: [[1, 0], [1, 0], [1, 1]], color: 'bg-red-600' },
-  { shape: [[0, 1, 1], [1, 1, 0]], color: 'bg-red-600' },
-  { shape: [[1, 1, 0], [0, 1, 1]], color: 'bg-red-600' },
-  { shape: [[0, 1], [0, 1], [1, 1]], color: 'bg-red-600' },
+  { shape: [[1, 1, 1, 1]], color: '#dc2626' }, // red-600
+  { shape: [[1, 1], [1, 1]], color: '#dc2626' },
+  { shape: [[0, 1, 0], [1, 1, 1]], color: '#dc2626' },
+  { shape: [[1, 0], [1, 0], [1, 1]], color: '#dc2626' },
+  { shape: [[0, 1, 1], [1, 1, 0]], color: '#dc2626' },
+  { shape: [[1, 1, 0], [0, 1, 1]], color: '#dc2626' },
+  { shape: [[0, 1], [0, 1], [1, 1]], color: '#dc2626' },
 ];
 
 interface Cell {
@@ -29,14 +29,14 @@ interface FallingPiece {
 interface TetrisAnimationProps {
   gridWidth?: number;
   gridHeight?: number;
-  cellSize?: string;
+  cellSize?: number;
   fallSpeed?: number;
 }
 
 const TetrisAnimation: React.FC<TetrisAnimationProps> = ({
   gridWidth = 10,
   gridHeight = 12,
-  cellSize = 'w-3 h-3',
+  cellSize = 12,
   fallSpeed = 60,
 }) => {
   const [grid, setGrid] = useState<Cell[][]>(() =>
@@ -46,6 +46,7 @@ const TetrisAnimation: React.FC<TetrisAnimationProps> = ({
   );
   const [fallingPiece, setFallingPiece] = useState<FallingPiece | null>(null);
   const [isClearing, setIsClearing] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<number | undefined>(undefined);
   const lastUpdateRef = useRef<number>(0);
 
@@ -115,7 +116,7 @@ const TetrisAnimation: React.FC<TetrisAnimationProps> = ({
         setIsClearing(true);
         const newGrid = prevGrid.map((row, rowIndex) => {
           if (linesToClear.includes(rowIndex)) {
-            return row.map(cell => ({ ...cell, color: 'bg-red-400 animate-pulse' }));
+            return row.map(cell => ({ ...cell, color: '#f87171' })); // red-400
           }
           return row;
         });
@@ -152,6 +153,7 @@ const TetrisAnimation: React.FC<TetrisAnimationProps> = ({
     return false;
   }, [grid, gridWidth, gridHeight]);
 
+  // Game loop for logic updates
   useEffect(() => {
     const gameLoop = (timestamp: number) => {
       if (timestamp - lastUpdateRef.current >= fallSpeed) {
@@ -178,40 +180,86 @@ const TetrisAnimation: React.FC<TetrisAnimationProps> = ({
     };
   }, [canPlacePiece, createNewPiece, placePiece, clearFullLines, checkAndReset, isClearing, fallSpeed]);
 
-  const renderGrid = () => {
-    const displayGrid = grid.map(row => row.map(cell => ({ ...cell })));
-    if (fallingPiece && !isClearing) {
-      for (let row = 0; row < fallingPiece.shape.length; row++) {
-        for (let col = 0; col < fallingPiece.shape[row].length; col++) {
-          if (fallingPiece.shape[row][col]) {
-            const gridX = fallingPiece.x + col;
-            const gridY = fallingPiece.y + row;
-            if (gridY >= 0 && gridY < gridHeight && gridX >= 0 && gridX < gridWidth) {
-              displayGrid[gridY][gridX] = { filled: true, color: fallingPiece.color };
-            }
+  // Canvas drawing loop
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let drawFrame: number;
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw background grid
+      for (let y = 0; y < gridHeight; y++) {
+        for (let x = 0; x < gridWidth; x++) {
+          const cell = grid[y][x];
+          ctx.fillStyle = cell.filled ? cell.color : '#18181b'; // zinc-900
+          ctx.strokeStyle = '#27272a'; // zinc-800
+          ctx.lineWidth = 1;
+          
+          const padding = 1;
+          const rectX = x * cellSize + padding;
+          const rectY = y * cellSize + padding;
+          const rectW = cellSize - padding * 2;
+          const rectH = cellSize - padding * 2;
+
+          ctx.fillRect(rectX, rectY, rectW, rectH);
+          ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+
+          if (cell.filled) {
+            // Glow effect for filled cells
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = '#dc262680';
+            ctx.strokeRect(rectX, rectY, rectW, rectH);
+            ctx.shadowBlur = 0;
           }
         }
       }
-    }
-    return displayGrid.map((row, rowIndex) => (
-      <div key={rowIndex} className="flex">
-        {row.map((cell, colIndex) => (
-          <div
-            key={`${rowIndex}-${colIndex}`}
-            className={`${cellSize} border border-zinc-800 transition-all duration-100 ${
-              cell.filled 
-                ? `${cell.color} scale-100 shadow-sm shadow-red-600/50` 
-                : 'bg-zinc-900 scale-95'
-            }`}
-          />
-        ))}
-      </div>
-    ));
-  };
+
+      // Draw falling piece
+      if (fallingPiece && !isClearing) {
+        ctx.fillStyle = fallingPiece.color;
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = '#dc262680';
+        
+        for (let row = 0; row < fallingPiece.shape.length; row++) {
+          for (let col = 0; col < fallingPiece.shape[row].length; col++) {
+            if (fallingPiece.shape[row][col]) {
+              const gridX = fallingPiece.x + col;
+              const gridY = fallingPiece.y + row;
+              if (gridY >= 0 && gridY < gridHeight && gridX >= 0 && gridX < gridWidth) {
+                const padding = 1;
+                ctx.fillRect(
+                  gridX * cellSize + padding,
+                  gridY * cellSize + padding,
+                  cellSize - padding * 2,
+                  cellSize - padding * 2
+                );
+              }
+            }
+          }
+        }
+        ctx.shadowBlur = 0;
+      }
+
+      drawFrame = requestAnimationFrame(draw);
+    };
+
+    drawFrame = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(drawFrame);
+  }, [grid, fallingPiece, isClearing, gridWidth, gridHeight, cellSize]);
 
   return (
-    <div className="border-2 border-red-600 bg-black p-1 rounded shadow-lg shadow-red-600/30">
-      {renderGrid()}
+    <div className="border-2 border-red-600 bg-black p-1 rounded shadow-lg shadow-red-600/30 inline-block">
+      <canvas
+        ref={canvasRef}
+        width={gridWidth * cellSize}
+        height={gridHeight * cellSize}
+        className="block"
+      />
     </div>
   );
 };
