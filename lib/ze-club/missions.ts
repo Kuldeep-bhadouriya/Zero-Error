@@ -2,7 +2,13 @@ import dbConnect from '@/lib/mongodb'
 import Mission from '@/models/mission'
 import MissionSubmission from '@/models/missionSubmission'
 import User from '@/models/user'
-import { isMissionCurrentlyActive } from '@/lib/missionUtils'
+import {
+  isMissionCurrentlyActive,
+  shouldShowWeeklyMission,
+  getNextWeeklyInstanceDate,
+  getDayName,
+  getWeekNumber,
+} from '@/lib/missionUtils'
 
 export type MissionWithComputed = {
   [key: string]: any
@@ -27,6 +33,11 @@ export type MissionWithComputed = {
     endHour: number
     timezone?: string
   }
+
+  isWeeklyMission?: boolean
+  weeklyDay?: number
+  weeklyDayName?: string
+  nextWeeklyAvailableDate?: string
 
   maxCompletions?: number
   currentCompletions?: number
@@ -62,14 +73,13 @@ export async function getMissionsForUserEmail(email?: string | null): Promise<Mi
     if (user) {
       userSubmissions = await MissionSubmission.find({
         user: user._id,
-        status: { $in: ['pending', 'approved'] },
       })
-        .select('mission status')
+        .select('mission status weekYear')
         .lean()
     }
   }
 
-  const submissionMap = new Map(userSubmissions.map((sub) => [sub.mission.toString(), sub.status]))
+  const submissionMap = new Map(userSubmissions.map((sub) => [sub.mission.toString(), sub]))
 
   const availableMissions = missions
     .map((mission: any) => {
@@ -89,12 +99,34 @@ export async function getMissionsForUserEmail(email?: string | null): Promise<Mi
         ? mission.currentCompletions >= mission.maxCompletions
         : false
 
-      const userSubmissionStatus = submissionMap.get(mission._id.toString())
-      const isCompleted = userSubmissionStatus === 'approved'
-      const isPending = userSubmissionStatus === 'pending'
+      // Get user's submissions for this mission (grouped by mission ID)
+      const missionSubmission = submissionMap.get(mission._id.toString())
+      const missionSubmissions = userSubmissions.filter(
+        (sub) => sub.mission.toString() === mission._id.toString()
+      )
 
-      // Check if mission is currently active (including hourly schedule)
-      const isCurrentlyActive = isMissionCurrentlyActive(mission, now)
+      const isCompleted = missionSubmission
+        ? missionSubmission.status === 'approved'
+        : false
+      const isPending = missionSubmission
+        ? missionSubmission.status === 'pending'
+        : false
+
+      // Check if mission is available
+      let isCurrentlyActive = false
+      let weeklyDayName: string | undefined
+      let nextWeeklyAvailableDate: string | undefined
+
+      if (mission.isWeeklyMission) {
+        weeklyDayName = getDayName(mission.weeklyDay)
+        isCurrentlyActive = shouldShowWeeklyMission(mission, missionSubmissions, now)
+
+        // Calculate next available date
+        const nextDate = getNextWeeklyInstanceDate(mission, now)
+        nextWeeklyAvailableDate = nextDate.toISOString()
+      } else {
+        isCurrentlyActive = isMissionCurrentlyActive(mission, now)
+      }
 
       // Convert _id to string and dates to ISO strings for serialization
       return {
@@ -104,6 +136,8 @@ export async function getMissionsForUserEmail(email?: string | null): Promise<Mi
         endDate: mission.endDate ? new Date(mission.endDate).toISOString() : undefined,
         createdAt: mission.createdAt ? new Date(mission.createdAt).toISOString() : undefined,
         updatedAt: mission.updatedAt ? new Date(mission.updatedAt).toISOString() : undefined,
+        weeklyDayName,
+        nextWeeklyAvailableDate,
         isExpired,
         daysRemaining,
         isMaxedOut,

@@ -25,7 +25,11 @@ export interface IMission {
     endHour: number   // 0-23
     timezone?: string // Default to UTC or user timezone
   }
-  
+
+  // Weekly repeating missions
+  isWeeklyMission?: boolean
+  weeklyDay?: number // 0-6 (Sunday-Saturday)
+
   // Status fields
   active: boolean
   featured: boolean
@@ -132,7 +136,18 @@ const MissionSchema = new Schema<IMission>({
       default: 'UTC',
     },
   },
-  
+
+  // Weekly repeating missions
+  isWeeklyMission: {
+    type: Boolean,
+    default: false,
+  },
+  weeklyDay: {
+    type: Number,
+    min: 0,
+    max: 6,
+  },
+
   // Status fields
   active: {
     type: Boolean,

@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
 import MissionSubmission from '@/models/missionSubmission'
 import User from '@/models/user'
+import Mission from '@/models/mission'
 import dbConnect from '@/lib/mongodb'
+import { getWeekNumber, getWeekStartDate } from '@/lib/missionUtils'
 
 /**
  * POST /api/ze-club/missions/upload
@@ -42,22 +44,60 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Check if user already has a pending or approved submission for this mission
-    const existingSubmission = await MissionSubmission.findOne({
-      user: user._id,
-      mission: missionId,
-      status: { $in: ['pending', 'approved'] }
-    })
-
-    if (existingSubmission) {
+    // Fetch the mission to check if it's weekly
+    const mission = await Mission.findById(missionId).lean()
+    if (!mission) {
       return NextResponse.json(
-        { 
-          error: existingSubmission.status === 'approved' 
-            ? 'You have already completed this mission' 
-            : 'You already have a pending submission for this mission'
-        },
-        { status: 400 }
+        { error: 'Mission not found' },
+        { status: 404 }
       )
+    }
+
+    // Calculate week information if this is a weekly mission
+    let weekYear: string | undefined
+    let weekStartDate: Date | undefined
+
+    if (mission.isWeeklyMission) {
+      const now = new Date()
+      weekYear = getWeekNumber(now)
+      weekStartDate = getWeekStartDate(now)
+
+      // Check if user already has a pending or approved submission for THIS WEEK
+      const existingWeeklySubmission = await MissionSubmission.findOne({
+        user: user._id,
+        mission: missionId,
+        weekYear,
+        status: { $in: ['pending', 'approved'] }
+      })
+
+      if (existingWeeklySubmission) {
+        return NextResponse.json(
+          {
+            error: existingWeeklySubmission.status === 'approved'
+              ? 'You have already completed this weekly mission this week'
+              : 'You already have a pending submission for this weekly mission this week'
+          },
+          { status: 400 }
+        )
+      }
+    } else {
+      // Check if user already has a pending or approved submission for non-weekly mission
+      const existingSubmission = await MissionSubmission.findOne({
+        user: user._id,
+        mission: missionId,
+        status: { $in: ['pending', 'approved'] }
+      })
+
+      if (existingSubmission) {
+        return NextResponse.json(
+          {
+            error: existingSubmission.status === 'approved'
+              ? 'You have already completed this mission'
+              : 'You already have a pending submission for this mission'
+          },
+          { status: 400 }
+        )
+      }
     }
 
     // Create submission record in database
@@ -66,6 +106,8 @@ export async function POST(req: NextRequest) {
       mission: missionId,
       proof: fileUrl,
       status: 'pending',
+      ...(weekYear && { weekYear }),
+      ...(weekStartDate && { weekStartDate }),
     })
 
     await newSubmission.save()

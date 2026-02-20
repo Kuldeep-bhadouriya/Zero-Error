@@ -165,3 +165,123 @@ export function formatHourlySchedule(hourlySchedule?: {
 
   return `${start} - ${end} ${tz}`
 }
+
+/**
+ * Get the ISO week number for a date in format "YYYY-WXX"
+ * @param date - The date to get the week number for
+ * @returns ISO week string like "2024-W05"
+ */
+export function getWeekNumber(date: Date): string {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const dayNum = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  const weekNum = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
+  return `${d.getUTCFullYear()}-W${weekNum.toString().padStart(2, '0')}`
+}
+
+/**
+ * Get the start date (Monday) of a given week
+ * @param date - Any date in the week
+ * @returns The Monday of that week
+ */
+export function getWeekStartDate(date: Date): Date {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1) // adjust when day is Sunday
+  return new Date(d.setDate(diff))
+}
+
+/**
+ * Check if a weekly mission is available today based on its day
+ * @param mission - The mission to check
+ * @param currentTime - Optional current time (defaults to now)
+ * @returns true if today matches the mission's weekly day
+ */
+export function isWeeklyMissionAvailableToday(
+  mission: IMission | any,
+  currentTime: Date = new Date()
+): boolean {
+  if (!mission.isWeeklyMission || mission.weeklyDay === undefined) {
+    return false
+  }
+
+  const today = currentTime.getDay() // 0-6 (Sunday-Saturday)
+  return today === mission.weeklyDay
+}
+
+/**
+ * Check if a weekly mission should be shown to a user
+ * @param mission - The mission to check
+ * @param userSubmissions - Array of user's submissions for this mission
+ * @param currentTime - Optional current time (defaults to now)
+ * @returns true if the mission should be displayed
+ */
+export function shouldShowWeeklyMission(
+  mission: IMission | any,
+  userSubmissions: any[] = [],
+  currentTime: Date = new Date()
+): boolean {
+  if (!mission.isWeeklyMission) {
+    return false
+  }
+
+  const currentWeek = getWeekNumber(currentTime)
+
+  // Check if user has an active (pending or approved) submission for this week
+  const hasActiveSubmissionThisWeek = userSubmissions.some(
+    submission =>
+      submission.weekYear === currentWeek &&
+      ['pending', 'approved'].includes(submission.status)
+  )
+
+  // Mission should show if:
+  // 1. Today is the mission's day, OR
+  // 2. User has an active submission for this week (incomplete mission stays visible)
+  return isWeeklyMissionAvailableToday(mission, currentTime) || hasActiveSubmissionThisWeek
+}
+
+/**
+ * Get the next date when a weekly mission will become available
+ * @param mission - The weekly mission
+ * @param currentTime - Optional current time (defaults to now)
+ * @returns Date of next availability
+ */
+export function getNextWeeklyInstanceDate(
+  mission: IMission | any,
+  currentTime: Date = new Date()
+): Date {
+  if (!mission.isWeeklyMission || mission.weeklyDay === undefined) {
+    return currentTime
+  }
+
+  const today = currentTime.getDay()
+  const targetDay = mission.weeklyDay
+
+  const nextDate = new Date(currentTime)
+
+  if (today === targetDay) {
+    // Today is the day, but next instance is next week
+    nextDate.setDate(nextDate.getDate() + 7)
+  } else if (today < targetDay) {
+    // Target day is later this week
+    nextDate.setDate(nextDate.getDate() + (targetDay - today))
+  } else {
+    // Target day was earlier this week, so next instance is next week
+    nextDate.setDate(nextDate.getDate() + (7 - today + targetDay))
+  }
+
+  // Reset time to 00:00:00
+  nextDate.setHours(0, 0, 0, 0)
+  return nextDate
+}
+
+/**
+ * Get a human-readable day name from week day number
+ * @param dayNum - Day number 0-6 (Sunday-Saturday)
+ * @returns Day name like "Monday"
+ */
+export function getDayName(dayNum: number): string {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  return days[dayNum] || 'Unknown'
+}

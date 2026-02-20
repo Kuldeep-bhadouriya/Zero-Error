@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Badge } from '@/components/ui/badge'
@@ -82,11 +82,35 @@ const categoryConfig: Record<
 
 function MissionCard({ mission, index }: { mission: Mission; index: number }) {
   const [expanded, setExpanded] = useState(false)
+  const [currentTime, setCurrentTime] = useState(() => new Date())
   const prefersReducedMotion = useReducedMotion()
   const diffConfig = difficultyConfig[mission.difficulty]
   const DiffIcon = diffConfig.icon
   const categoryInfo = categoryConfig[mission.category] || { icon: Target, color: 'text-zinc-400' }
   const CategoryIcon = categoryInfo.icon
+
+  useEffect(() => {
+    if (!mission.isTimeLimited || !mission.endDate) return
+    const t = setInterval(() => setCurrentTime(new Date()), 1000)
+    return () => clearInterval(t)
+  }, [mission.isTimeLimited, mission.endDate])
+
+  function formatCountdown(endDate: string): string {
+    const msLeft = new Date(endDate).getTime() - currentTime.getTime()
+    if (msLeft <= 0) return 'Expired'
+    const days = Math.floor(msLeft / (1000 * 60 * 60 * 24))
+    const hours = Math.floor((msLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    const mins = Math.floor((msLeft % (1000 * 60 * 60)) / (1000 * 60))
+    const secs = Math.floor((msLeft % (1000 * 60)) / 1000)
+    const hh = hours.toString().padStart(2, '0')
+    const mm = mins.toString().padStart(2, '0')
+    const ss = secs.toString().padStart(2, '0')
+    return days > 0 ? `${days}d ${hh}:${mm}:${ss}` : `${hh}:${mm}:${ss}`
+  }
+
+  function isUrgent(endDate: string): boolean {
+    return new Date(endDate).getTime() - currentTime.getTime() < 2 * 24 * 60 * 60 * 1000
+  }
 
   const canSubmit = Boolean(mission.isAvailable) && !mission.isCompleted && !mission.isPending
 
@@ -147,16 +171,16 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
             {mission.category}
           </Badge>
 
-          {mission.isTimeLimited && mission.daysRemaining !== null && (
+          {mission.isTimeLimited && mission.endDate && (
             <Badge
               className={`${
-                mission.daysRemaining <= 3
+                isUrgent(mission.endDate)
                   ? 'bg-red-500/10 text-red-200 border-red-500/30'
                   : 'bg-sky-500/10 text-sky-200 border-sky-500/30'
-              } border`}
+              } border font-mono`}
             >
               <Clock className="h-3 w-3 mr-1" />
-              {mission.daysRemaining}d left
+              {formatCountdown(mission.endDate)}
             </Badge>
           )}
 
@@ -236,6 +260,11 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
                         {mission.startDate && `Starts: ${new Date(mission.startDate).toLocaleDateString()}`}
                         {mission.endDate && ` • Ends: ${new Date(mission.endDate).toLocaleDateString()}`}
                       </p>
+                      {mission.endDate && (
+                        <p className={`font-mono font-semibold mt-1 ${isUrgent(mission.endDate) ? 'text-red-300' : 'text-sky-300'}`}>
+                          {formatCountdown(mission.endDate)} remaining
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}

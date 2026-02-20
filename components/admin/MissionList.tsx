@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -49,6 +49,31 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
   const [missionToDelete, setMissionToDelete] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [currentTime, setCurrentTime] = useState(() => new Date())
+
+  // Tick every second for live countdown
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  function formatCountdown(endDate: string | Date): string {
+    const msLeft = new Date(endDate).getTime() - currentTime.getTime()
+    if (msLeft <= 0) return 'Expired'
+    const days = Math.floor(msLeft / (1000 * 60 * 60 * 24))
+    const hours = Math.floor((msLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    const mins = Math.floor((msLeft % (1000 * 60 * 60)) / (1000 * 60))
+    const secs = Math.floor((msLeft % (1000 * 60)) / 1000)
+    const hh = hours.toString().padStart(2, '0')
+    const mm = mins.toString().padStart(2, '0')
+    const ss = secs.toString().padStart(2, '0')
+    return days > 0 ? `${days}d ${hh}:${mm}:${ss}` : `${hh}:${mm}:${ss}`
+  }
+
+  function countdownIsUrgent(endDate: string | Date): boolean {
+    const msLeft = new Date(endDate).getTime() - currentTime.getTime()
+    return msLeft > 0 && msLeft < 2 * 24 * 60 * 60 * 1000 // less than 2 days
+  }
 
   // Get unique categories - filter out empty/undefined values
   const categories = Array.from(
@@ -351,13 +376,19 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
                       <TableCell className="text-gray-300 py-3">
                         {mission.isTimeLimited ? (
                           <div className="flex items-center gap-1 text-xs sm:text-sm">
-                            <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500 flex-shrink-0" />
-                            {mission.daysRemaining !== null ? (
-                              <span>{mission.daysRemaining}d left</span>
-                            ) : mission.isExpired ? (
-                              <span className="text-red-500">Expired</span>
+                            <Clock className={cn(
+                              'h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0',
+                              mission.isExpired ? 'text-red-500' : countdownIsUrgent(mission.endDate) ? 'text-red-400' : 'text-orange-500'
+                            )} />
+                            {mission.endDate ? (
+                              <span className={cn(
+                                'font-mono',
+                                mission.isExpired ? 'text-red-500' : countdownIsUrgent(mission.endDate) ? 'text-red-400' : 'text-orange-300'
+                              )}>
+                                {formatCountdown(mission.endDate)}
+                              </span>
                             ) : (
-                              <span>Active</span>
+                              <span>No end date</span>
                             )}
                           </div>
                         ) : (

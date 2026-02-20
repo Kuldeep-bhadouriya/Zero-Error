@@ -66,8 +66,12 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
         isTimeLimited: missionData.isTimeLimited || false,
         startDate: missionData.startDate ? new Date(missionData.startDate) : null,
         endDate: missionData.endDate ? new Date(missionData.endDate) : null,
-        daysAvailable: missionData.daysAvailable || 0,      isHourlyScheduled: missionData.isHourlyScheduled || false,
-      hourlySchedule: missionData.hourlySchedule || { startHour: 9, endHour: 17, timezone: 'UTC' },        active: missionData.active ?? true,
+        daysAvailable: missionData.daysAvailable || 0,
+        isHourlyScheduled: missionData.isHourlyScheduled || false,
+        hourlySchedule: missionData.hourlySchedule || { startHour: 9, endHour: 17, timezone: 'UTC' },
+        isWeeklyMission: missionData.isWeeklyMission || false,
+        weeklyDay: missionData.weeklyDay !== undefined ? missionData.weeklyDay : 1, // Default to Monday
+        active: missionData.active ?? true,
         featured: missionData.featured || false,
         maxCompletions: missionData.maxCompletions || 0,
       }
@@ -88,6 +92,8 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
       daysAvailable: 0,
       isHourlyScheduled: false,
       hourlySchedule: { startHour: 9, endHour: 17, timezone: 'UTC' },
+      isWeeklyMission: false,
+      weeklyDay: 1, // Default to Monday
       active: true,
       featured: false,
       maxCompletions: 0,
@@ -199,6 +205,13 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
         }
         if (endHour <= startHour) {
           throw new Error('End hour must be after start hour')
+        }
+      }
+
+      // Validate weekly mission fields
+      if (formData.isWeeklyMission) {
+        if (formData.weeklyDay === undefined || formData.weeklyDay === null || formData.weeklyDay < 0 || formData.weeklyDay > 6) {
+          throw new Error('Please select a valid day of the week for the weekly mission')
         }
       }
 
@@ -675,6 +688,65 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
                     <p className="font-medium">Hourly Schedule Info</p>
                     <p className="text-blue-300/80 mt-1">
                       This mission will only be available during the specified hours each day. Outside these hours, users won't be able to see or submit this mission.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Weekly Repeating Mission */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Weekly Repeating Mission</CardTitle>
+          <CardDescription>Set this mission to repeat every week on a specific day</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Weekly Repeating Mission</Label>
+              <p className="text-sm text-muted-foreground">
+                Mission will automatically reset and reappear every week
+              </p>
+            </div>
+            <Switch
+              checked={formData.isWeeklyMission}
+              onCheckedChange={(checked) => setFormData({ ...formData, isWeeklyMission: checked })}
+            />
+          </div>
+
+          {formData.isWeeklyMission && (
+            <div className="space-y-4 pl-4 border-l-2">
+              <div>
+                <Label htmlFor="weeklyDay">Day of Week</Label>
+                <Select
+                  value={formData.weeklyDay.toString()}
+                  onValueChange={(value) => setFormData({ ...formData, weeklyDay: parseInt(value) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Sunday</SelectItem>
+                    <SelectItem value="1">Monday</SelectItem>
+                    <SelectItem value="2">Tuesday</SelectItem>
+                    <SelectItem value="3">Wednesday</SelectItem>
+                    <SelectItem value="4">Thursday</SelectItem>
+                    <SelectItem value="5">Friday</SelectItem>
+                    <SelectItem value="6">Saturday</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-400 mt-0.5" />
+                  <div className="text-sm text-green-200">
+                    <p className="font-medium">Weekly Mission Info</p>
+                    <p className="text-green-300/80 mt-1">
+                      Users who complete this mission will see it again next week on the same day. Users who don't complete it will continue to see it until they do.
                     </p>
                   </div>
                 </div>

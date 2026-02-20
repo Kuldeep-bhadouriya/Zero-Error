@@ -28,7 +28,9 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search')
 
     // Build filter query
-    const filter: any = {}
+    const filter: any = {
+      isDeleted: { $ne: true }, // Always exclude soft-deleted missions
+    }
     
     if (category && category !== 'all') {
       filter.category = category

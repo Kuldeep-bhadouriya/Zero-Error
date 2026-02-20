@@ -54,6 +54,23 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Validate weekly mission fields
+    if (data.isWeeklyMission) {
+      if (data.weeklyDay === undefined || data.weeklyDay === null) {
+        return NextResponse.json(
+          { error: 'Weekly day is required when isWeeklyMission is true' },
+          { status: 400 }
+        )
+      }
+
+      if (data.weeklyDay < 0 || data.weeklyDay > 6) {
+        return NextResponse.json(
+          { error: 'Weekly day must be between 0 (Sunday) and 6 (Saturday)' },
+          { status: 400 }
+        )
+      }
+    }
+
     const mission = await Mission.create({
       ...data,
       endDate,

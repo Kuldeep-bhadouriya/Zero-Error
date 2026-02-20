@@ -53,6 +53,23 @@ async function handleUpdate(req: NextRequest) {
       }
     }
 
+    // Validate weekly mission fields
+    if (updates.isWeeklyMission) {
+      if (updates.weeklyDay === undefined || updates.weeklyDay === null) {
+        return NextResponse.json(
+          { error: 'Weekly day is required when isWeeklyMission is true' },
+          { status: 400 }
+        )
+      }
+
+      if (updates.weeklyDay < 0 || updates.weeklyDay > 6) {
+        return NextResponse.json(
+          { error: 'Weekly day must be between 0 (Sunday) and 6 (Saturday)' },
+          { status: 400 }
+        )
+      }
+    }
+
     const mission = await Mission.findByIdAndUpdate(
       missionId,
       updates,
