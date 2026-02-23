@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Event from '@/models/event'
+import logger from '@/lib/logger'
 
 // Force dynamic rendering for client-side fetches
 export const dynamic = 'force-dynamic'
@@ -13,10 +14,7 @@ export async function GET(req: Request) {
     const featured = searchParams.get('featured') // 'true' | 'false'
     const limit = parseInt(searchParams.get('limit') || '0')
 
-    console.log('Fetching events with params:', { eventType, featured, limit })
-
     await dbConnect()
-    console.log('Database connected successfully')
 
     // Build query - only show published events
     const query: any = { status: 'published' }
@@ -30,8 +28,6 @@ export async function GET(req: Request) {
     if (featured) {
       query.featured = featured === 'true'
     }
-
-    console.log('Query:', query)
 
     let eventsQuery = Event.find(query).select('-createdBy')
 
@@ -50,21 +46,19 @@ export async function GET(req: Request) {
     }
 
     const events = await eventsQuery.lean()
-    console.log(`Found ${events.length} events`)
+    logger.info({ route: '/api/events', count: events.length }, 'Fetched events')
 
     return NextResponse.json({
       success: true,
       events,
       count: events.length,
     })
-  } catch (error: any) {
-    console.error('Error fetching events:', error)
-    console.error('Error stack:', error.stack)
+  } catch (error) {
+    logger.error({ route: '/api/events', err: error }, 'Error fetching events')
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: error.message || 'Failed to fetch events',
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        error: 'Failed to fetch events',
       },
       { status: 500 }
     )

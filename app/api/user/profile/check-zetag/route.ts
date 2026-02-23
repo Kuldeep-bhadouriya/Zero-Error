@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { errorResponse } from '@/lib/api-response'
 import dbConnect from '@/lib/mongodb'
 import User from '@/models/user'
+import logger from '@/lib/logger'
 
 export async function GET(req: Request) {
   try {
     const session = await auth()
     if (!session || !session.user) {
-      return new NextResponse('Unauthorized', { status: 401 })
+      return errorResponse('Unauthorized', 401)
     }
 
     const { searchParams } = new URL(req.url)
@@ -39,7 +41,7 @@ export async function GET(req: Request) {
       zeTag,
     })
   } catch (error) {
-    console.error('Error checking zeTag availability:', error)
+    logger.error('Error checking zeTag availability:', error)
     return new NextResponse('Internal server error', { status: 500 })
   }
 }

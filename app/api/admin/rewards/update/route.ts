@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
 import dbConnect from '@/lib/mongodb'
 import Reward from '@/models/reward'
+import logger from '@/lib/logger'
 
 export async function PATCH(req: Request) {
   try {
@@ -73,10 +74,10 @@ export async function PATCH(req: Request) {
       reward,
       message: 'Reward updated successfully',
     })
-  } catch (error: any) {
-    console.error('Error updating reward:', error)
+  } catch (error: unknown) {
+    logger.error('Error updating reward:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to update reward' },
+      { error: error instanceof Error ? error.message : 'Failed to update reward' },
       { status: 500 }
     )
   }

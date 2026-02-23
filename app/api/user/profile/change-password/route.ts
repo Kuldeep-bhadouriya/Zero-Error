@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { errorResponse } from '@/lib/api-response'
 import dbConnect from '@/lib/mongodb'
 import User from '@/models/user'
 import bcrypt from 'bcrypt'
+import logger from '@/lib/logger'
 
 export async function POST(req: Request) {
   try {
     const session = await auth()
     if (!session || !session.user) {
-      return new NextResponse('Unauthorized', { status: 401 })
+      return errorResponse('Unauthorized', 401)
     }
 
     const body = await req.json()
@@ -57,7 +59,7 @@ export async function POST(req: Request) {
       message: 'Password updated successfully',
     })
   } catch (error) {
-    console.error('Error changing password:', error)
+    logger.error('Error changing password:', error)
     return new NextResponse('Internal server error', { status: 500 })
   }
 }

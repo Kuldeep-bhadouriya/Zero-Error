@@ -3,6 +3,7 @@
  */
 
 import { IMission } from '@/models/mission'
+import logger from '@/lib/logger'
 
 /**
  * Check if a mission is currently active based on its schedule
@@ -39,8 +40,8 @@ export function isMissionCurrentlyActive(
     // Get current hour in the mission's timezone
     const currentHour = getCurrentHourInTimezone(currentTime, timezone || 'UTC')
     
-    // Check if current hour is within the scheduled range
-    if (currentHour < startHour || currentHour >= endHour) {
+    // endHour is INCLUSIVE: if endHour=17, mission is active during the 17:00–17:59 window
+    if (currentHour < startHour || currentHour > endHour) {
       return false // Outside of scheduled hours
     }
   }
@@ -61,19 +62,24 @@ export function isMissionCurrentlyActive(
  */
 export function getCurrentHourInTimezone(date: Date, timezone: string): number {
   try {
-    // Use Intl.DateTimeFormat to get the hour in the specified timezone
+    // Use Intl.DateTimeFormat with hourCycle: 'h23' to guarantee 0–23 range.
+    // IMPORTANT: Do NOT use hour12: false — in Node.js/V8 with the en-US locale,
+    // midnight (00:xx) is formatted as "24" (CLDR h24 behaviour), causing
+    // parseInt("24") = 24 which is outside 0-23 and always fails the endHour check.
     const formatter = new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
-      hour12: false,
+      hourCycle: 'h23', // h23 always returns 0–23 (midnight = 0, not 24)
       timeZone: timezone,
     })
-    
-    const hourString = formatter.format(date)
-    const hour = parseInt(hourString, 10)
-    
-    return hour
+
+    const parts = formatter.formatToParts(date)
+    const hourPart = parts.find((p) => p.type === 'hour')
+    const hour = parseInt(hourPart?.value ?? '0', 10)
+
+    // Normalize just in case: some runtimes may still emit 24 for midnight
+    return hour % 24
   } catch (error) {
-    console.error('Error getting hour in timezone:', error)
+    logger.error('Error getting hour in timezone:', error)
     // Fallback to UTC
     return date.getUTCHours()
   }
@@ -110,16 +116,19 @@ export function getNextAvailableTime(
 
   // Check hourly schedule
   if (mission.isHourlyScheduled && mission.hourlySchedule) {
-    const { startHour, timezone } = mission.hourlySchedule
+    const { startHour, endHour, timezone } = mission.hourlySchedule
     const currentHour = getCurrentHourInTimezone(currentTime, timezone || 'UTC')
-    
+
     if (currentHour < startHour) {
       // Mission starts later today
       const nextAvailable = new Date(currentTime)
       nextAvailable.setHours(startHour, 0, 0, 0)
       return nextAvailable
+    } else if (currentHour <= endHour) {
+      // Currently within the schedule window → mission is available now
+      return null
     } else {
-      // Mission starts tomorrow at startHour
+      // Past endHour for today — next window is tomorrow at startHour
       const nextAvailable = new Date(currentTime)
       nextAvailable.setDate(nextAvailable.getDate() + 1)
       nextAvailable.setHours(startHour, 0, 0, 0)

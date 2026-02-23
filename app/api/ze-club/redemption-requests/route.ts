@@ -1,9 +1,26 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
+import { errorResponse } from '@/lib/api-response';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/user';
 import Reward from '@/models/reward';
 import RedemptionRequest from '@/models/redemptionRequest';
+import logger from '@/lib/logger';
+import { z } from 'zod';
+import { badRequestFromZod, objectIdSchema, optionalTextSchema, requiredTextSchema } from '@/lib/validation';
+
+const redemptionRequestSchema = z.object({
+  rewardId: objectIdSchema,
+  contactName: requiredTextSchema('Contact name', 100),
+  contactEmail: z.string().trim().email('Invalid email format').max(254, 'Email is too long'),
+  contactPhone: z
+    .string()
+    .trim()
+    .regex(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/, 'Invalid phone number format')
+    .max(24, 'Phone number is too long'),
+  address: requiredTextSchema('Address', 300),
+  additionalNotes: optionalTextSchema('Additional notes', 500),
+});
 
 const RANK_VALUES: Record<string, number> = {
   'Rookie': 0,
@@ -17,36 +34,22 @@ export async function POST(req: Request) {
   const session = await auth();
 
   if (!session || !session.user) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    return errorResponse('Unauthorized', 401);
   }
 
   await dbConnect();
 
   try {
-    const { rewardId, contactName, contactEmail, contactPhone, address, additionalNotes } = await req.json();
-
-    // Validate required fields
-    if (!rewardId || !contactName || !contactEmail || !contactPhone || !address) {
+    const body = await req.json();
+    const parsed = redemptionRequestSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json({ 
-        message: 'Missing required fields' 
+        message: 'Invalid request payload',
+        ...badRequestFromZod(parsed.error),
       }, { status: 400 });
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(contactEmail)) {
-      return NextResponse.json({ 
-        message: 'Invalid email format' 
-      }, { status: 400 });
-    }
-
-    // Validate phone format (basic validation)
-    const phoneRegex = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/;
-    if (!phoneRegex.test(contactPhone.replace(/\s/g, ''))) {
-      return NextResponse.json({ 
-        message: 'Invalid phone number format' 
-      }, { status: 400 });
-    }
+    const { rewardId, contactName, contactEmail, contactPhone, address, additionalNotes } = parsed.data;
 
     const [user, reward] = await Promise.all([
       User.findById(session.user.id),
@@ -136,7 +139,10 @@ export async function POST(req: Request) {
       reward.save(),
     ]);
 
-    console.log(`Redemption request created: User ${user.id} redeemed ${reward.name} for ${finalCost} coins (original: ${reward.cost})`);
+    logger.info(
+      { route: '/api/ze-club/redemption-requests', userId: user.id, rewardId: reward.id, finalCost },
+      'Redemption request created'
+    );
 
     return NextResponse.json({ 
       message: 'Redemption request submitted successfully',
@@ -144,7 +150,7 @@ export async function POST(req: Request) {
     });
 
   } catch (error) {
-    console.error('Error creating redemption request:', error);
+    logger.error({ route: '/api/ze-club/redemption-requests', err: error }, 'Error creating redemption request');
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

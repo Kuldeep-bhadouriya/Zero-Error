@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { AlertTriangle, CheckCircle2, Megaphone, BellRing } from 'lucide-react'
 import type { AnnouncementItem } from '@/components/shared/AnnouncementCarousel'
-import { formatAnnouncementMessage } from '@/components/shared/AnnouncementCarousel'
+import { AnnouncementMessage } from '@/components/shared/AnnouncementCarousel'
 import { cn } from '@/lib/utils'
 
 interface ExtendedAnnouncement extends AnnouncementItem {
@@ -152,9 +152,9 @@ function AnnouncementsSection() {
                     <span className="text-xs text-gray-400">Priority {announcement.priority}/10</span>
                   </div>
                   <h3 className="mt-4 text-xl font-bold leading-tight">{announcement.title}</h3>
-                  <p
+                  <AnnouncementMessage
+                    message={announcement.message}
                     className="mt-3 text-sm text-gray-100/90"
-                    dangerouslySetInnerHTML={{ __html: formatAnnouncementMessage(announcement.message) }}
                   />
                 </div>
 

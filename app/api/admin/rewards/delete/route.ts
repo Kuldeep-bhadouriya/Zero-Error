@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
 import dbConnect from '@/lib/mongodb'
 import Reward from '@/models/reward'
+import logger from '@/lib/logger'
 
 export async function DELETE(req: Request) {
   try {
@@ -44,10 +45,10 @@ export async function DELETE(req: Request) {
       success: true,
       message: 'Reward deleted successfully',
     })
-  } catch (error: any) {
-    console.error('Error deleting reward:', error)
+  } catch (error: unknown) {
+    logger.error('Error deleting reward:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to delete reward' },
+      { error: error instanceof Error ? error.message : 'Failed to delete reward' },
       { status: 500 }
     )
   }

@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { errorResponse } from '@/lib/api-response'
 import dbConnect from '@/lib/mongodb'
 import Mission from '@/models/mission'
+import logger from '@/lib/logger'
 
 export async function GET() {
   try {
     const session = await auth()
     
     if (!session || !session.user) {
-      return new NextResponse('Unauthorized', { status: 401 })
+      return errorResponse('Unauthorized', 401)
     }
 
     await dbConnect()
@@ -69,7 +71,7 @@ export async function GET() {
 
     return NextResponse.json(availableMissions)
   } catch (error) {
-    console.error('Error fetching featured missions:', error)
+    logger.error('Error fetching featured missions:', error)
     return NextResponse.json(
       { error: 'Failed to fetch featured missions' },
       { status: 500 }

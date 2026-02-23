@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
 import dbConnect from '@/lib/mongodb'
 import Event from '@/models/event'
+import logger from '@/lib/logger'
 
 export async function PATCH(req: Request) {
   try {
@@ -79,10 +80,10 @@ export async function PATCH(req: Request) {
       event,
       message: 'Event updated successfully',
     })
-  } catch (error: any) {
-    console.error('Error updating event:', error)
+  } catch (error: unknown) {
+    logger.error('Error updating event:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to update event' },
+      { error: error instanceof Error ? error.message : 'Failed to update event' },
       { status: 500 }
     )
   }

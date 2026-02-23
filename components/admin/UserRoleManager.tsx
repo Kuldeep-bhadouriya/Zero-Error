@@ -19,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import logger from '@/lib/browser-logger'
 
 interface UserData {
   _id: string
@@ -62,7 +63,7 @@ export default function UserRoleManager() {
       const data = await res.json()
       setAdmins(data.admins || [])
     } catch (error: any) {
-      console.error('Error fetching admins:', error)
+      logger.error('Error fetching admins:', error)
       toast({
         title: 'Error',
         description: 'Failed to load admin list',
@@ -87,17 +88,17 @@ export default function UserRoleManager() {
         throw new Error(errorData.error || errorData.details || 'Failed to search users')
       }
       const data = await res.json()
-      console.log('Search results:', data.users)
+      logger.info('Search results:', data.users)
       if (data.users && data.users.length > 0) {
-        console.log('First user data:', data.users[0])
-        console.log('Image URLs:', {
+        logger.info('First user data:', data.users[0])
+        logger.info('Image URLs:', {
           profilePhotoUrl: data.users[0].profilePhotoUrl,
           image: data.users[0].image
         })
       }
       setUsers(data.users || [])
     } catch (error: any) {
-      console.error('Search error:', error)
+      logger.error('Search error:', error)
       toast({
         title: 'Error',
         description: error.message || 'Failed to search users. Please try again.',
@@ -382,7 +383,7 @@ export default function UserRoleManager() {
                             alt={user.zeTag || user.email}
                             className="h-10 w-10 sm:h-12 sm:w-12 rounded-full border-2 border-zinc-700 object-cover flex-shrink-0"
                             onError={(e) => {
-                              console.error('Image failed to load for user:', user.zeTag || user.email, {
+                              logger.error('Image failed to load for user:', user.zeTag || user.email, {
                                 profilePhotoUrl: user.profilePhotoUrl,
                                 image: user.image,
                                 attemptedUrl: imageUrl

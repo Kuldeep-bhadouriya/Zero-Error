@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react'
 import { useUploadThing } from '@/lib/uploadthing'
+import logger from '@/lib/browser-logger'
 
 interface EventImageUploaderProps {
   eventId?: string
@@ -38,7 +39,7 @@ function EventImageUploader({ eventId, currentImage, onImageUpload }: EventImage
 
       return true
     } catch (error: any) {
-      console.error('Error saving event image:', error)
+      logger.error('Error saving event image:', error)
       alert(error.message || 'Failed to link the uploaded image to this event')
       return false
     }
@@ -61,7 +62,7 @@ function EventImageUploader({ eventId, currentImage, onImageUpload }: EventImage
       setUploading(false)
     },
     onUploadError: (error) => {
-      console.error('Upload error:', error)
+      logger.error('Upload error:', error)
       alert(error.message || 'Failed to upload image')
       setPreview(currentImage || '')
       setUploading(false)
@@ -103,7 +104,7 @@ function EventImageUploader({ eventId, currentImage, onImageUpload }: EventImage
     try {
       await startUpload([file], { eventId })
     } catch (error: any) {
-      console.error('Upload error:', error)
+      logger.error('Upload error:', error)
       alert(error.message || 'Failed to upload image')
       setPreview(currentImage || '')
       setUploading(false)

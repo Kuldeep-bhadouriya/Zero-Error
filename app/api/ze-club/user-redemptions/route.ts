@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
+import { errorResponse } from '@/lib/api-response';
 import dbConnect from '@/lib/mongodb';
 import RedemptionRequest from '@/models/redemptionRequest';
 import User from '@/models/user';
+import logger from '@/lib/logger'
 
 export async function GET() {
   await dbConnect();
@@ -11,7 +13,7 @@ export async function GET() {
     const session = await auth();
 
     if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      return errorResponse('Unauthorized', 401);
     }
 
     // Get user
@@ -27,7 +29,7 @@ export async function GET() {
 
     return NextResponse.json(redemptions);
   } catch (error) {
-    console.error('Error fetching user redemptions:', error);
+    logger.error('Error fetching user redemptions:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

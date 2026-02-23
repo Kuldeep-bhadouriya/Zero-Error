@@ -38,6 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import logger from '@/lib/browser-logger'
 
 interface RedemptionRequest {
   _id: string;
@@ -90,7 +91,7 @@ export default function RedemptionManager() {
       const data = await response.json();
       setRequests(data);
     } catch (error) {
-      console.error('Error fetching requests:', error);
+      logger.error('Error fetching requests:', error);
       toast({
         title: 'Error',
         description: 'Failed to load redemption requests',
@@ -136,7 +137,7 @@ export default function RedemptionManager() {
       setDialogOpen(false);
       fetchRequests();
     } catch (error) {
-      console.error('Error updating request:', error);
+      logger.error('Error updating request:', error);
       toast({
         title: 'Error',
         description: 'Failed to update redemption request',

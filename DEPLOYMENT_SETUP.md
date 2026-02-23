@@ -125,6 +125,26 @@ EMAIL_PASSWORD="your-16-char-app-password"
 
 **Note**: Never use your actual Gmail password. Always use App Passwords.
 
+### 7. Rate Limiting (Upstash Redis)
+
+Rate limiting is enabled for all API routes. For distributed production deployments,
+configure Upstash Redis so limits are shared across instances.
+
+1. Go to [Upstash Console](https://console.upstash.com/)
+2. Create a Redis database
+3. Open the database and copy the REST credentials
+
+**Variables needed**:
+```env
+UPSTASH_REDIS_REST_URL="https://<your-upstash-endpoint>"
+UPSTASH_REDIS_REST_TOKEN="<your-upstash-token>"
+```
+
+**Important**:
+- Without these variables, the app falls back to in-memory rate limiting.
+- In-memory fallback is suitable for local development only.
+- For Vercel/Netlify/serverless multi-instance deployments, Upstash variables are strongly required.
+
 ## Deployment Platforms
 
 ### Vercel Deployment

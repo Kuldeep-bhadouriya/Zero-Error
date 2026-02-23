@@ -1,14 +1,23 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { errorResponse } from '@/lib/api-response'
 import dbConnect from '@/lib/mongodb'
 import User from '@/models/user'
 import { uploadToS3 } from '@/lib/s3'
+import { getSafeImageExtension, sanitizeFileName } from '@/lib/file-utils'
+import { objectIdSchema } from '@/lib/validation'
+import logger from '@/lib/logger'
 
 export async function POST(req: Request) {
   try {
     const session = await auth()
     if (!session || !session.user) {
-      return new NextResponse('Unauthorized', { status: 401 })
+      return errorResponse('Unauthorized', 401)
+    }
+
+    const parsedUserId = objectIdSchema.safeParse(session.user.id)
+    if (!parsedUserId.success) {
+      return new NextResponse('Invalid user identifier', { status: 400 })
     }
 
     const formData = await req.formData()
@@ -44,7 +53,12 @@ export async function POST(req: Request) {
     }
 
     // Upload to S3
-    const fileName = `profile-photos/${session.user.id}-${Date.now()}.${file.type.split('/')[1]}`
+    const safeOriginalName = sanitizeFileName(file.name || 'profile-image')
+    const safeExt = getSafeImageExtension(safeOriginalName, file.type)
+    const baseName = safeOriginalName.includes('.')
+      ? safeOriginalName.slice(0, safeOriginalName.lastIndexOf('.'))
+      : safeOriginalName
+    const fileName = `profile-photos/${parsedUserId.data}-${Date.now()}-${baseName}.${safeExt}`
     const buffer = Buffer.from(await file.arrayBuffer())
     const photoUrl = await uploadToS3(buffer, fileName, file.type)
 
@@ -57,7 +71,7 @@ export async function POST(req: Request) {
       profilePhotoUrl: photoUrl,
     })
   } catch (error) {
-    console.error('Error uploading profile photo:', error)
+    logger.error('Error uploading profile photo:', error)
     return new NextResponse('Internal server error', { status: 500 })
   }
 }

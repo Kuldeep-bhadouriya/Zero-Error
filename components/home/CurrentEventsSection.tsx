@@ -8,6 +8,7 @@ import { MapPin, Users, ExternalLink, Clock, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import logger from '@/lib/browser-logger'
 
 interface Event {
   _id: string
@@ -41,7 +42,7 @@ const CurrentEventsSection = () => {
         setEvents(data.events)
       }
     } catch (error) {
-      console.error('Error fetching current events:', error)
+      logger.error('Error fetching current events:', error)
     } finally {
       setLoading(false)
     }

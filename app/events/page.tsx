@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import CurrentEventsSection from "@/components/home/CurrentEventsSection";
+import logger from '@/lib/browser-logger'
 
 interface Event {
   _id: string
@@ -61,10 +62,10 @@ export default function EventsPage() {
       ])
       
       if (!upcomingRes.ok) {
-        console.error('Failed to fetch upcoming events:', upcomingRes.status, upcomingRes.statusText)
+        logger.error('Failed to fetch upcoming events:', upcomingRes.status, upcomingRes.statusText)
       }
       if (!pastRes.ok) {
-        console.error('Failed to fetch past events:', pastRes.status, pastRes.statusText)
+        logger.error('Failed to fetch past events:', pastRes.status, pastRes.statusText)
       }
       
       const [upcomingData, pastData] = await Promise.all([
@@ -72,20 +73,20 @@ export default function EventsPage() {
         pastRes.json()
       ])
       
-      console.log('Upcoming events response:', upcomingData)
-      console.log('Past events response:', pastData)
-      console.log('Past events count:', pastData.events?.length || 0)
-      console.log('Past events data:', pastData.events)
+      logger.info('Upcoming events response:', upcomingData)
+      logger.info('Past events response:', pastData)
+      logger.info('Past events count:', pastData.events?.length || 0)
+      logger.info('Past events data:', pastData.events)
       
       if (upcomingData.success) {
         setUpcomingEvents(upcomingData.events || [])
       }
       if (pastData.success) {
         setPastEvents(pastData.events || [])
-        console.log('Set past events state:', pastData.events?.length || 0)
+        logger.info('Set past events state:', pastData.events?.length || 0)
       }
     } catch (error) {
-      console.error('Error fetching events:', error)
+      logger.error('Error fetching events:', error)
     } finally {
       setLoading(false)
     }

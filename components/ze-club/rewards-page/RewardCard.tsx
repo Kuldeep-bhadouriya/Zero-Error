@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Coins, Package, Lock, Gift, Sparkles, AlertCircle, Zap, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IReward } from '@/models/reward';
+import logger from '@/lib/browser-logger'
 
 // Extending interface for frontend specific props
 interface Reward extends Omit<IReward, 'isModified' | 'increment' | 'get' | '$isNew' | 'errors' | 'schema' | 'db' | 'modelName' | 'collection'> {
@@ -69,16 +70,16 @@ export function RewardCard({ reward, userCoins, onRedeem, index }: RewardCardPro
           {/* Custom Image or Icon Illustration */}
           {reward.imageUrl ? (
             <>
-              {console.log('RewardCard rendering image:', reward.name, reward.imageUrl)}
+              {logger.info('RewardCard rendering image:', reward.name, reward.imageUrl)}
               <img 
                 src={reward.imageUrl} 
                 alt={reward.name} 
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 onError={(e) => {
-                  console.error('Image failed to load:', reward.imageUrl);
+                  logger.error('Image failed to load:', reward.imageUrl);
                   e.currentTarget.style.display = 'none';
                 }}
-                onLoad={() => console.log('Image loaded successfully:', reward.imageUrl)}
+                onLoad={() => logger.info('Image loaded successfully:', reward.imageUrl)}
               />
             </>
           ) : (

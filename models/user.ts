@@ -67,4 +67,7 @@ const UserSchema: Schema = new Schema({
   lastLoginAt: { type: Date },
 })
 
+UserSchema.index({ email: 1, experience: -1 })
+UserSchema.index({ experience: -1 })
+
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema)

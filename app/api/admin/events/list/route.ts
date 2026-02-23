@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
 import dbConnect from '@/lib/mongodb'
 import Event from '@/models/event'
+import logger from '@/lib/logger'
 
 // Prevent caching to ensure admins always see latest data
 export const dynamic = 'force-dynamic'
@@ -73,10 +74,10 @@ export async function GET(req: Request) {
         totalPages: Math.ceil(total / limit),
       },
     })
-  } catch (error: any) {
-    console.error('Error listing events:', error)
+  } catch (error: unknown) {
+    logger.error('Error listing events:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to list events' },
+      { error: error instanceof Error ? error.message : 'Failed to list events' },
       { status: 500 }
     )
   }

@@ -17,6 +17,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, Pencil, RefreshCcw, Search, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import logger from '@/lib/browser-logger'
 
 interface AnnouncementRecord {
   _id: string
@@ -93,7 +94,7 @@ function AnnouncementList({ onEdit, refreshTrigger }: AnnouncementListProps) {
         setAnnouncements(data.announcements || [])
         setTotalPages(data.pagination?.totalPages || 1)
       } catch (error: any) {
-        console.error(error)
+        logger.error(error)
         toast({ title: 'Unable to load announcements', description: error.message || 'Please try again shortly.' })
       } finally {
         setLoading(false)
@@ -118,7 +119,7 @@ function AnnouncementList({ onEdit, refreshTrigger }: AnnouncementListProps) {
       setAnnouncements((prev) => prev.map((item) => (item._id === id ? { ...item, ...updates } : item)))
       toast({ title: 'Announcement updated', description: 'Changes saved' })
     } catch (error: any) {
-      console.error('Failed to update announcement', error)
+      logger.error('Failed to update announcement', error)
       toast({ title: 'Update failed', description: error.message || 'Try again' })
     }
   }
@@ -137,7 +138,7 @@ function AnnouncementList({ onEdit, refreshTrigger }: AnnouncementListProps) {
       setAnnouncements((prev) => prev.filter((item) => item._id !== id))
       toast({ title: 'Announcement removed' })
     } catch (error: any) {
-      console.error('Failed to delete announcement', error)
+      logger.error('Failed to delete announcement', error)
       toast({ title: 'Delete failed', description: error.message || 'Try again' })
     }
   }

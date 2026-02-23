@@ -20,10 +20,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
-import { CalendarIcon, Upload, X, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react'
+import {
+  CalendarIcon, Upload, X, AlertCircle, CheckCircle2, AlertTriangle,
+  Clock, Target, FileImage, Star, Settings2, RotateCcw, Info, Layers, ChevronRight,
+} from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useUploadThing } from '@/lib/uploadthing'
+import logger from '@/lib/browser-logger'
 
 interface MissionFormProps {
   mission?: any
@@ -114,18 +118,18 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
 
   // Effect to update form when mission prop changes (for when switching between missions)
   useEffect(() => {
-    console.log('MissionForm: useEffect triggered, mission:', mission?._id, mission?.name)
+    logger.info('MissionForm: useEffect triggered, mission:', mission?._id, mission?.name)
     
     if (mission) {
       // Editing mode: populate form with mission data
       const newFormData = getInitialFormData(mission)
-      console.log('MissionForm: Setting form data for editing:', newFormData)
+      logger.info('MissionForm: Setting form data for editing:', newFormData)
       setFormData(newFormData)
       setExampleImagePreview(mission.exampleImageUrl || '')
       setExampleImage(null)
     } else {
       // Create mode: reset form to initial values
-      console.log('MissionForm: Resetting form for new mission')
+      logger.info('MissionForm: Resetting form for new mission')
       const emptyFormData = getInitialFormData()
       setFormData(emptyFormData)
       setExampleImagePreview('')
@@ -161,7 +165,7 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
 
       return uploadedFiles[0].url
     } catch (err: any) {
-      console.error('Error uploading image:', err)
+      logger.error('Error uploading image:', err)
       throw err
     } finally {
       setUploading(false)
@@ -203,8 +207,9 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
         if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) {
           throw new Error('Hours must be between 0 and 23')
         }
-        if (endHour <= startHour) {
-          throw new Error('End hour must be after start hour')
+        // endHour is inclusive, so startHour=9 endHour=9 is a valid 1-hour window (9:00–9:59)
+        if (endHour < startHour) {
+          throw new Error('End hour cannot be before start hour')
         }
       }
 
@@ -260,7 +265,7 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
         onSuccess?.()
       }, 1500)
     } catch (err: any) {
-      console.error('Mission form error:', err)
+      logger.error('Mission form error:', err)
       toast({
         title: 'Error',
         description: err.message || 'An unexpected error occurred',
@@ -273,10 +278,39 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Basic Info */}
-      <Card>
+      {/* Scheduling feature summary badges */}
+      {(formData.isTimeLimited || formData.isHourlyScheduled || formData.isWeeklyMission) && (
+        <div className="flex flex-wrap gap-2 p-3 rounded-lg bg-zinc-800/60 border border-zinc-700">
+          <span className="text-xs text-zinc-400 self-center mr-1">Active constraints:</span>
+          {formData.isTimeLimited && (
+            <Badge variant="outline" className="border-purple-500/60 text-purple-300 bg-purple-500/10 flex items-center gap-1 text-xs">
+              <CalendarIcon className="h-3 w-3" /> Date Range
+            </Badge>
+          )}
+          {formData.isHourlyScheduled && (
+            <Badge variant="outline" className="border-orange-500/60 text-orange-300 bg-orange-500/10 flex items-center gap-1 text-xs">
+              <Clock className="h-3 w-3" />
+              {formData.hourlySchedule.startHour.toString().padStart(2,'0')}:00–{formData.hourlySchedule.endHour.toString().padStart(2,'0')}:59 {formData.hourlySchedule.timezone}
+            </Badge>
+          )}
+          {formData.isWeeklyMission && (
+            <Badge variant="outline" className="border-green-500/60 text-green-300 bg-green-500/10 flex items-center gap-1 text-xs">
+              <RotateCcw className="h-3 w-3" /> Weekly
+            </Badge>
+          )}
+          {formData.isTimeLimited && formData.isHourlyScheduled && (
+            <Badge variant="outline" className="border-indigo-500/60 text-indigo-300 bg-indigo-500/10 flex items-center gap-1 text-xs">
+              <Layers className="h-3 w-3" /> Combined (AND)
+            </Badge>
+          )}
+        </div>
+      )}
+      <Card className="border-zinc-800">
         <CardHeader>
-          <CardTitle>Basic Information</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-red-400" />
+            Basic Information
+          </CardTitle>
           <CardDescription>Mission name, description, and category</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -361,9 +395,12 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
       </Card>
 
       {/* Points & Rewards */}
-      <Card>
+      <Card className="border-zinc-800">
         <CardHeader>
-          <CardTitle>Points & Limits</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Star className="h-5 w-5 text-yellow-400" />
+            Points & Limits
+          </CardTitle>
           <CardDescription>Configure points awarded and completion limits</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -403,9 +440,12 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
       </Card>
 
       {/* Proof Requirements */}
-      <Card>
+      <Card className="border-zinc-800">
         <CardHeader>
-          <CardTitle>Proof Requirements</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <FileImage className="h-5 w-5 text-blue-400" />
+            Proof Requirements
+          </CardTitle>
           <CardDescription>What type of proof users need to submit</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -477,17 +517,20 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
       </Card>
 
       {/* Time Limits */}
-      <Card>
+      <Card className="border-zinc-800">
         <CardHeader>
-          <CardTitle>Time Limits</CardTitle>
-          <CardDescription>Set when this mission is available</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5 text-purple-400" />
+            Date Range (Time Limit)
+          </CardTitle>
+          <CardDescription>Restrict this mission to a specific date window</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Time Limited Mission</Label>
+              <Label className="text-base">Enable Date-Range Limit</Label>
               <p className="text-sm text-muted-foreground">
-                Mission will only be available during specified dates
+                Mission will only be available between the chosen dates
               </p>
             </div>
             <Switch
@@ -497,16 +540,16 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
           </div>
 
           {formData.isTimeLimited && (
-            <div className="space-y-4 pl-4 border-l-2">
+            <div className="space-y-4 pl-4 border-l-2 border-purple-500/40">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Start Date (Optional)</Label>
+                  <Label>Start Date <span className="text-zinc-500 font-normal">(optional)</span></Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className={cn(
-                          'w-full justify-start text-left font-normal bg-zinc-800 border-zinc-700 hover:bg-zinc-700',
+                          'w-full justify-start text-left font-normal bg-zinc-800 border-zinc-700 hover:bg-zinc-700 mt-1.5',
                           !formData.startDate ? 'text-gray-400' : 'text-white'
                         )}
                       >
@@ -525,13 +568,13 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
                 </div>
 
                 <div>
-                  <Label>End Date (Optional)</Label>
+                  <Label>End Date <span className="text-zinc-500 font-normal">(optional)</span></Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         className={cn(
-                          'w-full justify-start text-left font-normal bg-zinc-800 border-zinc-700 hover:bg-zinc-700',
+                          'w-full justify-start text-left font-normal bg-zinc-800 border-zinc-700 hover:bg-zinc-700 mt-1.5',
                           !formData.endDate ? 'text-gray-400' : 'text-white'
                         )}
                       >
@@ -554,7 +597,10 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
               </div>
 
               <div>
-                <Label htmlFor="daysAvailable">Or Days Available (from start date)</Label>
+                <Label htmlFor="daysAvailable">
+                  Or specify duration in days{' '}
+                  <span className="text-zinc-500 font-normal">(from start date)</span>
+                </Label>
                 <Input
                   id="daysAvailable"
                   type="number"
@@ -562,28 +608,41 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
                   value={formData.daysAvailable}
                   onChange={(e) => setFormData({ ...formData, daysAvailable: parseInt(e.target.value) || 0 })}
                   placeholder="0"
+                  className="mt-1.5"
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                  Mission will auto-expire after this many days. Overrides end date.
+                  If set, auto-calculates the end date. Overrides the end date picker above.
                 </p>
               </div>
+
+              {formData.isHourlyScheduled && (
+                <div className="flex items-start gap-2 rounded-md bg-purple-500/10 border border-purple-500/30 p-3">
+                  <Layers className="h-4 w-4 text-purple-400 mt-0.5 shrink-0" />
+                  <p className="text-sm text-purple-200">
+                    <span className="font-medium">Works with Hourly Schedule</span> — users will only see this mission within the date range <span className="font-medium">and</span> during the active hours defined below.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Hourly Schedule */}
-      <Card>
+      <Card className="border-zinc-800">
         <CardHeader>
-          <CardTitle>Hourly Schedule</CardTitle>
-          <CardDescription>Set specific hours when mission is active each day</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-orange-400" />
+            Hourly Schedule
+          </CardTitle>
+          <CardDescription>Limit this mission to specific hours of the day</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Hourly Scheduled Mission</Label>
+              <Label className="text-base">Enable Hourly Schedule</Label>
               <p className="text-sm text-muted-foreground">
-                Mission will only be active during specified hours each day
+                Mission will only appear during the specified hours each day
               </p>
             </div>
             <Switch
@@ -593,72 +652,99 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
           </div>
 
           {formData.isHourlyScheduled && (
-            <div className="space-y-4 pl-4 border-l-2">
+            <div className="space-y-5 pl-4 border-l-2 border-orange-500/40">
+              {/* Hour inputs */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="startHour">Start Hour (24h format)</Label>
-                  <Select
-                    value={formData.hourlySchedule.startHour.toString()}
-                    onValueChange={(value) => setFormData({ 
-                      ...formData, 
-                      hourlySchedule: { 
-                        ...formData.hourlySchedule, 
-                        startHour: parseInt(value) 
-                      } 
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      {Array.from({ length: 24 }, (_, i) => (
-                        <SelectItem key={i} value={i.toString()}>
-                          {i.toString().padStart(2, '0')}:00
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="startHour">
+                    Start Hour{' '}
+                    <span className="text-zinc-500 font-normal">(0–23, 24h)</span>
+                  </Label>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <Select
+                      value={formData.hourlySchedule.startHour.toString()}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          hourlySchedule: {
+                            ...formData.hourlySchedule,
+                            startHour: parseInt(value),
+                          },
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[280px]">
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>
+                            {i.toString().padStart(2, '0')}:00
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="endHour">End Hour (24h format)</Label>
-                  <Select
-                    value={formData.hourlySchedule.endHour.toString()}
-                    onValueChange={(value) => setFormData({ 
-                      ...formData, 
-                      hourlySchedule: { 
-                        ...formData.hourlySchedule, 
-                        endHour: parseInt(value) 
-                      } 
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      {Array.from({ length: 24 }, (_, i) => (
-                        <SelectItem key={i} value={i.toString()}>
-                          {i.toString().padStart(2, '0')}:00
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="endHour">
+                    End Hour{' '}
+                    <span className="text-zinc-500 font-normal">(0–23, inclusive)</span>
+                  </Label>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <Select
+                      value={formData.hourlySchedule.endHour.toString()}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          hourlySchedule: {
+                            ...formData.hourlySchedule,
+                            endHour: parseInt(value),
+                          },
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[280px]">
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <SelectItem
+                            key={i}
+                            value={i.toString()}
+                            disabled={i < formData.hourlySchedule.startHour}
+                          >
+                            {i.toString().padStart(2, '0')}:00
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {formData.hourlySchedule.endHour < formData.hourlySchedule.startHour && (
+                    <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> End hour must be ≥ start hour
+                    </p>
+                  )}
                 </div>
               </div>
 
+              {/* Timezone */}
               <div>
                 <Label htmlFor="timezone">Timezone</Label>
                 <Select
                   value={formData.hourlySchedule.timezone}
-                  onValueChange={(value) => setFormData({ 
-                    ...formData, 
-                    hourlySchedule: { 
-                      ...formData.hourlySchedule, 
-                      timezone: value 
-                    } 
-                  })}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      hourlySchedule: {
+                        ...formData.hourlySchedule,
+                        timezone: value,
+                      },
+                    })
+                  }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-1.5">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
@@ -676,31 +762,98 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
                     <SelectItem value="Australia/Sydney">Sydney (AEDT/AEST)</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Mission active: {formData.hourlySchedule.startHour.toString().padStart(2, '0')}:00 - {formData.hourlySchedule.endHour.toString().padStart(2, '0')}:00 {formData.hourlySchedule.timezone}
+              </div>
+
+              {/* Visual 24-hour timeline bar */}
+              {formData.hourlySchedule.endHour >= formData.hourlySchedule.startHour && (
+                <div className="space-y-2">
+                  <Label className="text-xs text-zinc-400 uppercase tracking-wider">Daily Active Window</Label>
+                  <div className="relative h-7 w-full rounded-md overflow-hidden bg-zinc-800 border border-zinc-700">
+                    {/* Active segment */}
+                    <div
+                      className="absolute top-0 h-full bg-orange-500/70 border-r border-l border-orange-400/60 flex items-center justify-center"
+                      style={{
+                        left: `${(formData.hourlySchedule.startHour / 24) * 100}%`,
+                        width: `${((formData.hourlySchedule.endHour - formData.hourlySchedule.startHour + 1) / 24) * 100}%`,
+                      }}
+                    >
+                      <span className="text-[10px] font-semibold text-white drop-shadow px-1 truncate">
+                        {formData.hourlySchedule.startHour.toString().padStart(2, '0')}:00 –{' '}
+                        {formData.hourlySchedule.endHour.toString().padStart(2, '0')}:59
+                      </span>
+                    </div>
+                  </div>
+                  {/* Hour markers */}
+                  <div className="flex justify-between text-[10px] text-zinc-600 px-0.5">
+                    {[0, 6, 12, 18, 23].map((h) => (
+                      <span key={h}>{h.toString().padStart(2, '0')}h</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Active window summary */}
+              <div className="rounded-md bg-orange-500/10 border border-orange-500/30 p-3 space-y-1">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-orange-400 shrink-0" />
+                  <p className="text-sm font-medium text-orange-200">Active each day:</p>
+                </div>
+                <p className="text-sm text-orange-300/80 pl-6">
+                  {formData.hourlySchedule.startHour.toString().padStart(2, '0')}:00 –{' '}
+                  {formData.hourlySchedule.endHour.toString().padStart(2, '0')}:59{' '}
+                  <span className="font-medium">{formData.hourlySchedule.timezone}</span>
+                  {' '}
+                  <span className="text-orange-400/60">
+                    ({formData.hourlySchedule.endHour - formData.hourlySchedule.startHour + 1}{' '}
+                    hour{formData.hourlySchedule.endHour - formData.hourlySchedule.startHour + 1 !== 1 ? 's' : ''} per day)
+                  </span>
+                </p>
+                <p className="text-xs text-orange-400/60 pl-6">
+                  End hour is <strong>inclusive</strong> — the mission is active throughout the end hour (e.g. 17:00 means active until 17:59).
                 </p>
               </div>
 
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-blue-400 mt-0.5" />
-                  <div className="text-sm text-blue-200">
-                    <p className="font-medium">Hourly Schedule Info</p>
-                    <p className="text-blue-300/80 mt-1">
-                      This mission will only be available during the specified hours each day. Outside these hours, users won't be able to see or submit this mission.
+              {/* Combined hint when time limit is also active */}
+              {formData.isTimeLimited && (
+                <div className="flex items-start gap-2 rounded-md bg-indigo-500/10 border border-indigo-500/30 p-3">
+                  <Layers className="h-4 w-4 text-indigo-400 mt-0.5 shrink-0" />
+                  <div className="text-sm text-indigo-200 space-y-0.5">
+                    <p className="font-medium">Combined Schedule Active</p>
+                    <p className="text-indigo-300/80">
+                      Both conditions must be met:{' '}
+                      {formData.startDate && (
+                        <span>from <strong>{format(formData.startDate, 'PPP')}</strong></span>
+                      )}
+                      {formData.endDate && (
+                        <span> to <strong>{format(formData.endDate, 'PPP')}</strong></span>
+                      )}
+                      {(!formData.startDate && !formData.endDate) && (
+                        <span>within the configured date range</span>
+                      )}
+                      {' '}<span className="text-indigo-400">AND</span>{' '}
+                      between{' '}
+                      <strong>
+                        {formData.hourlySchedule.startHour.toString().padStart(2, '0')}:00 –{' '}
+                        {formData.hourlySchedule.endHour.toString().padStart(2, '0')}:59{' '}
+                        {formData.hourlySchedule.timezone}
+                      </strong>{' '}
+                      each day.
                     </p>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Weekly Repeating Mission */}
-      <Card>
+      <Card className="border-zinc-800">
         <CardHeader>
-          <CardTitle>Weekly Repeating Mission</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <RotateCcw className="h-5 w-5 text-green-400" />
+            Weekly Repeating Mission
+          </CardTitle>
           <CardDescription>Set this mission to repeat every week on a specific day</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -757,9 +910,12 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
       </Card>
 
       {/* Status */}
-      <Card>
+      <Card className="border-zinc-800">
         <CardHeader>
-          <CardTitle>Status</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Settings2 className="h-5 w-5 text-zinc-400" />
+            Status
+          </CardTitle>
           <CardDescription>Control mission visibility and features</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -792,25 +948,35 @@ export default function MissionForm({ mission, onSuccess, onCancel }: MissionFor
       </Card>
 
       {/* Actions */}
-      <div className="flex gap-4">
-        <Button
-          type="submit"
-          disabled={loading || uploading}
-          className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-        >
-          {loading ? 'Saving...' : mission ? 'Update Mission' : 'Create Mission'}
-        </Button>
-        {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={loading || uploading}
-            className="bg-zinc-800 border-zinc-700 text-gray-300 hover:text-white hover:bg-zinc-700"
-          >
-            Cancel
-          </Button>
+      <div className="flex flex-col gap-3">
+        {uploading && (
+          <div className="flex items-center gap-2 text-sm text-orange-300 bg-orange-500/10 border border-orange-500/30 rounded-md px-3 py-2">
+            <Upload className="h-4 w-4 animate-pulse" />
+            Uploading example image…
+          </div>
         )}
+        <div className="flex gap-3">
+          <Button
+            type="submit"
+            disabled={loading || uploading}
+            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold"
+          >
+            {loading
+              ? (mission ? 'Updating…' : 'Creating…')
+              : (mission ? 'Update Mission' : 'Create Mission')}
+          </Button>
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={loading || uploading}
+              className="bg-zinc-800 border-zinc-700 text-gray-300 hover:text-white hover:bg-zinc-700"
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Date Validation Dialog */}

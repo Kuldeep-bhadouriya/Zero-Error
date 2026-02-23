@@ -3,6 +3,7 @@ import { auth } from '@/app/api/auth/[...nextauth]/route'
 import dbConnect from '@/lib/mongodb'
 import Mission from '@/models/mission'
 import { revalidatePath } from 'next/cache'
+import logger from '@/lib/logger'
 
 async function handleUpdate(req: NextRequest) {
   try {
@@ -89,10 +90,10 @@ async function handleUpdate(req: NextRequest) {
     revalidatePath('/api/ze-club/missions')
 
     return NextResponse.json(mission)
-  } catch (error: any) {
-    console.error('Error updating mission:', error)
+  } catch (error: unknown) {
+    logger.error('Error updating mission:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to update mission' },
+      { error: error instanceof Error ? error.message : 'Failed to update mission' },
       { status: 500 }
     )
   }

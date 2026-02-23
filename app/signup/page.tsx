@@ -6,6 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { ChevronLeft } from "lucide-react"
+import logger from '@/lib/browser-logger'
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -29,7 +30,7 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     // TODO: Implement email/password signup
-    console.log("Form submitted:", formState)
+    logger.info("Form submitted:", formState)
   }
 
   return (

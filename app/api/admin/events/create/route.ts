@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
 import dbConnect from '@/lib/mongodb'
 import Event from '@/models/event'
+import logger from '@/lib/logger'
 
 export async function POST(req: Request) {
   try {
@@ -94,10 +95,10 @@ export async function POST(req: Request) {
       event,
       message: 'Event created successfully',
     })
-  } catch (error: any) {
-    console.error('Error creating event:', error)
+  } catch (error: unknown) {
+    logger.error('Error creating event:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to create event' },
+      { error: error instanceof Error ? error.message : 'Failed to create event' },
       { status: 500 }
     )
   }

@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { errorResponse } from '@/lib/api-response'
 import dbConnect from '@/lib/mongodb'
 import User from '@/models/user'
+import logger from '@/lib/logger'
 
 export async function PATCH(req: Request) {
   try {
     const session = await auth()
     if (!session || !session.user.roles.includes('admin')) {
-      return new NextResponse('Unauthorized', { status: 401 })
+      return errorResponse('Unauthorized', 401)
     }
 
     const { userId, action } = await req.json()
@@ -60,7 +62,7 @@ export async function PATCH(req: Request) {
       }
     })
   } catch (error) {
-    console.error('Error toggling admin role:', error)
+    logger.error('Error toggling admin role:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }

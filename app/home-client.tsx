@@ -1,19 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   motion,
   useScroll,
   AnimatePresence,
 } from "framer-motion";
-
 import LoadingScreen from "@/components/home/LoadingScreen";
 import AnimatedBackground from "@/components/home/AnimatedBackground";
 import HeroSection from "@/components/home/HeroSection";
-import AnnouncementsSection from "@/components/home/AnnouncementsSection";
-import StatsSection from "@/components/home/StatsSection";
-import FeaturedGamesSection from "@/components/home/FeaturedGamesSection";
-import PastEventsSection from "@/components/home/PastEventsSection";
+import logger from '@/lib/browser-logger'
+
+const AnnouncementsSection = dynamic(() => import("@/components/home/AnnouncementsSection"));
+const StatsSection = dynamic(() => import("@/components/home/StatsSection"));
+const FeaturedGamesSection = dynamic(() => import("@/components/home/FeaturedGamesSection"));
+const PastEventsSection = dynamic(() => import("@/components/home/PastEventsSection"));
 
 export default function HomeClient() {
   const [loading, setLoading] = useState(true);
@@ -36,7 +38,7 @@ export default function HomeClient() {
           });
         }
       } catch (error) {
-        console.error("Failed to fetch hero media:", error);
+        logger.error("Failed to fetch hero media:", error);
       }
     }
 

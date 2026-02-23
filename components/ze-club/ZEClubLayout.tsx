@@ -7,17 +7,22 @@ import { AnimatePresence } from "framer-motion"
 import PageTransition from "@/components/page-transition"
 import { useState, useEffect } from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Menu, X, LayoutDashboard, Trophy, Gift, Target, HeadphonesIcon, User, Shield } from "lucide-react"
+import { Menu, X, LayoutDashboard, Trophy, Gift, Target, HeadphonesIcon, User, Shield, CalendarClock } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { MenuItem, MenuContainer } from "@/components/ui/fluid-menu"
+import SeasonBanner from "@/components/ze-club/SeasonBanner"
+import { ErrorBoundary } from "@/components/ErrorBoundary"
+import logger from '@/lib/browser-logger'
+import { useZeClubStore } from '@/lib/stores/zeClubStore'
 
 function ZEClubLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { data: session } = useSession()
-  const [userPoints, setUserPoints] = useState(0)
-  const [userZeTag, setUserZeTag] = useState<string | undefined>()
+  const userPoints = useZeClubStore((state) => state.totalPoints)
+  const userZeTag = useZeClubStore((state) => state.zeTag)
+  const hydrateFromDashboard = useZeClubStore((state) => state.hydrateFromDashboard)
 
   useEffect(() => {
     async function fetchUserData() {
@@ -25,15 +30,14 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
         const response = await fetch("/api/ze-club/user/dashboard")
         if (response.ok) {
           const data = await response.json()
-          setUserPoints(data.totalPoints || 0)
-          setUserZeTag(data.zeTag)
+          hydrateFromDashboard(data)
         }
       } catch (error) {
-        console.error("Failed to fetch user data:", error)
+        logger.error("Failed to fetch user data:", error)
       }
     }
     fetchUserData()
-  }, [])
+  }, [hydrateFromDashboard])
 
   const navItems = [
     { href: "/ze-club", label: "Dashboard", icon: LayoutDashboard },
@@ -41,6 +45,7 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
     { href: "/ze-club/leaderboard", label: "Leaderboard", icon: Trophy },
     { href: "/ze-club/rewards", label: "Rewards", icon: Gift },
     { href: "/ze-club/missions", label: "Missions", icon: Target },
+    { href: "/ze-club/seasons", label: "Seasons", icon: CalendarClock },
     { href: "/ze-club/support", label: "Support", icon: HeadphonesIcon },
   ]
 
@@ -90,12 +95,16 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
               icon={<Gift size={20} strokeWidth={1.5} className="text-white" />} 
               onClick={() => handleNavigate('/ze-club/rewards')}
             />
-            <MenuItem 
-              icon={<Target size={20} strokeWidth={1.5} className="text-white" />} 
+            <MenuItem
+              icon={<Target size={20} strokeWidth={1.5} className="text-white" />}
               onClick={() => handleNavigate('/ze-club/missions')}
             />
-            <MenuItem 
-              icon={<HeadphonesIcon size={20} strokeWidth={1.5} className="text-white" />} 
+            <MenuItem
+              icon={<CalendarClock size={20} strokeWidth={1.5} className="text-white" />}
+              onClick={() => handleNavigate('/ze-club/seasons')}
+            />
+            <MenuItem
+              icon={<HeadphonesIcon size={20} strokeWidth={1.5} className="text-white" />}
               onClick={() => handleNavigate('/ze-club/support')}
             />
             {/* Admin Panel - Only visible to admins */}
@@ -248,9 +257,21 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
         !isMobile && "ml-72",
         "p-4 sm:p-6 lg:p-8 pt-16 sm:pt-20 lg:pt-24"
       )}>
-        <AnimatePresence mode="wait" initial={false}>
-          <PageTransition key={pathname}>{children}</PageTransition>
-        </AnimatePresence>
+        <ErrorBoundary
+          fallback={
+            <div className="p-6 bg-red-900/20 border border-red-700 rounded-lg">
+              <h2 className="text-xl font-bold text-red-500 mb-2">ZE Club feature error</h2>
+              <p className="text-zinc-300">Try refreshing the page to continue.</p>
+            </div>
+          }
+        >
+          <div className="mb-4">
+            <SeasonBanner />
+          </div>
+          <AnimatePresence mode="wait" initial={false}>
+            <PageTransition key={pathname}>{children}</PageTransition>
+          </AnimatePresence>
+        </ErrorBoundary>
       </main>
     </div>
   )

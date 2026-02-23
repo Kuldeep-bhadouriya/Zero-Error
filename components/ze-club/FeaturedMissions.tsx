@@ -15,6 +15,7 @@ import {
   Award
 } from "lucide-react"
 import Link from "next/link"
+import logger from '@/lib/browser-logger'
 
 interface FeaturedMission {
   _id: string
@@ -45,7 +46,7 @@ function FeaturedMissions() {
         const data = await response.json()
         setMissions(data.slice(0, 3)) // Show max 3 featured missions
       } catch (err) {
-        console.error("Error fetching featured missions:", err)
+        logger.error("Error fetching featured missions:", err)
       } finally {
         setIsLoading(false)
       }

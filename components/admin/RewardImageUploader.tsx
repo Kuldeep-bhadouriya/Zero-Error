@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Upload, X, Loader2, Image as ImageIcon } from 'lucide-react'
 import { useUploadThing } from '@/lib/uploadthing'
+import logger from '@/lib/browser-logger'
 
 interface RewardImageUploaderProps {
   rewardId?: string
@@ -21,7 +22,7 @@ function RewardImageUploader({ rewardId, currentImage, onImageUpload }: RewardIm
     onClientUploadComplete: async (res) => {
       if (res && res[0]) {
         const uploadedUrl = res[0].url
-        console.log('✅ Upload complete! URL:', uploadedUrl, 'RewardID:', rewardId)
+        logger.info('✅ Upload complete! URL:', uploadedUrl, 'RewardID:', rewardId)
         // Update parent component's state
         onImageUpload(uploadedUrl)
         setPreview(uploadedUrl)
@@ -30,7 +31,7 @@ function RewardImageUploader({ rewardId, currentImage, onImageUpload }: RewardIm
       setUploading(false)
     },
     onUploadError: (error) => {
-      console.error('❌ Upload error:', error)
+      logger.error('❌ Upload error:', error)
       alert('❌ ' + (error.message || 'Failed to upload image'))
       setPreview(currentImage || '')
       setUploading(false)
@@ -69,11 +70,11 @@ function RewardImageUploader({ rewardId, currentImage, onImageUpload }: RewardIm
 
     // Upload via UploadThing
     setUploading(true)
-    console.log('🚀 Starting upload for rewardId:', rewardId)
+    logger.info('🚀 Starting upload for rewardId:', rewardId)
     try {
       await startUpload([file], { rewardId })
     } catch (error: any) {
-      console.error('Upload error:', error)
+      logger.error('Upload error:', error)
       alert(error.message || 'Failed to upload image')
       setPreview(currentImage || '')
       setUploading(false)

@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { errorResponse } from '@/lib/api-response'
 import dbConnect from '@/lib/mongodb'
 import User from '@/models/user'
+import logger from '@/lib/logger'
 
 const RANKS = [
   { name: 'Rookie', points: 0, icon: '/images/ranks/rookie.png' },
@@ -56,7 +58,7 @@ export async function POST(req: Request) {
     const session = await auth()
 
     if (!session?.user?.email) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
+      return errorResponse('Unauthorized', 401)
     }
 
     await dbConnect()
@@ -125,7 +127,7 @@ export async function POST(req: Request) {
           })
         }
       } catch (error) {
-        console.error(`Error updating user ${user.email}:`, error)
+        logger.error(`Error updating user ${user.email}:`, error)
         errorCount++
       }
     }
@@ -138,10 +140,10 @@ export async function POST(req: Request) {
       errorCount,
       updates: updates.slice(0, 20), // Return first 20 updates
     })
-  } catch (error: any) {
-    console.error('Error fixing user ranks:', error)
+  } catch (error: unknown) {
+    logger.error('Error fixing user ranks:', error)
     return NextResponse.json(
-      { message: 'Failed to fix user ranks', error: error.message },
+      { message: 'Failed to fix user ranks', error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

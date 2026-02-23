@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Plus, RefreshCw, AlertCircle } from 'lucide-react'
 import MissionForm from './MissionForm'
 import MissionList from './MissionList'
+import logger from '@/lib/browser-logger'
 
 export default function MissionManager() {
   const [missions, setMissions] = useState<any[]>([])
@@ -46,7 +47,7 @@ export default function MissionManager() {
   }
 
   function handleEdit(mission: any) {
-    console.log('MissionManager: handleEdit called with mission:', {
+    logger.info('MissionManager: handleEdit called with mission:', {
       id: mission._id,
       name: mission.name,
       description: mission.description,

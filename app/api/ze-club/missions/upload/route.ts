@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { errorResponse } from '@/lib/api-response'
 import MissionSubmission from '@/models/missionSubmission'
 import User from '@/models/user'
 import Mission, { type IMission } from '@/models/mission'
+import Season from '@/models/season'
 import dbConnect from '@/lib/mongodb'
 import { getWeekNumber, getWeekStartDate } from '@/lib/missionUtils'
+import { z } from 'zod'
+import { badRequestFromZod, objectIdSchema } from '@/lib/validation'
+import logger from '@/lib/logger'
+
+const missionSubmissionSchema = z.object({
+  missionId: objectIdSchema,
+  fileUrl: z.string().url('Invalid file URL').max(2048, 'File URL is too long'),
+})
 
 /**
  * POST /api/ze-club/missions/upload
@@ -20,10 +30,19 @@ export async function POST(req: NextRequest) {
   
   // Verify user authentication
   if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return errorResponse('Unauthorized', 401)
   }
 
   await dbConnect()
+
+  // Check if there is an active season
+  const activeSeason = await Season.findOne({ status: 'active' }).lean()
+  if (!activeSeason) {
+    return NextResponse.json(
+      { error: 'No active season. Mission submissions are only accepted during an active season.' },
+      { status: 403 }
+    )
+  }
 
   // Find authenticated user in database
   const user = await User.findOne({ email: session.user.email })
@@ -33,15 +52,15 @@ export async function POST(req: NextRequest) {
 
   // Parse JSON body (file URL comes from UploadThing client)
   const body = await req.json()
-  const { missionId, fileUrl } = body
-
-  // Validate required fields
-  if (!missionId || !fileUrl) {
+  const parsed = missionSubmissionSchema.safeParse(body)
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: 'Missing mission ID or file URL' },
+      badRequestFromZod(parsed.error),
       { status: 400 }
     )
   }
+
+  const { missionId, fileUrl } = parsed.data
 
   try {
     // Fetch the mission to check if it's weekly
@@ -117,7 +136,7 @@ export async function POST(req: NextRequest) {
       submission: newSubmission,
     })
   } catch (error) {
-    console.error('Error saving submission to DB:', error)
+    logger.error('Error saving submission to DB:', error)
     return NextResponse.json(
       { error: 'Failed to create submission' },
       { status: 500 }

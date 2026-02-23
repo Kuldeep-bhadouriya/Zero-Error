@@ -1,38 +1,86 @@
+import 'server-only';
+import { Redis } from '@upstash/redis';
+import { revalidateTag, unstable_cache } from 'next/cache';
+import dbConnect from '@/lib/mongodb';
 import User from '@/models/user';
 
-// Simple in-memory cache with TTL
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
+const CACHE_TTL_SECONDS = 5 * 60;
+const USER_CACHE_TAG = 'user:counts';
+
+type CountCachePayload = {
+  value: number;
+  cachedAt: number;
+};
+
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? Redis.fromEnv()
+    : null;
+
+function totalCountCacheKey() {
+  return 'user:count:total';
 }
 
-const cache = new Map<string, CacheEntry<any>>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+function rankCountCacheKey(rank: string) {
+  return `user:count:rank:${rank}`;
+}
 
-/**
- * Get a value from cache if it exists and hasn't expired
- */
-function getFromCache<T>(key: string): T | null {
-  const entry = cache.get(key);
-  if (!entry) return null;
+async function readCountFromRedis(key: string): Promise<number | null> {
+  if (!redis) return null;
 
-  const now = Date.now();
-  if (now - entry.timestamp > CACHE_TTL) {
-    cache.delete(key);
+  try {
+    const payload = await redis.get<CountCachePayload>(key);
+    if (!payload || typeof payload.value !== 'number') return null;
+    return payload.value;
+  } catch {
     return null;
   }
-
-  return entry.data as T;
 }
 
-/**
- * Set a value in cache with current timestamp
- */
-function setInCache<T>(key: string, data: T): void {
-  cache.set(key, {
-    data,
-    timestamp: Date.now(),
-  });
+async function writeCountToRedis(key: string, value: number): Promise<void> {
+  if (!redis) return;
+
+  const payload: CountCachePayload = {
+    value,
+    cachedAt: Date.now(),
+  };
+
+  try {
+    await redis.set(key, payload, { ex: CACHE_TTL_SECONDS });
+  } catch {
+    // Redis is an optimization layer; ignore transient failures.
+  }
+}
+
+const getTotalUserCountFromDb = unstable_cache(
+  async () => {
+    await dbConnect();
+    return User.countDocuments({
+      email: { $exists: true, $ne: null },
+    });
+  },
+  ['user-count-total'],
+  {
+    revalidate: CACHE_TTL_SECONDS,
+    tags: [USER_CACHE_TAG, totalCountCacheKey()],
+  }
+);
+
+function getUserCountByRankFromDb(rank: string) {
+  return unstable_cache(
+    async () => {
+      await dbConnect();
+      return User.countDocuments({
+        email: { $exists: true, $ne: null },
+        rank,
+      });
+    },
+    ['user-count-rank', rank],
+    {
+      revalidate: CACHE_TTL_SECONDS,
+      tags: [USER_CACHE_TAG, rankCountCacheKey(rank)],
+    }
+  )();
 }
 
 /**
@@ -40,22 +88,12 @@ function setInCache<T>(key: string, data: T): void {
  * Used for rank calculations across the platform
  */
 export async function getTotalUserCount(): Promise<number> {
-  const cacheKey = 'user:count:total';
-  
-  // Try to get from cache first
-  const cached = getFromCache<number>(cacheKey);
-  if (cached !== null) {
-    return cached;
-  }
+  const cacheKey = totalCountCacheKey();
+  const cached = await readCountFromRedis(cacheKey);
+  if (cached !== null) return cached;
 
-  // If not in cache, query database
-  const count = await User.countDocuments({ 
-    email: { $exists: true, $ne: null } 
-  });
-
-  // Store in cache
-  setInCache(cacheKey, count);
-
+  const count = await getTotalUserCountFromDb();
+  await writeCountToRedis(cacheKey, count);
   return count;
 }
 
@@ -64,23 +102,12 @@ export async function getTotalUserCount(): Promise<number> {
  * Useful for calculating percentile ranks
  */
 export async function getUserCountByRank(rank: string): Promise<number> {
-  const cacheKey = `user:count:rank:${rank}`;
-  
-  // Try to get from cache first
-  const cached = getFromCache<number>(cacheKey);
-  if (cached !== null) {
-    return cached;
-  }
+  const cacheKey = rankCountCacheKey(rank);
+  const cached = await readCountFromRedis(cacheKey);
+  if (cached !== null) return cached;
 
-  // If not in cache, query database
-  const count = await User.countDocuments({ 
-    email: { $exists: true, $ne: null },
-    rank 
-  });
-
-  // Store in cache
-  setInCache(cacheKey, count);
-
+  const count = await getUserCountByRankFromDb(rank);
+  await writeCountToRedis(cacheKey, count);
   return count;
 }
 
@@ -88,36 +115,46 @@ export async function getUserCountByRank(rank: string): Promise<number> {
  * Clear all user-related caches
  * Call this when user data changes significantly (e.g., after bulk updates)
  */
-export function clearUserCache(): void {
-  const keysToDelete: string[] = [];
-  
-  cache.forEach((_, key) => {
-    if (key.startsWith('user:')) {
-      keysToDelete.push(key);
-    }
-  });
+export async function clearUserCache(): Promise<void> {
+  revalidateTag(USER_CACHE_TAG, 'max');
 
-  keysToDelete.forEach(key => cache.delete(key));
+  if (!redis) return;
+
+  try {
+    const keys = await redis.keys('user:count:*');
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+  } catch {
+    // Cache invalidation should not block writes.
+  }
 }
 
 /**
  * Get cache statistics (useful for monitoring)
  */
-export function getCacheStats() {
-  const now = Date.now();
-  const stats = {
-    totalEntries: cache.size,
-    validEntries: 0,
-    expiredEntries: 0,
-  };
+export async function getCacheStats() {
+  if (!redis) {
+    return {
+      backend: 'none',
+      totalEntries: 0,
+      keyPattern: 'user:count:*',
+    };
+  }
 
-  cache.forEach((entry) => {
-    if (now - entry.timestamp > CACHE_TTL) {
-      stats.expiredEntries++;
-    } else {
-      stats.validEntries++;
-    }
-  });
-
-  return stats;
+  try {
+    const keys = await redis.keys('user:count:*');
+    return {
+      backend: 'upstash-redis',
+      totalEntries: keys.length,
+      keyPattern: 'user:count:*',
+    };
+  } catch {
+    return {
+      backend: 'upstash-redis',
+      totalEntries: 0,
+      keyPattern: 'user:count:*',
+      unavailable: true,
+    };
+  }
 }

@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { errorResponse } from '@/lib/api-response'
 import dbConnect from '@/lib/mongodb'
 import User from '@/models/user'
 import MissionSubmission from '@/models/missionSubmission'
+import logger from '@/lib/logger'
 
 export async function GET() {
   try {
     const session = await auth()
     if (!session || !session.user) {
-      return new NextResponse('Unauthorized', { status: 401 })
+      return errorResponse('Unauthorized', 401)
     }
 
     await dbConnect()
@@ -66,7 +68,7 @@ export async function GET() {
       },
     })
   } catch (error) {
-    console.error('Error fetching profile:', error)
+    logger.error('Error fetching profile:', error)
     return new NextResponse('Internal server error', { status: 500 })
   }
 }

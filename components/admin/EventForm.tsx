@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { CalendarIcon, Upload, X, Loader2, AlertTriangle } from 'lucide-react'
 import EventImageUploader from './EventImageUploader'
+import logger from '@/lib/browser-logger'
 
 interface EventFormData {
   title: string
@@ -143,7 +144,7 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
           setImageUrl(updatedEvent.imageUrl)
         }
       } catch (error) {
-        console.error('Error refreshing event data:', error)
+        logger.error('Error refreshing event data:', error)
       }
     }
   }
@@ -230,7 +231,7 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
         }
       }
     } catch (error: any) {
-      console.error('Error saving event:', error)
+      logger.error('Error saving event:', error)
       toast({
         title: 'Error',
         description: error.message || 'Failed to save event',

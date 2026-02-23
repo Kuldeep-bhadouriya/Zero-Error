@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
+import { errorResponse } from '@/lib/api-response';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/user';
 import Reward from '@/models/reward';
+import Season from '@/models/season';
+import logger from '@/lib/logger';
+import { z } from 'zod';
+import { badRequestFromZod, objectIdSchema } from '@/lib/validation';
+
+const redeemBodySchema = z.object({
+  rewardId: objectIdSchema,
+});
 
 const RANK_VALUES: Record<string, number> = {
   Rookie: 0,
@@ -16,17 +25,28 @@ export async function POST(req: Request) {
   const session = await auth();
 
   if (!session || !session.user) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    return errorResponse('Unauthorized', 401);
   }
 
   await dbConnect();
 
-  try {
-    const { rewardId } = await req.json();
+  // Check if there is an active season
+  const activeSeason = await Season.findOne({ status: 'active' }).lean();
+  if (!activeSeason) {
+    return NextResponse.json(
+      { message: 'No active season. Reward redemptions are only available during an active season.' },
+      { status: 403 }
+    );
+  }
 
-    if (!rewardId) {
-      return NextResponse.json({ message: 'Reward ID is required' }, { status: 400 });
+  try {
+    const body = await req.json();
+    const parsed = redeemBodySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ message: 'Invalid request payload', ...badRequestFromZod(parsed.error) }, { status: 400 });
     }
+
+    const { rewardId } = parsed.data;
 
     const rewardPromise = Reward.findById(rewardId);
 
@@ -100,12 +120,11 @@ export async function POST(req: Request) {
 
     await Promise.all([user.save(), reward.save()]);
     
-    // For now, we just log the redemption
-    console.log(`User ${user.id} redeemed reward ${reward.id} for ${finalCost} ZE Coins.`);
+    logger.info({ route: '/api/ze-club/rewards/redeem', userId: user.id, rewardId: reward.id, finalCost }, 'Reward redeemed');
 
     return NextResponse.json({ message: 'Reward redeemed successfully' });
   } catch (error) {
-    console.error('Error redeeming reward:', error);
+    logger.error({ route: '/api/ze-club/rewards/redeem', err: error }, 'Error redeeming reward');
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

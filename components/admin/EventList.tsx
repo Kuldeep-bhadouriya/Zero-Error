@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Edit, Trash2, Loader2, Star, Search } from 'lucide-react'
 import { format } from 'date-fns'
+import logger from '@/lib/browser-logger'
 
 interface Event {
   _id: string
@@ -104,10 +105,10 @@ export function EventList({ onEdit, refreshTrigger }: EventListProps) {
         setEvents(result.events)
         setTotalPages(result.pagination.totalPages)
       } else {
-        console.error('Failed to fetch events:', result.error)
+        logger.error('Failed to fetch events:', result.error)
       }
     } catch (error) {
-      console.error('Error fetching events:', error)
+      logger.error('Error fetching events:', error)
     } finally {
       setLoading(false)
     }
@@ -132,7 +133,7 @@ export function EventList({ onEdit, refreshTrigger }: EventListProps) {
         alert(result.error || 'Failed to delete event')
       }
     } catch (error: any) {
-      console.error('Error deleting event:', error)
+      logger.error('Error deleting event:', error)
       alert(error.message || 'Failed to delete event')
     } finally {
       setDeleting(false)
@@ -158,7 +159,7 @@ export function EventList({ onEdit, refreshTrigger }: EventListProps) {
         alert(result.error || 'Failed to update event')
       }
     } catch (error: any) {
-      console.error('Error updating event:', error)
+      logger.error('Error updating event:', error)
       alert(error.message || 'Failed to update event')
     }
   }

@@ -192,6 +192,9 @@ const MissionSchema = new Schema<IMission>({
   timestamps: true, // Auto-creates createdAt and updatedAt
 })
 
+MissionSchema.index({ active: 1, startDate: 1, endDate: 1 })
+MissionSchema.index({ featured: -1, createdAt: -1 })
+
 const Mission = models.Mission || model<IMission>('Mission', MissionSchema)
 
 export default Mission

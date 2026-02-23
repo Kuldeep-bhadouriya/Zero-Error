@@ -6,6 +6,7 @@ import Event from "@/models/event";
 import User from "@/models/user";
 import Reward from "@/models/reward";
 import { revalidatePath } from "next/cache";
+import logger from '@/lib/logger'
 
 const f = createUploadthing();
 
@@ -34,8 +35,8 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code runs on the server after upload completes
-      console.log("Upload complete for user:", metadata.userEmail);
-      console.log("File URL:", file.url);
+      logger.info("Upload complete for user:", metadata.userEmail);
+      logger.info("File URL:", file.url);
 
       await dbConnect();
       await User.findByIdAndUpdate(
@@ -76,8 +77,8 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code runs on the server after upload completes
-      console.log("Upload complete for user:", metadata.userEmail);
-      console.log("File URL:", file.url);
+      logger.info("Upload complete for user:", metadata.userEmail);
+      logger.info("File URL:", file.url);
 
       // Return data to the client
       return { 
@@ -112,8 +113,8 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code runs on the server after upload completes
-      console.log("Hero media upload complete by admin:", metadata.userEmail);
-      console.log("File URL:", file.url);
+      logger.info("Hero media upload complete by admin:", metadata.userEmail);
+      logger.info("File URL:", file.url);
 
       // Return data to the client
       return { 
@@ -149,8 +150,8 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code runs on the server after upload completes
-      console.log("Event image upload complete by admin:", metadata.userEmail);
-      console.log("File URL:", file.url);
+      logger.info("Event image upload complete by admin:", metadata.userEmail);
+      logger.info("File URL:", file.url);
 
       if (metadata.eventId) {
         await dbConnect();
@@ -198,8 +199,8 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code runs on the server after upload completes
-      console.log("Mission example image upload complete by admin:", metadata.userEmail);
-      console.log("File URL:", file.url);
+      logger.info("Mission example image upload complete by admin:", metadata.userEmail);
+      logger.info("File URL:", file.url);
 
       // Return data to the client
       return { 
@@ -235,14 +236,14 @@ export const ourFileRouter = {
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // This code runs on the server after upload completes
-      console.log("🎯 Reward image upload complete by admin:", metadata.userEmail);
-      console.log("📸 File URL:", file.url);
-      console.log("🆔 Reward ID:", metadata.rewardId);
+      logger.info("🎯 Reward image upload complete by admin:", metadata.userEmail);
+      logger.info("📸 File URL:", file.url);
+      logger.info("🆔 Reward ID:", metadata.rewardId);
 
       if (metadata.rewardId) {
         try {
           await dbConnect();
-          console.log("✅ Database connected");
+          logger.info("✅ Database connected");
           
           const updatedReward = await Reward.findByIdAndUpdate(
             metadata.rewardId,
@@ -251,24 +252,24 @@ export const ourFileRouter = {
           );
 
           if (updatedReward) {
-            console.log("✅ Reward updated successfully:", {
+            logger.info("✅ Reward updated successfully:", {
               id: updatedReward._id,
               name: updatedReward.name,
               imageUrl: updatedReward.imageUrl
             });
           } else {
-            console.error("❌ Reward not found with ID:", metadata.rewardId);
+            logger.error("❌ Reward not found with ID:", metadata.rewardId);
           }
 
           // Revalidate paths
           revalidatePath('/ze-club/rewards');
           revalidatePath('/admin/ze-club');
-          console.log("✅ Paths revalidated");
+          logger.info("✅ Paths revalidated");
         } catch (error) {
-          console.error("❌ Error updating reward with image:", error);
+          logger.error("❌ Error updating reward with image:", error);
         }
       } else {
-        console.warn("⚠️ No rewardId provided, skipping database update");
+        logger.warn("⚠️ No rewardId provided, skipping database update");
       }
 
       // Return data to the client

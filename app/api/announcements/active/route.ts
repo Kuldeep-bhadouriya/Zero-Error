@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Announcement from '@/models/announcement'
+import logger from '@/lib/logger'
 
 // Force dynamic rendering since we need to read query parameters
 export const dynamic = 'force-dynamic'
@@ -67,7 +68,7 @@ export async function GET(req: Request) {
       },
     })
   } catch (error) {
-    console.error('Error fetching active announcements:', error)
+    logger.error('Error fetching active announcements:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }

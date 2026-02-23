@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import Event from '@/models/event'
+import logger from '@/lib/logger'
 
 // Make this route dynamic to prevent caching issues
 export const dynamic = 'force-dynamic'
@@ -34,10 +35,10 @@ export async function GET() {
       events,
       count: events.length,
     })
-  } catch (error: any) {
-    console.error('Error fetching current events:', error)
+  } catch (error: unknown) {
+    logger.error('Error fetching current events:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch current events' },
+      { error: error instanceof Error ? error.message : 'Failed to fetch current events' },
       { status: 500 }
     )
   }

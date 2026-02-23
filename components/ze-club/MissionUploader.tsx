@@ -17,6 +17,7 @@ import { Upload, FileVideo, X, CheckCircle2, Target, Loader2, AlertCircle } from
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useUploadThing } from '@/lib/uploadthing'
+import logger from '@/lib/browser-logger'
 
 interface Mission {
   _id: string
@@ -70,14 +71,14 @@ export default function MissionUploader({ missions: initialMissions, initialMiss
       try {
         const response = await fetch('/api/ze-club/missions')
         if (!response.ok) {
-          console.error('Failed to fetch missions')
+          logger.error('Failed to fetch missions')
           return
         }
         const fetchedMissions = await response.json()
         const availableMissions = fetchedMissions.filter((m: Mission) => !m.isCompleted && !m.isPending)
         setMissions(availableMissions)
       } catch (error) {
-        console.error('Error fetching missions:', error)
+        logger.error('Error fetching missions:', error)
       }
     }
 
@@ -170,24 +171,24 @@ export default function MissionUploader({ missions: initialMissions, initialMiss
 
     try {
       // Step 1: Upload file to UploadThing
-      console.log('Starting upload for file:', file.name, 'size:', file.size, 'type:', file.type)
+      logger.info('Starting upload for file:', file.name, 'size:', file.size, 'type:', file.type)
       
       let uploadedFiles
       try {
         uploadedFiles = await startUpload([file])
       } catch (uploadError) {
-        console.error('UploadThing error:', uploadError)
+        logger.error('UploadThing error:', uploadError)
         throw new Error(`Upload service error: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`)
       }
       
-      console.log('Upload result:', uploadedFiles)
+      logger.info('Upload result:', uploadedFiles)
       
       if (!uploadedFiles || uploadedFiles.length === 0) {
         throw new Error('File upload failed - no files returned from UploadThing. Please check your internet connection and try again.')
       }
 
       const fileUrl = uploadedFiles[0].url
-      console.log('File uploaded successfully to:', fileUrl)
+      logger.info('File uploaded successfully to:', fileUrl)
 
       // Step 2: Save submission to database
       const response = await fetch('/api/ze-club/missions/upload', {
@@ -224,7 +225,7 @@ export default function MissionUploader({ missions: initialMissions, initialMiss
         }
       }
     } catch (error) {
-      console.error('Upload error:', error)
+      logger.error('Upload error:', error)
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during upload.'
       alert(errorMessage)
     } finally {

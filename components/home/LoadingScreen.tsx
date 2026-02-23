@@ -1,5 +1,7 @@
-// components/LoadingScreen.tsx
 "use client";
+
+import logger from '@/lib/browser-logger'
+// components/LoadingScreen.tsx
 
 import React, { useEffect, useState, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,7 +39,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
       hasLoadedBefore = sessionStorage.getItem("hasLoadedSite") === "true";
     } catch (e) {
       // Session storage might not be available
-      console.warn("sessionStorage not available");
+      logger.warn("sessionStorage not available");
     }
 
     const startTime = Date.now();

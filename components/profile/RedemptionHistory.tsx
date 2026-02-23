@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Package, Clock, CheckCircle, XCircle, Loader2, Gift } from 'lucide-react'
 import { toast } from 'sonner'
+import logger from '@/lib/browser-logger'
 
 interface Redemption {
   _id: string
@@ -81,7 +82,7 @@ export function RedemptionHistory() {
       const data = await response.json()
       setRedemptions(data)
     } catch (error) {
-      console.error('Error fetching redemptions:', error)
+      logger.error('Error fetching redemptions:', error)
       toast.error('Failed to load redemption history')
     } finally {
       setIsLoading(false)

@@ -5,6 +5,7 @@ import type React from "react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, User, MessageSquare, Send } from "lucide-react";
+import logger from '@/lib/browser-logger'
 
 interface ContactUsProps {
   className?: string;
@@ -63,11 +64,11 @@ export default function ContactUs({
         const data = await response.json();
 
         if (!response.ok) {
-          console.error('Error response:', data);
+          logger.error('Error response:', data);
           throw new Error(data.error || 'Failed to send message');
         }
 
-        console.log('Email sent successfully:', data);
+        logger.info('Email sent successfully:', data);
       }
 
       setSubmitStatus("success");
@@ -78,7 +79,7 @@ export default function ContactUs({
         setSubmitStatus("idle");
       }, 3000);
     } catch (error) {
-      console.error('Error sending email:', error);
+      logger.error('Error sending email:', error);
       setSubmitStatus("error");
       setTimeout(() => {
         setSubmitStatus("idle");

@@ -7,6 +7,7 @@ import { Menu, X, ChevronRight, LogOut, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { Orbitron } from "next/font/google";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +17,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
 
 // Navigation links data
 const navLinks = [
@@ -148,7 +154,7 @@ export default function Navbar() {
       >
         <Link
           href="/join-us"
-          className={`px-5 py-2 rounded-full bg-gradient-to-r from-red-700 to-red-500 text-white font-medium transition-all hover:shadow-lg hover:shadow-red-500/30 ${
+          className={`${orbitron.className} px-5 py-2 rounded-full bg-gradient-to-r from-red-700 to-red-500 text-white font-semibold uppercase tracking-[0.06em] transition-all hover:shadow-lg hover:shadow-red-500/30 ${
             scrolled ? "text-xs" : "text-sm"
           }`}
         >
@@ -190,7 +196,7 @@ export default function Navbar() {
       >
         <Link
           href="/join-us"
-          className="block w-full text-center px-6 py-3 rounded-md bg-gradient-to-r from-red-700 to-red-500 text-white text-lg font-medium shadow-lg shadow-red-900/30"
+          className={`${orbitron.className} block w-full text-center px-6 py-3 rounded-md bg-gradient-to-r from-red-700 to-red-500 text-white text-lg font-semibold uppercase tracking-[0.06em] shadow-lg shadow-red-900/30`}
           onClick={() => setIsMenuOpen(false)}
         >
           Join Us
@@ -256,7 +262,7 @@ export default function Navbar() {
                 >
                   <Link
                     href={link.path}
-                    className={`relative px-1 py-1 font-medium transition-all ${
+                    className={`${orbitron.className} relative px-1 py-1 font-semibold uppercase tracking-[0.06em] antialiased transition-all ${
                       scrolled ? "text-sm" : "text-base"
                     } ${
                       pathname === link.path ? "text-red-500" : "text-gray-200"
@@ -377,7 +383,7 @@ export default function Navbar() {
                     >
                       <Link
                         href={link.path}
-                        className={`flex items-center justify-between text-2xl font-semibold ${
+                        className={`${orbitron.className} flex items-center justify-between text-2xl font-semibold uppercase tracking-[0.06em] ${
                           pathname === link.path ? "text-red-500" : "text-white"
                         }`}
                         onClick={() => setIsMenuOpen(false)}

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
 import { getMissionsForUserEmail } from '@/lib/ze-club/missions'
+import logger from '@/lib/logger'
 
 export async function GET() {
   try {
@@ -8,7 +9,7 @@ export async function GET() {
     const missions = await getMissionsForUserEmail(session?.user?.email)
     return NextResponse.json(missions)
   } catch (error) {
-    console.error('Error fetching missions:', error)
+    logger.error('Error fetching missions:', error)
     return NextResponse.json(
       { error: 'Failed to fetch missions' },
       { status: 500 }

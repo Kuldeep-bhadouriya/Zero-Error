@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Coins, Crown, Loader2, Rocket, AlertTriangle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { RedemptionDialog } from '../RedemptionDialog';
 import { RewardCard } from './RewardCard';
 import { IReward } from '@/models/reward';
+import logger from '@/lib/browser-logger'
+import { useZeClubStore } from '@/lib/stores/zeClubStore';
 
 // Define the full Reward type as used in the frontend
 interface Reward extends Omit<IReward, 'isModified' | 'increment' | 'get' | '$isNew' | 'errors' | 'schema' | 'db' | 'modelName' | 'collection'> {
@@ -20,45 +23,77 @@ interface Reward extends Omit<IReward, 'isModified' | 'increment' | 'get' | '$is
   finalCost?: number;
 }
 
+interface DashboardData {
+  zeCoins?: number;
+  totalPoints?: number;
+  zeTag?: string;
+}
+
+const REWARDS_QUERY_KEY = ['ze-club', 'rewards'] as const;
+const DASHBOARD_QUERY_KEY = ['ze-club', 'dashboard'] as const;
+
+function getCoins(data?: DashboardData) {
+  if (!data) {
+    return 0;
+  }
+
+  return data.zeCoins !== undefined ? data.zeCoins : (data.totalPoints || 0);
+}
+
+async function fetchRewards() {
+  const response = await fetch('/api/ze-club/rewards', { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error('Failed to fetch rewards');
+  }
+
+  const rewardsData = (await response.json()) as Reward[];
+  logger.info('📦 Fetched rewards with images:', rewardsData.map((reward) => ({
+    name: reward.name,
+    hasImage: !!reward.imageUrl,
+    imageUrl: reward.imageUrl,
+  })));
+
+  return rewardsData;
+}
+
+async function fetchDashboard() {
+  const response = await fetch('/api/ze-club/user/dashboard', { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error('Failed to fetch user dashboard');
+  }
+
+  return (await response.json()) as DashboardData;
+}
+
 export default function RewardsClient() {
-  const [rewards, setRewards] = useState<Reward[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [userCoins, setUserCoins] = useState(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
   const { toast } = useToast();
+  const zeCoins = useZeClubStore((state) => state.zeCoins);
+  const hydrateFromDashboard = useZeClubStore((state) => state.hydrateFromDashboard);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [rewardsResponse, dashboardResponse] = await Promise.all([
-        fetch('/api/ze-club/rewards', { cache: 'no-store' }),
-        fetch('/api/ze-club/user/dashboard', { cache: 'no-store' })
-      ]);
+  const {
+    data: rewards = [],
+    isLoading: rewardsLoading,
+    error: rewardsError,
+  } = useQuery({
+    queryKey: REWARDS_QUERY_KEY,
+    queryFn: fetchRewards,
+  });
 
-      if (!rewardsResponse.ok) throw new Error('Failed to fetch rewards');
-      
-      const rewardsData = await rewardsResponse.json();
-      console.log('📦 Fetched rewards with images:', rewardsData.map((r: any) => ({ name: r.name, hasImage: !!r.imageUrl, imageUrl: r.imageUrl })));
-      setRewards(rewardsData);
-
-      if (dashboardResponse.ok) {
-        const dashboardData = await dashboardResponse.json();
-        const coins = dashboardData.zeCoins !== undefined ? dashboardData.zeCoins : (dashboardData.totalPoints || 0);
-        setUserCoins(coins);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: dashboardData } = useQuery({
+    queryKey: DASHBOARD_QUERY_KEY,
+    queryFn: fetchDashboard,
+    retry: 1,
+  });
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (dashboardData) {
+      hydrateFromDashboard(dashboardData);
+    }
+  }, [dashboardData, hydrateFromDashboard]);
+
+  const userCoins = dashboardData ? getCoins(dashboardData) : zeCoins;
 
   const handleRedeem = (reward: Reward) => {
     if (reward.isLocked) {
@@ -74,7 +109,6 @@ export default function RewardsClient() {
   };
 
   const handleSuccess = () => {
-    fetchData(); // Refresh data to update stock and balance
     setDialogOpen(false);
     toast({
       title: "Redemption Successful! 🎉",
@@ -89,7 +123,7 @@ export default function RewardsClient() {
     return { exclusiveRewards: exclusive, regularRewards: regular };
   }, [rewards]);
 
-  if (loading) {
+  if (rewardsLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-400">
         <Loader2 className="w-10 h-10 animate-spin text-purple-500 mb-4" />
@@ -98,13 +132,15 @@ export default function RewardsClient() {
     );
   }
 
-  if (error) {
+  if (rewardsError) {
+    const message = rewardsError instanceof Error ? rewardsError.message : 'An unknown error occurred';
+
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center px-4">
         <GlassCard variant="intense" className="p-8 max-w-md border-red-500/30">
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-white mb-2">Failed to Load</h3>
-          <p className="text-gray-400 mb-6">{error}</p>
+          <p className="text-gray-400 mb-6">{message}</p>
           <Button onClick={() => window.location.reload()} variant="outline">Try Again</Button>
         </GlassCard>
       </div>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
 import dbConnect from '@/lib/mongodb'
 import Reward from '@/models/reward'
+import logger from '@/lib/logger'
 
 // Prevent caching to ensure admins always see latest data
 export const dynamic = 'force-dynamic'
@@ -46,10 +47,10 @@ export async function GET(req: Request) {
       success: true,
       rewards,
     })
-  } catch (error: any) {
-    console.error('Error listing rewards:', error)
+  } catch (error: unknown) {
+    logger.error('Error listing rewards:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to list rewards' },
+      { error: error instanceof Error ? error.message : 'Failed to list rewards' },
       { status: 500 }
     )
   }

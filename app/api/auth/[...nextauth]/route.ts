@@ -1,4 +1,5 @@
 import NextAuth from 'next-auth'
+import type { NextAuthConfig } from 'next-auth'
 import DiscordProvider from 'next-auth/providers/discord'
 import GoogleProvider from 'next-auth/providers/google'
 import { MongoDBAdapter } from '@auth/mongodb-adapter'
@@ -6,21 +7,8 @@ import { clientPromise } from '@/lib/mongodb'
 import dbConnect from '@/lib/mongodb'
 import User from '@/models/user'
 import { customAlphabet, nanoid } from 'nanoid'
-
-const RANKS = [
-  { name: 'Rookie', points: 0, icon: '/images/ranks/rookie.png' },
-  { name: 'Contender', points: 100, icon: '/images/ranks/contender.png' },
-  { name: 'Gladiator', points: 250, icon: '/images/ranks/gladiator.png' },
-  { name: 'Vanguard', points: 500, icon: '/images/ranks/vanguard.png' },
-  { name: 'Errorless Legend', points: 1000, icon: '/images/ranks/errorless-legend.png' },
-] as const
-
-function getRankForExperience(experience: number) {
-  for (let i = RANKS.length - 1; i >= 0; i--) {
-    if (experience >= RANKS[i].points) return RANKS[i]
-  }
-  return RANKS[0]
-}
+import { getRankForExperience } from '@/lib/ranks'
+import { clearUserCache } from '@/lib/userService'
 
 const zeSuffix = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 8)
 
@@ -33,12 +21,9 @@ async function generateUniqueZeTag() {
   return `ze_${customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 12)()}`
 }
 
-// @ts-ignore - Type mismatch between NextAuth v5 beta and adapter versions
-const { handlers, auth, signIn, signOut } = NextAuth({
-  // @ts-ignore - MongoDBAdapter type compatibility
-  adapter: MongoDBAdapter(clientPromise),
+const authConfig = {
+  adapter: MongoDBAdapter(clientPromise) as NextAuthConfig['adapter'],
   providers: [
-    // @ts-ignore - Provider type compatibility
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID!,
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
@@ -48,7 +33,6 @@ const { handlers, auth, signIn, signOut } = NextAuth({
         },
       },
     }),
-    // @ts-ignore - Provider type compatibility
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -57,6 +41,7 @@ const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
     strategy: 'jwt',
   },
+  useSecureCookies: process.env.NODE_ENV === 'production',
   pages: {
     signIn: '/join-us',
   },
@@ -97,6 +82,10 @@ const { handlers, auth, signIn, signOut } = NextAuth({
         await dbConnect()
         const dbUser = await User.findOne({ email: user.email })
         if (dbUser) {
+          const prevPoints = dbUser.points
+          const prevExperience = dbUser.experience
+          const prevRank = dbUser.rank
+
           // Update provider ID if not set
           if (!dbUser.discordId && account?.provider === 'discord') {
             dbUser.discordId = account.providerAccountId
@@ -129,6 +118,14 @@ const { handlers, auth, signIn, signOut } = NextAuth({
           // Update last login
           dbUser.lastLoginAt = new Date()
           await dbUser.save()
+
+          if (
+            prevPoints !== dbUser.points ||
+            prevExperience !== dbUser.experience ||
+            prevRank !== dbUser.rank
+          ) {
+            await clearUserCache()
+          }
           
           token.id = dbUser._id.toString()
           token.roles = dbUser.roles.join(',') // Convert array to string
@@ -186,11 +183,14 @@ const { handlers, auth, signIn, signOut } = NextAuth({
           }
           user.lastLoginAt = new Date()
           await user.save()
+          await clearUserCache()
         }
       }
     },
   },
-})
+} satisfies NextAuthConfig
+
+const { handlers, auth, signIn, signOut } = NextAuth(authConfig)
 
 export { auth, signIn, signOut }
 export const { GET, POST } = handlers

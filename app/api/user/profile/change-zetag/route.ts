@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { errorResponse } from '@/lib/api-response'
 import dbConnect from '@/lib/mongodb'
 import User from '@/models/user'
+import logger from '@/lib/logger'
 
 export async function PATCH(req: Request) {
   try {
     const session = await auth()
     if (!session || !session.user) {
-      return new NextResponse('Unauthorized', { status: 401 })
+      return errorResponse('Unauthorized', 401)
     }
 
     const body = await req.json()
@@ -53,9 +55,9 @@ export async function PATCH(req: Request) {
       success: true,
       zeTag: user.zeTag,
     })
-  } catch (error: any) {
-    console.error('Error changing zeTag:', error)
-    if (error.code === 11000) {
+  } catch (error: unknown) {
+    logger.error('Error changing zeTag:', error)
+    if (error instanceof Error && 'code' in error && (error as { code: unknown }).code === 11000) {
       return NextResponse.json(
         { error: 'This ZE Tag is already taken' },
         { status: 409 }

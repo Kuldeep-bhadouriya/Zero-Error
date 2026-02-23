@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Crown, Search, Shield } from 'lucide-react';
+import { Crown, Search, Shield, History } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 interface LeaderboardUser {
   _id: string;
@@ -22,56 +24,47 @@ interface LeaderboardUser {
 const RANKS = ['all', 'Errorless Legend', 'Vanguard', 'Gladiator', 'Contender', 'Rookie'];
 
 export default function Leaderboard() {
-  const [users, setUsers] = useState<LeaderboardUser[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<LeaderboardUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [rankFilter, setRankFilter] = useState<string>('all');
   const [viewState, setViewState] = useState<'all' | 'top10'>('all');
 
-  useEffect(() => {
-    async function fetchLeaderboard() {
-      try {
-        const response = await fetch('/api/ze-club/leaderboard');
-        if (!response.ok) {
-          throw new Error('Failed to fetch leaderboard');
+    const {
+        data: users = [],
+        isLoading: loading,
+        error,
+    } = useQuery<LeaderboardUser[]>({
+        queryKey: ['ze-club', 'leaderboard'],
+        queryFn: async () => {
+            const response = await fetch('/api/ze-club/leaderboard');
+            if (!response.ok) {
+                throw new Error('Failed to fetch leaderboard');
+            }
+            const data = await response.json();
+            return data.leaderboard || data;
+        },
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+
+    const filteredUsers = useMemo(() => {
+        let filtered = users;
+
+        if (searchQuery) {
+            filtered = filtered.filter((user) =>
+                user.zeTag.toLowerCase().includes(searchQuery.toLowerCase())
+            );
         }
-        const data = await response.json();
-        setUsers(data);
-        setFilteredUsers(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      } finally {
-        setLoading(false);
-      }
-    }
 
-    fetchLeaderboard();
-  }, []);
+        if (rankFilter !== 'all') {
+            filtered = filtered.filter((user) => user.userRank === rankFilter);
+        }
 
-  useEffect(() => {
-    let filtered = users;
-    
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(user =>
-        user.zeTag.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+        if (viewState === 'top10') {
+            filtered = filtered.slice(0, 10);
+        }
 
-    // Rank tier filter
-    if (rankFilter !== 'all') {
-      filtered = filtered.filter(user => user.userRank === rankFilter);
-    }
-    
-    // View state filter (Top 10 vs All)
-    if (viewState === 'top10') {
-      filtered = filtered.slice(0, 10);
-    }
-    
-    setFilteredUsers(filtered);
-  }, [searchQuery, rankFilter, viewState, users]);
+        return filtered;
+    }, [searchQuery, rankFilter, viewState, users]);
 
   const topThree = filteredUsers.slice(0, 3);
   const restUsers = filteredUsers.slice(3);
@@ -143,7 +136,7 @@ export default function Leaderboard() {
         <div className="text-center py-20 text-red-400 bg-red-900/10 rounded-2xl border border-red-500/20">
             <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <h3 className="text-lg font-semibold">Unable to load rankings</h3>
-            <p className="opacity-70">{error}</p>
+                        <p className="opacity-70">{error instanceof Error ? error.message : 'An unknown error occurred'}</p>
         </div>
       ) : (
         <div className="space-y-10">
@@ -203,6 +196,13 @@ function HeaderSection() {
                 <p className="text-gray-400 max-w-lg mx-auto text-sm md:text-base mt-4 font-medium leading-relaxed">
                     Compete, climb the ranks, and earn your place among the Zero Error elite.
                 </p>
+                <Link
+                    href="/ze-club/seasons"
+                    className="inline-flex items-center gap-1.5 mt-3 text-sm text-gray-500 hover:text-red-400 transition-colors"
+                >
+                    <History className="h-3.5 w-3.5" />
+                    View Past Seasons
+                </Link>
             </motion.div>
         </div>
     )
@@ -413,7 +413,7 @@ function EmptyState() {
             </div>
             <h3 className="text-xl font-bold text-white mb-2">No players found</h3>
             <p className="text-gray-500 max-w-sm">
-                We couldn't find any players matching your current filters. Try adjusting your search criteria.
+                We couldn&apos;t find any players matching your current filters. Try adjusting your search criteria.
             </p>
         </div>
     )

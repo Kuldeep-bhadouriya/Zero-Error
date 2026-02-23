@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { errorResponse } from '@/lib/api-response'
 import dbConnect from '@/lib/mongodb'
 import User from '@/models/user'
+import logger from '@/lib/logger'
 
 export async function GET(req: Request) {
   try {
     const session = await auth()
     if (!session || !session.user.roles.includes('admin')) {
-      return new NextResponse('Unauthorized', { status: 401 })
+      return errorResponse('Unauthorized', 401)
     }
 
     const { searchParams } = new URL(req.url)
@@ -33,12 +35,12 @@ export async function GET(req: Request) {
       .limit(20)
       .lean()
 
-    console.log(`Found ${users.length} users for query: "${query}"`)
+    logger.info({ route: '/api/admin/users/search', count: users.length }, 'User search completed')
     return NextResponse.json({ users })
   } catch (error) {
-    console.error('Error searching users:', error)
+    logger.error({ route: '/api/admin/users/search', err: error }, 'Error searching users')
     return NextResponse.json(
-      { error: 'Failed to search users', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to search users' },
       { status: 500 }
     )
   }

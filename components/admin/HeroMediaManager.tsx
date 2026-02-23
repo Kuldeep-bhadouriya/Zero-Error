@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast"
 import { UploadButton } from "@/lib/uploadthing"
 import { Loader2, Upload, Video, Image as ImageIcon, Check, X, Undo2, AlertCircle, Info } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import logger from '@/lib/browser-logger'
 
 // Default media URLs
 const DEFAULT_HERO_VIDEO = "/images/background.mp4"
@@ -54,7 +55,7 @@ export default function HeroMediaManager() {
       const data = await response.json()
       setSettings(data)
     } catch (error) {
-      console.error("Error fetching settings:", error)
+      logger.error("Error fetching settings:", error)
       toast({
         title: "Error",
         description: "Failed to load hero media settings",
@@ -92,7 +93,7 @@ export default function HeroMediaManager() {
         description: "Hero media settings updated successfully",
       })
     } catch (error) {
-      console.error("Error saving settings:", error)
+      logger.error("Error saving settings:", error)
       toast({
         title: "Error",
         description: "Failed to save hero media settings",

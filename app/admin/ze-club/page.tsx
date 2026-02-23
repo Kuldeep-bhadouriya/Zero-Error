@@ -10,8 +10,9 @@ import MissionManager from '@/components/admin/MissionManager'
 import UserRoleManager from '@/components/admin/UserRoleManager'
 import RedemptionManager from '@/components/admin/RedemptionManager'
 import RewardManager from '@/components/admin/RewardManager'
+import SeasonManager from '@/components/admin/SeasonManager'
 import { motion } from 'framer-motion'
-import { Shield, Zap, Video, Calendar, ListChecks, Megaphone, Target, Users, Menu, X, Gift, Award } from 'lucide-react'
+import { Shield, Zap, Video, Calendar, ListChecks, Megaphone, Target, Users, Menu, X, Gift, Award, CalendarClock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { MenuItem, MenuContainer } from '@/components/ui/fluid-menu'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -20,7 +21,7 @@ export default function AdminZEClubPage() {
   const router = useRouter()
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('submissions')
+  const [activeTab, setActiveTab] = useState('seasons')
   const isMobile = useIsMobile()
 
   useEffect(() => {
@@ -62,6 +63,7 @@ export default function AdminZEClubPage() {
   }
 
   const navItems = [
+    { id: 'seasons', label: 'Seasons', icon: CalendarClock, description: 'Manage competitive seasons' },
     { id: 'submissions', label: 'Submissions', icon: ListChecks, description: 'Verify mission submissions' },
     { id: 'missions', label: 'Mission Manager', icon: Target, description: 'Create & edit missions' },
     { id: 'redemptions', label: 'Redemptions', icon: Gift, description: 'Manage reward redemptions' },
@@ -74,6 +76,8 @@ export default function AdminZEClubPage() {
 
   function renderContent() {
     switch (activeTab) {
+      case 'seasons':
+        return <SeasonManager />
       case 'submissions':
         return <SubmissionVerifier />
       case 'missions':
@@ -91,7 +95,7 @@ export default function AdminZEClubPage() {
       case 'users':
         return <UserRoleManager />
       default:
-        return <SubmissionVerifier />
+        return <SeasonManager />
     }
   }
 

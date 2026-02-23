@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
+import { errorResponse } from '@/lib/api-response';
 import dbConnect from '@/lib/mongodb';
 import RedemptionRequest from '@/models/redemptionRequest';
 import User from '@/models/user';
 import Reward from '@/models/reward';
+import { z } from 'zod';
+import { badRequestFromZod, objectIdSchema, optionalTextSchema } from '@/lib/validation';
+import logger from '@/lib/logger'
+
+const statusSchema = z.enum(['pending', 'processing', 'completed', 'cancelled']);
+const updateRedemptionSchema = z.object({
+  status: statusSchema.optional(),
+  adminNotes: optionalTextSchema('Admin notes', 500),
+});
 
 export async function PATCH(
   req: NextRequest,
@@ -12,7 +22,7 @@ export async function PATCH(
   const session = await auth();
 
   if (!session || !session.user) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    return errorResponse('Unauthorized', 401);
   }
 
   // Check if user has admin role
@@ -23,23 +33,22 @@ export async function PATCH(
   await dbConnect();
 
   try {
-    const { status, adminNotes } = await req.json();
     const { id } = await params;
-
-    if (!id) {
-      return NextResponse.json({ message: 'Request ID is required' }, { status: 400 });
+    const idParse = objectIdSchema.safeParse(id);
+    if (!idParse.success) {
+      return NextResponse.json({ message: 'Invalid request ID' }, { status: 400 });
     }
 
-    // Validate status
-    const validStatuses = ['pending', 'processing', 'completed', 'cancelled'];
-    if (status && !validStatuses.includes(status)) {
-      return NextResponse.json({ 
-        message: 'Invalid status. Must be one of: pending, processing, completed, cancelled' 
-      }, { status: 400 });
+    const body = await req.json();
+    const parsed = updateRedemptionSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(badRequestFromZod(parsed.error), { status: 400 });
     }
+
+    const { status, adminNotes } = parsed.data;
 
     // Find and update the redemption request
-    const redemptionRequest = await RedemptionRequest.findById(id);
+    const redemptionRequest = await RedemptionRequest.findById(idParse.data);
 
     if (!redemptionRequest) {
       return NextResponse.json({ message: 'Redemption request not found' }, { status: 404 });
@@ -80,7 +89,7 @@ export async function PATCH(
     });
 
   } catch (error) {
-    console.error('Error updating redemption request:', error);
+    logger.error('Error updating redemption request:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

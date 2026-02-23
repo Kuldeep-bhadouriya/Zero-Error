@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
 import AnnouncementCarousel, { AnnouncementItem } from './AnnouncementCarousel'
 import { Loader2 } from 'lucide-react'
+import logger from '@/lib/browser-logger'
 
 function mapPathToTarget(pathname: string | null) {
   if (!pathname || pathname === '/') {
@@ -80,7 +81,7 @@ function AnnouncementBanner() {
         if (error.name === 'AbortError') {
           return
         }
-        console.error('Announcement fetch failed', error)
+        logger.error('Announcement fetch failed', error)
         setAnnouncements([])
       } finally {
         setLoading(false)

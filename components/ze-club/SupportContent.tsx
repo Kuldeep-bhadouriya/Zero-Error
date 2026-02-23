@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import logger from '@/lib/browser-logger'
 
 export default function SupportContent() {
   const [formData, setFormData] = useState({
@@ -42,11 +43,11 @@ export default function SupportContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error('Error response:', data);
+        logger.error('Error response:', data);
         throw new Error(data.error || 'Failed to send message');
       }
 
-      console.log('Email sent successfully:', data);
+      logger.info('Email sent successfully:', data);
       
       toast({
         title: 'Support Request Submitted',
@@ -55,7 +56,7 @@ export default function SupportContent() {
       
       setFormData({ name: '', email: '', subject: '', message: '' });
     } catch (error) {
-      console.error('Error sending email:', error);
+      logger.error('Error sending email:', error);
       toast({
         title: 'Error',
         description: 'Failed to send message. Please try again later.',

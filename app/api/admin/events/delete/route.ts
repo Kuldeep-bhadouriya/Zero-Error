@@ -4,6 +4,7 @@ import { auth } from '@/app/api/auth/[...nextauth]/route'
 import dbConnect from '@/lib/mongodb'
 import Event from '@/models/event'
 import { UTApi } from 'uploadthing/server'
+import logger from '@/lib/logger'
 
 const utapi = new UTApi()
 
@@ -48,7 +49,7 @@ export async function DELETE(req: Request) {
           await utapi.deleteFiles([fileKey])
         }
       } catch (uploadthingError) {
-        console.error('Error deleting UploadThing image:', uploadthingError)
+        logger.error('Error deleting UploadThing image:', uploadthingError)
         // Continue with event deletion even if UploadThing deletion fails
       }
     }
@@ -64,10 +65,10 @@ export async function DELETE(req: Request) {
       success: true,
       message: 'Event deleted successfully',
     })
-  } catch (error: any) {
-    console.error('Error deleting event:', error)
+  } catch (error: unknown) {
+    logger.error('Error deleting event:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to delete event' },
+      { error: error instanceof Error ? error.message : 'Failed to delete event' },
       { status: 500 }
     )
   }

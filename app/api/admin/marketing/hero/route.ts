@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { NextResponse } from 'next/server'
 import dbConnect from '@/lib/mongodb'
 import SiteSetting from '@/models/siteSetting'
 import { revalidatePath } from 'next/cache'
+import { withAdmin, withErrorHandling, withRequestLogging } from '@/lib/api/middleware'
 
 /**
  * GET /api/admin/marketing/hero
@@ -17,8 +17,9 @@ import { revalidatePath } from 'next/cache'
  * Note: When heroVideoUrl or heroPosterUrl is empty, the frontend will automatically
  * use the default media from /public/images/
  */
-export async function GET() {
-  try {
+export const GET = withRequestLogging(
+  '/api/admin/marketing/hero',
+  withErrorHandling('/api/admin/marketing/hero', async () => {
     await dbConnect()
 
     // Default URLs that will be used if no custom media is set
@@ -48,24 +49,18 @@ export async function GET() {
       updatedAt: settings.updatedAt,
       updatedBy: settings.updatedBy,
     })
-  } catch (error) {
-    console.error('Error fetching hero settings:', error)
-    return new NextResponse('Internal Server Error', { status: 500 })
-  }
-}
+  })
+)
 
 /**
  * PATCH /api/admin/marketing/hero
  * Update hero video and/or poster URLs
  */
-export async function PATCH(req: NextRequest) {
-  try {
-    const session = await auth()
-
-    if (!session || !session.user.roles.includes('admin')) {
-      return new NextResponse('Unauthorized', { status: 401 })
-    }
-
+export const PATCH = withRequestLogging(
+  '/api/admin/marketing/hero',
+  withErrorHandling(
+    '/api/admin/marketing/hero',
+    withAdmin(async (req, _context, session) => {
     const body = await req.json()
     const { heroVideoUrl, heroPosterUrl } = body
 
@@ -119,8 +114,6 @@ export async function PATCH(req: NextRequest) {
       updatedAt: settings.updatedAt,
       updatedBy: settings.updatedBy,
     })
-  } catch (error) {
-    console.error('Error updating hero settings:', error)
-    return new NextResponse('Internal Server Error', { status: 500 })
-  }
-}
+    })
+  )
+)

@@ -9,6 +9,7 @@ import { Gift, Coins, ShoppingBag, Star, Sparkles, TrendingUp, Package, Target, 
 import { Badge } from '@/components/ui/badge';
 import { RedemptionDialog } from './RedemptionDialog';
 import { cn } from '@/lib/utils';
+import logger from '@/lib/browser-logger'
 
 interface Reward {
   _id: string;
@@ -106,7 +107,7 @@ export default function Rewards() {
           setUserCoins(coins);
         }
       } catch (err) {
-        console.error('Error refreshing data:', err);
+        logger.error('Error refreshing data:', err);
       }
     }
     refreshData();

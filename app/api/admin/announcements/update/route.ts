@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { errorResponse } from '@/lib/api-response'
 import dbConnect from '@/lib/mongodb'
 import Announcement from '@/models/announcement'
 import { revalidatePath } from 'next/cache'
+import logger from '@/lib/logger'
 
 const REVALIDATE_PATHS = ['/', '/ze-club', '/admin/ze-club']
 
@@ -40,7 +42,7 @@ export async function PATCH(req: Request) {
   const session = await auth()
 
   if (!session || !session.user.roles.includes('admin')) {
-    return new NextResponse('Unauthorized', { status: 401 })
+    return errorResponse('Unauthorized', 401)
   }
 
   await dbConnect()
@@ -67,7 +69,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({ announcement })
   } catch (error) {
-    console.error('Error updating announcement:', error)
+    logger.error('Error updating announcement:', error)
     return new NextResponse('Internal Server Error', { status: 500 })
   }
 }

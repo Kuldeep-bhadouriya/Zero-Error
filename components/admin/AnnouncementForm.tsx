@@ -27,6 +27,7 @@ import {
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 import { CalendarIcon, Bold, Italic, Link as LinkIcon, Loader2, Eye, AlertTriangle } from 'lucide-react'
+import logger from '@/lib/browser-logger'
 
 const TYPE_OPTIONS = [
   { label: 'Info', value: 'info' },
@@ -211,7 +212,7 @@ function AnnouncementForm({ announcement, onSuccess, onCancel }: AnnouncementFor
 
       onSuccess()
     } catch (error: any) {
-      console.error('Error saving announcement:', error)
+      logger.error('Error saving announcement:', error)
       toast({ title: 'Something went wrong', description: error.message || 'Unable to save announcement' })
     } finally {
       setSubmitting(false)

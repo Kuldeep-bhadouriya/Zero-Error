@@ -1,8 +1,26 @@
 import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
+import { buildRateLimitHeaders, checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import logger from '@/lib/logger'
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req)
+
+    const ipResult = await checkRateLimit({
+      key: ip,
+      prefix: 'rl:contact:ip',
+      limit: 3,
+      windowSeconds: 600,
+    })
+
+    if (!ipResult.success) {
+      return NextResponse.json(
+        { error: 'Too many contact requests from this IP. Please try again later.' },
+        { status: 429, headers: buildRateLimitHeaders(ipResult) }
+      )
+    }
+
     const { name, email, subject, message } = await req.json()
 
     // Validate required fields
@@ -22,6 +40,20 @@ export async function POST(req: Request) {
       )
     }
 
+    const emailRateResult = await checkRateLimit({
+      key: email.toLowerCase(),
+      prefix: 'rl:contact:email',
+      limit: 2,
+      windowSeconds: 3600,
+    })
+
+    if (!emailRateResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests for this email. Please try again later.' },
+        { status: 429, headers: buildRateLimitHeaders(emailRateResult) }
+      )
+    }
+
     // Configure nodemailer transporter with Gmail
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -29,12 +61,6 @@ export async function POST(req: Request) {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
       },
-    })
-
-    // Verify transporter configuration
-    console.log('Email configuration:', {
-      user: process.env.EMAIL_USER,
-      hasPassword: !!process.env.EMAIL_PASSWORD,
     })
 
     // Email content to send to Zero Error Esports
@@ -70,22 +96,18 @@ export async function POST(req: Request) {
 
     // Send email
     const info = await transporter.sendMail(mailOptions)
-    console.log('Email sent successfully:', info.messageId)
+    logger.info({ route: '/api/contact', messageId: info.messageId }, 'Contact email sent')
 
     return NextResponse.json(
       { message: 'Email sent successfully', messageId: info.messageId },
       { status: 200 }
     )
   } catch (error) {
-    console.error('Error sending email:', error)
-    
-    // Provide more detailed error message
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    
+    logger.error({ route: '/api/contact', err: error }, 'Error sending contact email')
+
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to send email. Please try again later.',
-        details: errorMessage 
       },
       { status: 500 }
     )

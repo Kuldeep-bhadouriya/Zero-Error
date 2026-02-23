@@ -8,6 +8,7 @@ import { ChevronRight, Calendar, MapPin, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import logger from '@/lib/browser-logger'
 
 interface Event {
   _id: string
@@ -40,7 +41,7 @@ const PastEventsSection = () => {
         setEvents(data.events)
       }
     } catch (error) {
-      console.error('Error fetching past events:', error)
+      logger.error('Error fetching past events:', error)
     } finally {
       setLoading(false)
     }

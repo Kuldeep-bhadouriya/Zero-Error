@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
+import logger from '@/lib/browser-logger'
 
 interface MissionListProps {
   missions: any[]
@@ -134,7 +135,7 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
 
       onRefresh()
     } catch (err: any) {
-      console.error('Error toggling mission status:', err)
+      logger.error('Error toggling mission status:', err)
       setError(err.message || 'Failed to toggle mission status')
     } finally {
       setLoading(false)
@@ -162,7 +163,7 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
       setMissionToDelete(null)
       onRefresh()
     } catch (err: any) {
-      console.error('Error deleting mission:', err)
+      logger.error('Error deleting mission:', err)
       setError(err.message || 'Failed to delete mission')
     } finally {
       setLoading(false)

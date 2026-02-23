@@ -4,7 +4,11 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { AnimatePresence, motion } from 'framer-motion'
 import { AlertTriangle, BellRing, CheckCircle2, Megaphone, X } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkBreaks from 'remark-breaks'
+import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
+import logger from '@/lib/browser-logger'
 
 const STORAGE_KEY = 'ze-dismissed-announcements'
 
@@ -50,22 +54,39 @@ const TYPE_ICONS = {
   urgent: BellRing,
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
+function sanitizeAnnouncementUrl(url: string) {
+  if (/^(https?:|mailto:)/i.test(url)) {
+    return url
+  }
+  return ''
 }
 
-export function formatAnnouncementMessage(raw: string) {
-  let formatted = escapeHtml(raw)
-  formatted = formatted.replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" class="underline font-semibold">$1</a>')
-  formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-  formatted = formatted.replace(/(^|[^*])\*(?!\*)([^*]+)\*(?!\*)/g, '$1<em>$2</em>')
-  formatted = formatted.replace(/\n/g, '<br />')
-  return formatted
+export function AnnouncementMessage({ message, className }: { message: string; className?: string }) {
+  return (
+    <div className={cn('announcement-markdown', className)}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkBreaks]}
+        urlTransform={sanitizeAnnouncementUrl}
+        components={{
+          p: ({ children }) => <p className="inline">{children}</p>,
+          a: ({ href, children }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-semibold"
+            >
+              {children}
+            </a>
+          ),
+          strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+          em: ({ children }) => <em className="italic">{children}</em>,
+        }}
+      >
+        {message}
+      </ReactMarkdown>
+    </div>
+  )
 }
 
 function AnnouncementCarousel({ announcements }: AnnouncementCarouselProps) {
@@ -87,7 +108,7 @@ function AnnouncementCarousel({ announcements }: AnnouncementCarouselProps) {
         }
       }
     } catch (error) {
-      console.error('Failed to parse dismissed announcements', error)
+      logger.error('Failed to parse dismissed announcements', error)
     }
   }, [])
 
@@ -143,7 +164,7 @@ function AnnouncementCarousel({ announcements }: AnnouncementCarouselProps) {
           try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(next)))
           } catch (error) {
-            console.error('Unable to persist dismissed announcements', error)
+            logger.error('Unable to persist dismissed announcements', error)
           }
         }
         return next
@@ -192,9 +213,9 @@ function AnnouncementCarousel({ announcements }: AnnouncementCarouselProps) {
                   </div>
                 </div>
                 <h3 className="mt-2 text-lg font-bold md:text-2xl">{currentAnnouncement.title}</h3>
-                <p
+                <AnnouncementMessage
+                  message={currentAnnouncement.message}
                   className="mt-2 text-sm leading-relaxed md:text-base"
-                  dangerouslySetInnerHTML={{ __html: formatAnnouncementMessage(currentAnnouncement.message) }}
                 />
               </div>
 

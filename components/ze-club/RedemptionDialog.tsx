@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Phone, MapPin, User, FileText, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import logger from '@/lib/browser-logger'
+import { useZeClubStore } from '@/lib/stores/zeClubStore';
 
 interface RedemptionDialogProps {
   open: boolean;
@@ -23,9 +26,25 @@ interface RedemptionDialogProps {
   onSuccess: () => void;
 }
 
+interface RewardListItem {
+  _id: string;
+  stock: number;
+}
+
+interface DashboardCache {
+  zeCoins?: number;
+  totalPoints?: number;
+}
+
+const REWARDS_QUERY_KEY = ['ze-club', 'rewards'] as const;
+const DASHBOARD_QUERY_KEY = ['ze-club', 'dashboard'] as const;
+
 export function RedemptionDialog({ open, onOpenChange, reward, userCoins, onSuccess }: RedemptionDialogProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const setZeCoins = useZeClubStore((state) => state.setZeCoins);
+  const hydrateFromDashboard = useZeClubStore((state) => state.hydrateFromDashboard);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     contactName: '',
@@ -70,6 +89,40 @@ export function RedemptionDialog({ open, onOpenChange, reward, userCoins, onSucc
 
     setIsSubmitting(true);
 
+    const redemptionCost = reward.cost;
+    const previousDashboard = queryClient.getQueryData<DashboardCache>(DASHBOARD_QUERY_KEY);
+    const previousRewards = queryClient.getQueryData<RewardListItem[]>(REWARDS_QUERY_KEY);
+
+    queryClient.setQueryData<DashboardCache>(DASHBOARD_QUERY_KEY, (current) => {
+      const currentCoins = current?.zeCoins ?? current?.totalPoints ?? userCoins;
+      const nextCoins = Math.max(0, currentCoins - redemptionCost);
+
+      return {
+        ...(current ?? {}),
+        zeCoins: nextCoins,
+        totalPoints: current?.totalPoints,
+      };
+    });
+
+    queryClient.setQueryData<RewardListItem[]>(REWARDS_QUERY_KEY, (current) => {
+      if (!current) {
+        return current;
+      }
+
+      return current.map((item) => {
+        if (item._id !== reward._id) {
+          return item;
+        }
+
+        return {
+          ...item,
+          stock: Math.max(0, item.stock - 1),
+        };
+      });
+    });
+
+    setZeCoins(Math.max(0, userCoins - redemptionCost));
+
     try {
       const response = await fetch('/api/ze-club/redemption-requests', {
         method: 'POST',
@@ -110,13 +163,29 @@ export function RedemptionDialog({ open, onOpenChange, reward, userCoins, onSucc
       onSuccess();
       onOpenChange(false);
 
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: REWARDS_QUERY_KEY }),
+        queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEY }),
+      ]);
+
       // Redirect to profile page with redemptions section
       setTimeout(() => {
         router.push('/profile#redemptions');
       }, 1500);
 
     } catch (error) {
-      console.error('Redemption error:', error);
+      if (previousDashboard) {
+        queryClient.setQueryData(DASHBOARD_QUERY_KEY, previousDashboard);
+        hydrateFromDashboard(previousDashboard);
+      } else {
+        setZeCoins(userCoins);
+      }
+
+      if (previousRewards) {
+        queryClient.setQueryData(REWARDS_QUERY_KEY, previousRewards);
+      }
+
+      logger.error('Redemption error:', error);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to submit redemption request',
