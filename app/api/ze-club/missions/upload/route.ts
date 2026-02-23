@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/api/auth/[...nextauth]/route'
 import MissionSubmission from '@/models/missionSubmission'
 import User from '@/models/user'
-import Mission from '@/models/mission'
+import Mission, { type IMission } from '@/models/mission'
 import dbConnect from '@/lib/mongodb'
 import { getWeekNumber, getWeekStartDate } from '@/lib/missionUtils'
 
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // Fetch the mission to check if it's weekly
-    const mission = await Mission.findById(missionId).lean()
+    const mission = await Mission.findById(missionId).lean() as IMission | null
     if (!mission) {
       return NextResponse.json(
         { error: 'Mission not found' },
