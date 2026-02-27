@@ -194,7 +194,11 @@ export const GET = withRequestLogging(
     const normalized = users.map((user) => {
       const rawPoints = typeof user.points === 'number' ? user.points : 0;
       const rawExperience = typeof user.experience === 'number' ? user.experience : rawPoints;
-      const experience = rawExperience;
+      // Some approvals made under the legacy system incremented `points` but not `experience`.
+      // Using Math.max ensures users who accumulated points before the `experience` field was
+      // introduced (e.g. ZE_lythic: 34 missions × 10 pts = 340) are displayed correctly even
+      // if `experience` in the DB is lower than `points`.
+      const experience = Math.max(rawExperience, rawPoints);
 
       const zeTagIsValid = typeof user.zeTag === 'string' && ZE_TAG_REGEX.test(user.zeTag);
       const zeTag = zeTagIsValid

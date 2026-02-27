@@ -113,7 +113,7 @@ export default function Navbar() {
               whileTap={{ scale: 0.9 }}
               className="cursor-pointer"
             >
-              <Avatar>
+              <Avatar className="w-8 h-8">
                 <AvatarImage 
                   src={session.user?.profilePhotoUrl || session.user?.image || undefined} 
                   alt={session.user?.name ?? "User"} 
@@ -207,8 +207,8 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Desktop Navbar - Hidden on mobile */}
-      <div className="fixed top-0 left-0 right-0 flex justify-center z-[100] pt-3 px-4 hidden md:flex">
+      {/* Desktop Navbar - Hidden on tablet/mobile, visible only on lg+ */}
+      <div className="fixed top-0 left-0 right-0 flex justify-center z-[100] pt-3 px-4 hidden lg:flex">
         <motion.header
           className="rounded-full backdrop-blur-md border w-auto"
           variants={headerVariants}
@@ -300,11 +300,11 @@ export default function Navbar() {
         </motion.header>
       </div>
 
-      {/* Mobile Navbar - Hidden on desktop */}
-      <div className="fixed top-0 left-0 right-0 z-[100] md:hidden">
-        {/* Top bar with logo and menu button */}
+      {/* Mobile Navbar - Visible on tablet/mobile (below lg), hidden on desktop */}
+      <div className="fixed top-0 left-0 right-0 z-[100] lg:hidden">
+        {/* Top bar with logo and menu button - relative z-20 ensures it stays above the menu overlay */}
         <motion.div
-          className="flex items-center justify-between px-5 py-4"
+          className="relative z-20 flex items-center justify-between px-5 py-4"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -383,7 +383,7 @@ export default function Navbar() {
                     >
                       <Link
                         href={link.path}
-                        className={`${orbitron.className} flex items-center justify-between text-2xl font-semibold uppercase tracking-[0.06em] ${
+                        className={`${orbitron.className} flex items-center justify-between text-xl font-semibold uppercase tracking-[0.06em] ${
                           pathname === link.path ? "text-red-500" : "text-white"
                         }`}
                         onClick={() => setIsMenuOpen(false)}

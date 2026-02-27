@@ -20,6 +20,7 @@ type VerifySubmissionInput = {
   submissionId: string
   status: 'approved' | 'rejected'
   adminUserId: string
+  rejectReason?: string
 }
 
 type RevertSubmissionInput = {
@@ -42,6 +43,9 @@ export async function verifyMissionSubmission(
   if (input.status === 'approved') {
     submission.approvedBy = input.adminUserId
     submission.approvedAt = new Date()
+  }
+  if (input.status === 'rejected' && input.rejectReason) {
+    submission.remarks = input.rejectReason
   }
 
   await saveSubmission(submission)

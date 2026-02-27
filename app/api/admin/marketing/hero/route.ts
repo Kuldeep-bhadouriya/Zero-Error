@@ -4,6 +4,11 @@ import SiteSetting from '@/models/siteSetting'
 import { revalidatePath } from 'next/cache'
 import { withAdmin, withErrorHandling, withRequestLogging } from '@/lib/api/middleware'
 
+// Prevent Next.js from caching this route at build time.
+// Without this, the GET response could be cached with empty URLs during the
+// build step, causing the video to revert to default after every deployment.
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/admin/marketing/hero
  * Get current hero video and poster URLs (public access)

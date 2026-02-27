@@ -164,7 +164,11 @@ export default function Leaderboard() {
                     </div>
                     
                     <div className="space-y-2">
-                        {(searchQuery || rankFilter !== 'all' ? filteredUsers : restUsers).map((user) => (
+                        {/* When the podium is visible (all view, no search, no rank filter), skip
+                            the top-3 users here (they appear in the Podium above). In every other
+                            case (top-10 view, active search, or rank filter) render all filtered
+                            users so no one gets lost. */}
+                        {(searchQuery || rankFilter !== 'all' || viewState !== 'all' ? filteredUsers : restUsers).map((user) => (
                             <LeaderboardRow 
                                 key={user._id} 
                                 user={user} 

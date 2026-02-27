@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Plus, RefreshCw, AlertCircle } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 import MissionForm from './MissionForm'
 import MissionList from './MissionList'
 import logger from '@/lib/browser-logger'
@@ -16,6 +17,7 @@ export default function MissionManager() {
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('list')
   const [editingMission, setEditingMission] = useState<any>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchMissions()
@@ -70,6 +72,29 @@ export default function MissionManager() {
   function handleFormCancel() {
     setEditingMission(null)
     setActiveTab('list')
+  }
+
+  async function handleDuplicate(mission: any) {
+    try {
+      const res = await fetch('/api/admin/missions/duplicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ missionId: mission._id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to duplicate mission')
+      toast({
+        title: 'Mission Duplicated',
+        description: `"${data.name}" created as inactive. Edit it before activating.`,
+      })
+      fetchMissions()
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to duplicate mission',
+        variant: 'destructive',
+      })
+    }
   }
 
   // Calculate stats
@@ -191,6 +216,7 @@ export default function MissionManager() {
             <MissionList
               missions={missions}
               onEdit={handleEdit}
+              onDuplicate={handleDuplicate}
               onRefresh={fetchMissions}
             />
           )}

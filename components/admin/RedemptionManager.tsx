@@ -18,9 +18,11 @@ import {
   XCircle,
   Loader2,
   Edit,
-  Gift
+  Gift,
+  Search
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -64,6 +66,7 @@ export default function RedemptionManager() {
   const [requests, setRequests] = useState<RedemptionRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<RedemptionRequest | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newStatus, setNewStatus] = useState<string>('');
@@ -178,9 +181,16 @@ export default function RedemptionManager() {
     }).format(date);
   }
 
-  const filteredRequests = filterStatus === 'all' 
-    ? requests 
-    : requests.filter(r => r.status === filterStatus);
+  const filteredRequests = requests.filter(r => {
+    const matchesStatus = filterStatus === 'all' || r.status === filterStatus;
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = !q ||
+      r.userName.toLowerCase().includes(q) ||
+      r.userEmail.toLowerCase().includes(q) ||
+      r.contactName.toLowerCase().includes(q) ||
+      r.contactEmail.toLowerCase().includes(q);
+    return matchesStatus && matchesSearch;
+  });
 
   return (
     <div className="space-y-6">
@@ -192,18 +202,29 @@ export default function RedemptionManager() {
         </div>
         
         {/* Filter */}
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[180px] bg-gray-800/50 border-gray-600 text-white">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent className="bg-gray-800 border-gray-600">
-            <SelectItem value="all">All Requests</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="processing">Processing</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search by user name or email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-gray-800/50 border-gray-600 text-white placeholder:text-gray-500"
+            />
+          </div>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-full sm:w-[180px] bg-gray-800/50 border-gray-600 text-white">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-600">
+              <SelectItem value="all">All Requests</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Stats */}

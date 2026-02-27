@@ -29,7 +29,7 @@ export default function HomeClient() {
   useEffect(() => {
     async function fetchHeroMedia() {
       try {
-        const response = await fetch("/api/admin/marketing/hero");
+        const response = await fetch("/api/admin/marketing/hero", { cache: "no-store" });
         if (response.ok) {
           const data = await response.json();
           setHeroMedia({

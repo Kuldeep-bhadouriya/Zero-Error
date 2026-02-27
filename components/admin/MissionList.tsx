@@ -17,7 +17,8 @@ import {
   Search,
   Star,
   Users,
-  AlertCircle
+  AlertCircle,
+  Copy
 } from 'lucide-react'
 import {
   AlertDialog,
@@ -35,10 +36,11 @@ import logger from '@/lib/browser-logger'
 interface MissionListProps {
   missions: any[]
   onEdit: (mission: any) => void
+  onDuplicate: (mission: any) => void
   onRefresh: () => void
 }
 
-export default function MissionList({ missions, onEdit, onRefresh }: MissionListProps) {
+export default function MissionList({ missions, onEdit, onDuplicate, onRefresh }: MissionListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [difficultyFilter, setDifficultyFilter] = useState('all')
@@ -375,26 +377,38 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
                         </div>
                       </TableCell>
                       <TableCell className="text-gray-300 py-3">
-                        {mission.isTimeLimited ? (
-                          <div className="flex items-center gap-1 text-xs sm:text-sm">
-                            <Clock className={cn(
-                              'h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0',
-                              mission.isExpired ? 'text-red-500' : countdownIsUrgent(mission.endDate) ? 'text-red-400' : 'text-orange-500'
-                            )} />
-                            {mission.endDate ? (
-                              <span className={cn(
-                                'font-mono',
-                                mission.isExpired ? 'text-red-500' : countdownIsUrgent(mission.endDate) ? 'text-red-400' : 'text-orange-300'
-                              )}>
-                                {formatCountdown(mission.endDate)}
+                        <div className="flex flex-col gap-1">
+                          {mission.isTimeLimited && (
+                            <div className="flex items-center gap-1 text-xs sm:text-sm">
+                              <Clock className={cn(
+                                'h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0',
+                                mission.isExpired ? 'text-red-500' : countdownIsUrgent(mission.endDate) ? 'text-red-400' : 'text-orange-500'
+                              )} />
+                              {mission.endDate ? (
+                                <span className={cn(
+                                  'font-mono',
+                                  mission.isExpired ? 'text-red-500' : countdownIsUrgent(mission.endDate) ? 'text-red-400' : 'text-orange-300'
+                                )}>
+                                  {formatCountdown(mission.endDate)}
+                                </span>
+                              ) : (
+                                <span>No end date</span>
+                              )}
+                            </div>
+                          )}
+                          {mission.isHourlyScheduled && mission.hourlySchedule && (
+                            <div className="flex items-center gap-1 text-xs">
+                              <Clock className="h-3 w-3 flex-shrink-0 text-orange-400" />
+                              <span className="font-mono text-orange-300">
+                                {String(mission.hourlySchedule.startHour).padStart(2, '0')}:00–{String(mission.hourlySchedule.endHour).padStart(2, '0')}:59
                               </span>
-                            ) : (
-                              <span>No end date</span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-xs">-</span>
-                        )}
+                              <span className="text-gray-500">{mission.hourlySchedule.timezone}</span>
+                            </div>
+                          )}
+                          {!mission.isTimeLimited && !mission.isHourlyScheduled && (
+                            <span className="text-gray-400 text-xs">-</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="py-3">
                         <div className="flex gap-1">
@@ -403,9 +417,20 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
                             variant="ghost"
                             onClick={() => onEdit(mission)}
                             disabled={loading}
+                            title="Edit mission"
                             className="text-gray-300 hover:text-white hover:bg-zinc-800 h-8 w-8"
                           >
                             <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => onDuplicate(mission)}
+                            disabled={loading}
+                            title="Duplicate mission"
+                            className="text-blue-400 hover:text-blue-300 hover:bg-zinc-800 h-8 w-8"
+                          >
+                            <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
                           </Button>
                           <Button
                             size="icon"
@@ -415,6 +440,7 @@ export default function MissionList({ missions, onEdit, onRefresh }: MissionList
                               setDeleteDialogOpen(true)
                             }}
                             disabled={loading}
+                            title="Delete mission"
                             className="text-red-400 hover:text-red-300 hover:bg-zinc-800 h-8 w-8"
                           >
                             <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />

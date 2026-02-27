@@ -15,7 +15,7 @@ export const PATCH = withRequestLogging(
   withErrorHandling(
     '/api/admin/submissions/verify',
     withAdmin(async (req, _context, session) => {
-    const { submissionId, status } = await req.json()
+    const { submissionId, status, rejectReason } = await req.json()
 
     // Validate status value
     if (!['approved', 'rejected'].includes(status)) {
@@ -26,6 +26,7 @@ export const PATCH = withRequestLogging(
       submissionId,
       status,
       adminUserId: session.user.id,
+      rejectReason,
     })
 
     // Revalidate the leaderboard page to show updated data
