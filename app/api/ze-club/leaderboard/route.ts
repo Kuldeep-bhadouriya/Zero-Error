@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/user';
 import Season, { type ISeason } from '@/models/season';
+import MissionSubmission from '@/models/missionSubmission';
 import { Types } from 'mongoose';
 import { customAlphabet } from 'nanoid';
 import { getRankForExperience } from '@/lib/ranks';
@@ -138,6 +139,32 @@ export const GET = withRequestLogging(
       .select('seasonNumber name')
       .lean() as ISeason | null
 
+    // Issue 3 fix: compute the true total approved-mission points per user
+    // directly from submissions so that stale `experience` / `points` DB values
+    // (caused by past normalization bugs) are always corrected at display time.
+    const submissionPointsAgg = await MissionSubmission.aggregate<{ _id: Types.ObjectId; totalPoints: number }>([
+      { $match: { status: 'approved' } },
+      {
+        $lookup: {
+          from: 'missions',
+          localField: 'mission',
+          foreignField: '_id',
+          as: 'missionData',
+          pipeline: [{ $project: { points: 1 } }],
+        },
+      },
+      { $unwind: { path: '$missionData', preserveNullAndEmptyArrays: false } },
+      {
+        $group: {
+          _id: '$user',
+          totalPoints: { $sum: '$missionData.points' },
+        },
+      },
+    ]);
+    const submissionPointsMap = new Map(
+      submissionPointsAgg.map((s) => [s._id.toString(), s.totalPoints])
+    );
+
     const cursorMatch = cursor
       ? {
           $or: [
@@ -194,11 +221,12 @@ export const GET = withRequestLogging(
     const normalized = users.map((user) => {
       const rawPoints = typeof user.points === 'number' ? user.points : 0;
       const rawExperience = typeof user.experience === 'number' ? user.experience : rawPoints;
-      // Some approvals made under the legacy system incremented `points` but not `experience`.
-      // Using Math.max ensures users who accumulated points before the `experience` field was
-      // introduced (e.g. ZE_lythic: 34 missions × 10 pts = 340) are displayed correctly even
-      // if `experience` in the DB is lower than `points`.
-      const experience = Math.max(rawExperience, rawPoints);
+      // Source-of-truth: sum of points from every approved mission submission.
+      // This corrects cases where `experience` / `points` in the DB were set to a
+      // stale / lower value (e.g. ZE_lythic: 34 missions × 10 pts = 340 but DB
+      // had both fields at 300 after a legacy normalisation pass).
+      const submissionBased = submissionPointsMap.get(String(user._id)) ?? 0;
+      const experience = Math.max(rawExperience, rawPoints, submissionBased);
 
       const zeTagIsValid = typeof user.zeTag === 'string' && ZE_TAG_REGEX.test(user.zeTag);
       const zeTag = zeTagIsValid
@@ -212,6 +240,7 @@ export const GET = withRequestLogging(
       const needsUpdate =
         !zeTagIsValid ||
         typeof user.experience !== 'number' ||
+        user.experience !== experience ||   // catches stale / lower stored value
         typeof user.points !== 'number' ||
         user.points !== experience ||
         typeof user.rank !== 'string' ||
