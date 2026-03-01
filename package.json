@@ -1,12 +1,19 @@
 {
-  "name": "my-v0-project",
-  "version": "0.1.0",
+  "name": "zero-error",
+  "version": "2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
     "db:seed-missions": "ts-node scripts/seed-missions.ts",
     "db:seed-rewards": "ts-node scripts/seed-rewards.ts",
     "db:make-admin": "ts-node scripts/make-admin.ts",
@@ -92,6 +99,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.1",
     "@next/bundle-analyzer": "^16.0.1",
     "@types/bcrypt": "^6.0.0",
     "@types/multer-s3": "^3.0.3",
@@ -102,9 +110,12 @@
     "dotenv": "^17.2.3",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16",
+    "mongodb-memory-server": "^10.2.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.2.4"
   }
 }
