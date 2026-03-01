@@ -21,9 +21,9 @@ export default function SeasonBanner() {
     async function fetchSeason() {
       try {
         // Also trigger the auto-end check
-        fetch('/api/ze-club/season/check-end').catch(() => {})
+        fetch('/api/ze-club/season/check-end', { cache: 'no-store' }).catch(() => {})
 
-        const res = await fetch('/api/ze-club/season/current')
+        const res = await fetch('/api/ze-club/season/current', { cache: 'no-store' })
         if (res.ok) {
           const data = await res.json()
           setSeason(data.season)

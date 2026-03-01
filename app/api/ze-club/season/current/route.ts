@@ -3,6 +3,8 @@ import dbConnect from '@/lib/mongodb'
 import Season, { type ISeason } from '@/models/season'
 import logger from '@/lib/logger'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * GET /api/ze-club/season/current
  * Returns the current active season info for users. No auth required.

@@ -55,6 +55,7 @@
     "@upstash/redis": "^1.36.2",
     "autoprefixer": "^10.4.20",
     "aws4": "^1.13.2",
+    "baseline-browser-mapping": "^2.10.0",
     "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
