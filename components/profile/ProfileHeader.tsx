@@ -124,7 +124,7 @@ export function ProfileHeader({ profile, onUpdate }: ProfileHeaderProps) {
                         <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
                           <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
                         </div>
-                        <div className="text-[10px] sm:text-xs text-purple-400/80 font-medium uppercase tracking-wider">Experience</div>
+                        <div className="text-[10px] sm:text-xs text-purple-400/80 font-medium uppercase tracking-wider">ZE Points</div>
                       </div>
                       <div className="text-2xl sm:text-3xl font-bold text-white tabular-nums">
                         {(profile.experience || profile.points).toLocaleString()}

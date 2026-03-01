@@ -67,14 +67,7 @@ export default function ClientLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [isLoading, setIsLoading] = useState(() => {
-    if (typeof window === "undefined") {
-      return true;
-    }
-
-    const hasLoadedBefore = window.sessionStorage.getItem("hasLoadedSite");
-    return !hasLoadedBefore;
-  });
+  const [isLoading, setIsLoading] = useState(true);
   const isAdminRoute = pathname?.startsWith("/admin");
   const isZeClubRoute = pathname?.startsWith("/ze-club");
   const isProfileRoute = pathname === "/profile";
@@ -82,14 +75,19 @@ export default function ClientLayout({
   const shouldOffsetContent = isAdminRoute || isZeClubRoute;
 
   useEffect(() => {
-    if (!isLoading) {
-      return;
+    const hasLoadedBefore = window.sessionStorage.getItem("hasLoadedSite");
+    if (hasLoadedBefore) {
+      const immediate = window.setTimeout(() => setIsLoading(false), 0);
+      return () => clearTimeout(immediate);
     }
 
-    const timer = setTimeout(() => setIsLoading(false), 3000);
-    sessionStorage.setItem("hasLoadedSite", "true");
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      sessionStorage.setItem("hasLoadedSite", "true");
+    }, 3000);
+
     return () => clearTimeout(timer);
-  }, [isLoading]);
+  }, []);
 
   // Reset any animation state when route changes
   useEffect(() => {

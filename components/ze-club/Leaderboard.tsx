@@ -159,7 +159,7 @@ export default function Leaderboard() {
                         </div>
                         <div className="flex items-center gap-8 md:gap-16">
                             <span className="hidden md:block">Rank Tier</span>
-                            <span className="w-20 text-right">Points</span>
+                            <span className="w-20 text-right">ZE Points</span>
                         </div>
                     </div>
                     
@@ -329,7 +329,7 @@ function PodiumCard({ user, rank, color, isFirst = false }: { user: LeaderboardU
                      </Badge>
                 </div>
                 <div className={cn("font-mono font-bold mt-1 md:mt-2", isFirst ? "text-lg sm:text-3xl text-yellow-500" : "text-sm md:text-xl text-white/90")}>
-                    {user.points.toLocaleString()} <span className="hidden md:inline text-xs sm:text-sm font-sans font-medium opacity-50">XP</span>
+                    {user.points.toLocaleString()} <span className="hidden md:inline text-xs sm:text-sm font-sans font-medium opacity-50">ZE Points</span>
                 </div>
             </div>
         </div>
@@ -382,7 +382,7 @@ function LeaderboardRow({ user }: { user: LeaderboardUser }) {
                     <span className="font-mono font-bold text-white group-hover:text-yellow-400 transition-colors">
                         {user.points.toLocaleString()}
                     </span>
-                    <span className="text-[10px] text-gray-600 block leading-none mt-1">XP</span>
+                    <span className="text-[10px] text-gray-600 block leading-none mt-1">ZE Points</span>
                 </div>
             </div>
         </motion.div>

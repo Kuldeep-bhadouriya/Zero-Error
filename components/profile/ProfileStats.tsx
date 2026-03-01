@@ -44,7 +44,7 @@ export function ProfileStats({ stats }: ProfileStatsProps) {
     },
     {
       icon: Gift,
-      label: 'Total Points',
+      label: 'ZE Points',
       value: stats.totalPoints.toLocaleString(),
       color: 'text-purple-400',
       bgGradient: 'from-purple-500/5 to-purple-600/5',

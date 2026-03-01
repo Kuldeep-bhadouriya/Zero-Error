@@ -130,7 +130,7 @@ function RankCard({
               transition={{ delay: 0.4 }}
             >
               <TrendingUp className="h-4 w-4 text-green-400" />
-              <span className="text-xs font-semibold text-white">{currentPoints} pts</span>
+              <span className="text-xs font-semibold text-white">{currentPoints} ZE Points</span>
             </motion.div>
           </div>
 

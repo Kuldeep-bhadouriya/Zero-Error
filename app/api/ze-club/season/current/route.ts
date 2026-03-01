@@ -23,14 +23,15 @@ export async function GET() {
     const now = new Date()
     const endDate = new Date(activeSeason.scheduledEndDate)
     const diffMs = endDate.getTime() - now.getTime()
-    const daysRemaining = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)))
-    const hoursRemaining = Math.max(0, Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)))
+    const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)))
+    const hoursRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60)))
 
     return NextResponse.json({
       season: {
         ...activeSeason,
         daysRemaining,
         hoursRemaining,
+        isExpired: diffMs <= 0,
       },
     })
   } catch (error) {

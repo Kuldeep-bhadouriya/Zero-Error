@@ -210,7 +210,7 @@ function Dashboard() {
           icon={Star} 
           label="ZE Points" 
           value={dashboardData.experience}
-          subValue="Total Points"
+          subValue="ZE Points"
           color="purple"
           delay={0.3}
         />
@@ -260,11 +260,11 @@ function Dashboard() {
 
               <div className="space-y-2.5 sm:space-y-3">
                 {[
-                  { title: "Win Tournament", value: "+100 XP", icon: Trophy, color: "text-amber-400" },
-                  { title: "Refer a Friend", value: "+30 XP", icon: User, color: "text-blue-400" },
-                  { title: "Game Night", value: "+15 XP", icon: Gamepad2, color: "text-purple-400" },
-                  { title: "Discord Event", value: "+10 XP", icon: MessageCircle, color: "text-indigo-400" },
-                  { title: "Share Content", value: "+10 XP", icon: Share2, color: "text-pink-400" },
+                  { title: "Win Tournament", value: "+100 ZE Points", icon: Trophy, color: "text-amber-400" },
+                  { title: "Refer a Friend", value: "+30 ZE Points", icon: User, color: "text-blue-400" },
+                  { title: "Game Night", value: "+15 ZE Points", icon: Gamepad2, color: "text-purple-400" },
+                  { title: "Discord Event", value: "+10 ZE Points", icon: MessageCircle, color: "text-indigo-400" },
+                  { title: "Share Content", value: "+10 ZE Points", icon: Share2, color: "text-pink-400" },
                 ].map((item, i) => (
                   <motion.div 
                     key={i}

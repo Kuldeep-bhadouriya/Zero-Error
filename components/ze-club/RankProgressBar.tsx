@@ -74,10 +74,10 @@ function RankProgressBar({
             </TooltipTrigger>
             <TooltipContent className="bg-black/90 border-white/10">
               <div className="space-y-1 text-xs">
-                <p><span className="text-gray-400">Current:</span> {currentPoints} points</p>
-                <p><span className="text-gray-400">Progress:</span> {pointsEarned} / {pointsNeeded} points</p>
+                <p><span className="text-gray-400">Current:</span> {currentPoints} ZE Points</p>
+                <p><span className="text-gray-400">Progress:</span> {pointsEarned} / {pointsNeeded} ZE Points</p>
                 {!isMaxRank && (
-                  <p><span className="text-yellow-400">Need:</span> {pointsRemaining} more points</p>
+                  <p><span className="text-yellow-400">Need:</span> {pointsRemaining} more ZE Points</p>
                 )}
               </div>
             </TooltipContent>
@@ -185,11 +185,11 @@ function RankProgressBar({
       {/* Points Info */}
       <div className="flex items-center justify-between text-xs">
         <span className="text-gray-500">
-          {currentRankPoints} pts
+          {currentRankPoints} ZE Points
         </span>
         {!isMaxRank ? (
           <span className="text-gray-500">
-            {nextRankPoints} pts
+            {nextRankPoints} ZE Points
           </span>
         ) : (
           <span className="text-yellow-400 font-semibold flex items-center gap-1">
@@ -208,7 +208,7 @@ function RankProgressBar({
         >
           {pointsRemaining <= 100 
             ? "🔥 So close! Keep pushing!" 
-            : `${pointsRemaining} points to ${nextRank}! You got this! 💪`
+            : `${pointsRemaining} ZE Points to ${nextRank}! You got this! 💪`
           }
         </motion.p>
       )}
