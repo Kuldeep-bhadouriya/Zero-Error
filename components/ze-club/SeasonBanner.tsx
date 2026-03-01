@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { CalendarClock, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -9,14 +10,29 @@ import logger from '@/lib/browser-logger'
 interface SeasonInfo {
   seasonNumber: number
   name: string
+  scheduledEndDate: string
+}
+
+interface Countdown {
   daysRemaining: number
   hoursRemaining: number
 }
 
+function computeCountdown(scheduledEndDate: string): Countdown {
+  const diffMs = new Date(scheduledEndDate).getTime() - Date.now()
+  return {
+    daysRemaining: Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24))),
+    hoursRemaining: Math.max(0, Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))),
+  }
+}
+
 export default function SeasonBanner() {
+  const pathname = usePathname()
   const [season, setSeason] = useState<SeasonInfo | null>(null)
+  const [countdown, setCountdown] = useState<Countdown | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Re-fetch on every ZE Club page navigation so an extension is reflected immediately
   useEffect(() => {
     async function fetchSeason() {
       try {
@@ -26,7 +42,15 @@ export default function SeasonBanner() {
         const res = await fetch('/api/ze-club/season/current', { cache: 'no-store' })
         if (res.ok) {
           const data = await res.json()
-          setSeason(data.season)
+          const s: SeasonInfo | null = data.season
+            ? {
+                seasonNumber: data.season.seasonNumber,
+                name: data.season.name,
+                scheduledEndDate: data.season.scheduledEndDate,
+              }
+            : null
+          setSeason(s)
+          setCountdown(s ? computeCountdown(s.scheduledEndDate) : null)
         }
       } catch (error) {
         logger.error('Failed to fetch season:', error)
@@ -35,7 +59,16 @@ export default function SeasonBanner() {
       }
     }
     fetchSeason()
-  }, [])
+  }, [pathname])
+
+  // Tick the countdown every minute so it stays accurate without refetching
+  useEffect(() => {
+    if (!season) return
+    const id = setInterval(() => {
+      setCountdown(computeCountdown(season.scheduledEndDate))
+    }, 60_000)
+    return () => clearInterval(id)
+  }, [season])
 
   if (loading) return null
 
@@ -63,11 +96,11 @@ export default function SeasonBanner() {
         </span>
       </div>
 
-      {season && (
+      {season && countdown && (
         <div className="flex items-center gap-1.5 text-xs text-gray-400">
           <Clock className="h-3 w-3" />
           <span>
-            {season.daysRemaining}d {season.hoursRemaining}h left
+            {countdown.daysRemaining}d {countdown.hoursRemaining}h left
           </span>
         </div>
       )}
