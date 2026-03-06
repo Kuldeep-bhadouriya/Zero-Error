@@ -69,9 +69,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Forbidden - Admin access required' }, { status: 403 })
     }
 
-    // Get all users with valid email
+    // Get all Ze Club users
     const users = await User.find({ 
-      email: { $exists: true, $ne: null } 
+      zeClubId: { $exists: true, $ne: null } 
     })
 
     let updatedCount = 0

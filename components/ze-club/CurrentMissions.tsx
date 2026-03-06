@@ -90,10 +90,10 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
   const CategoryIcon = categoryInfo.icon
 
   useEffect(() => {
-    if (!mission.isTimeLimited || !mission.endDate) return
+    if (!mission.endDate) return
     const t = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(t)
-  }, [mission.isTimeLimited, mission.endDate])
+  }, [mission.endDate])
 
   function formatCountdown(endDate: string): string {
     const msLeft = new Date(endDate).getTime() - currentTime.getTime()
@@ -171,7 +171,7 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
             {mission.category}
           </Badge>
 
-          {mission.isTimeLimited && mission.endDate && (
+          {mission.endDate && (
             <Badge
               className={`${
                 isUrgent(mission.endDate)
@@ -251,14 +251,15 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
                   </div>
                 )}
 
-                {mission.isTimeLimited && (mission.startDate || mission.endDate) && (
+                {mission.endDate && (
                   <div className="mt-4 flex items-start gap-2 p-3 rounded-lg bg-sky-500/5 border border-sky-500/20">
                     <AlertCircle className="h-4 w-4 text-sky-300 flex-shrink-0 mt-0.5" />
                     <div className="text-sm">
                       <p className="text-sky-200 font-medium">Time window</p>
                       <p className="text-gray-400">
-                        {mission.startDate && `Starts: ${new Date(mission.startDate).toLocaleDateString()}`}
-                        {mission.endDate && ` • Ends: ${new Date(mission.endDate).toLocaleDateString()}`}
+                        {mission.startDate
+                          ? `Starts: ${new Date(mission.startDate).toLocaleDateString()} • Ends: ${new Date(mission.endDate).toLocaleDateString()}`
+                          : `Ends: ${new Date(mission.endDate).toLocaleDateString()}`}
                       </p>
                       {mission.endDate && (
                         <p className={`font-mono font-semibold mt-1 ${isUrgent(mission.endDate) ? 'text-red-300' : 'text-sky-300'}`}>

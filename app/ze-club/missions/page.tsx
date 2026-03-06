@@ -36,8 +36,11 @@ async function UserSubmissions() {
     return <p className="text-gray-400">User not found.</p>
   }
 
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+
   const submissions = await MissionSubmission.find({
     user: user._id,
+    submittedAt: { $gte: sevenDaysAgo },
   })
     .populate({ path: 'mission', model: Mission, select: 'name' })
     .sort({ submittedAt: -1 })

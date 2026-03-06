@@ -128,7 +128,8 @@ export const GET = withRequestLogging(
   await dbConnect();
 
     const { searchParams } = new URL(request.url);
-    const parsedLimit = Number(searchParams.get('limit'));
+    const rawLimit = searchParams.get('limit');
+    const parsedLimit = rawLimit === null ? NaN : Number(rawLimit);
     const pageSize = Number.isFinite(parsedLimit)
       ? Math.min(Math.max(Math.floor(parsedLimit), 1), 50)
       : 20;
@@ -165,42 +166,21 @@ export const GET = withRequestLogging(
       submissionPointsAgg.map((s) => [s._id.toString(), s.totalPoints])
     );
 
-    const cursorMatch = cursor
-      ? {
-          $or: [
-            { experience: { $lt: cursor.experience } },
-            { experience: cursor.experience, _id: { $gt: new Types.ObjectId(cursor.id) } },
-          ],
-        }
-      : null;
-
-    // Aggregate query keeps selection/sorting/limit in a single server-side pipeline.
-    const users = await User.aggregate<LeaderboardUser>([
+    // Fetch all users, then rank by normalized experience.
+    // This avoids stale DB `experience` values excluding users before correction.
+    const users = await User.find(
+      {},
       {
-        $match: {
-          email: { $exists: true, $ne: null },
-        },
-      },
-      ...(cursorMatch ? [{ $match: cursorMatch }] : []),
-      {
-        $sort: { experience: -1, _id: 1 },
-      },
-      {
-        $limit: pageSize + 1,
-      },
-      {
-        $project: {
-          zeTag: 1,
-          points: 1,
-          experience: 1,
-          zeCoins: 1,
-          rank: 1,
-          rankIcon: 1,
-          profilePhotoUrl: 1,
-          image: 1,
-        },
-      },
-    ]);
+        zeTag: 1,
+        points: 1,
+        experience: 1,
+        zeCoins: 1,
+        rank: 1,
+        rankIcon: 1,
+        profilePhotoUrl: 1,
+        image: 1,
+      }
+    ).lean<LeaderboardUser[]>();
 
     const reservedTags = new Set(
       users
@@ -284,8 +264,25 @@ export const GET = withRequestLogging(
       await User.bulkWrite(ops, { ordered: false });
     }
 
-    const hasMore = normalized.length > pageSize;
-    const pageItems = hasMore ? normalized.slice(0, pageSize) : normalized;
+    // Sort by effective experience after normalization, then apply cursor + page window.
+    const rankedUsers = normalized
+      .sort((a, b) => {
+        if (b.experience !== a.experience) return b.experience - a.experience;
+        return String(a.user._id).localeCompare(String(b.user._id));
+      });
+
+    const cursorFiltered = cursor
+      ? rankedUsers.filter(
+          (n) =>
+            n.experience < cursor.experience ||
+            (n.experience === cursor.experience &&
+              String(n.user._id).localeCompare(cursor.id) > 0)
+        )
+      : rankedUsers;
+
+    const pageWindow = cursorFiltered.slice(0, pageSize + 1);
+    const hasMore = pageWindow.length > pageSize;
+    const pageItems = hasMore ? pageWindow.slice(0, pageSize) : pageWindow;
 
     const leaderboard = pageItems.map((n, index) => ({
       _id: String(n.user._id),

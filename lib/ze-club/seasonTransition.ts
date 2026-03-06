@@ -94,7 +94,7 @@ export async function endSeason(
 
     // STEP 4: Build leaderboard snapshot (all users sorted by experience)
     const allUsers = await User.find(
-      { email: { $exists: true, $ne: null } },
+      { zeClubId: { $exists: true, $ne: null } },
       'experience zeCoins rank rankIcon zeTag profilePhotoUrl'
     )
       .sort({ experience: -1 })

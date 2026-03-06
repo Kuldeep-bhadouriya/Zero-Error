@@ -35,7 +35,7 @@ export default function Leaderboard() {
     } = useQuery<LeaderboardUser[]>({
         queryKey: ['ze-club', 'leaderboard'],
         queryFn: async () => {
-            const response = await fetch('/api/ze-club/leaderboard');
+            const response = await fetch('/api/ze-club/leaderboard', { cache: 'no-store' });
             if (!response.ok) {
                 throw new Error('Failed to fetch leaderboard');
             }

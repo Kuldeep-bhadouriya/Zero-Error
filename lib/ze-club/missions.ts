@@ -7,7 +7,7 @@ import {
   shouldShowWeeklyMission,
   getNextWeeklyInstanceDate,
   getDayName,
-  getWeekNumber,
+  getCurrentHourInTimezone,
 } from '@/lib/missionUtils'
 
 export type MissionWithComputed = {
@@ -81,16 +81,65 @@ export async function getMissionsForUserEmail(email?: string | null): Promise<Mi
 
   const submissionMap = new Map(userSubmissions.map((sub) => [sub.mission.toString(), sub]))
 
+  function getHourlyMissionEndDateIso(
+    currentTime: Date,
+    mission: {
+      isHourlyScheduled?: boolean
+      hourlySchedule?: {
+        startHour: number
+        endHour: number
+        timezone?: string
+      }
+    }
+  ): string | undefined {
+    if (!mission.isHourlyScheduled || !mission.hourlySchedule) return undefined
+
+    const { endHour, timezone } = mission.hourlySchedule
+    const tz = timezone || 'UTC'
+    const currentHour = getCurrentHourInTimezone(currentTime, tz)
+
+    try {
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hourCycle: 'h23',
+        timeZone: tz,
+      })
+      const parts = formatter.formatToParts(currentTime)
+      const minute = Number(parts.find((p) => p.type === 'minute')?.value ?? '0')
+      const second = Number(parts.find((p) => p.type === 'second')?.value ?? '0')
+
+      // Mission should usually be active at this point, but guard anyway.
+      if (currentHour > endHour) return undefined
+
+      const secondsLeft = (endHour - currentHour) * 3600 + (59 - minute) * 60 + (59 - second)
+      if (secondsLeft <= 0) return undefined
+
+      return new Date(currentTime.getTime() + secondsLeft * 1000).toISOString()
+    } catch {
+      return undefined
+    }
+  }
+
   const availableMissions = missions
     .map((mission: any) => {
       let isExpired = false
       let daysRemaining: number | null = null
+      let computedEndDate: string | undefined
 
       if (mission.isTimeLimited && mission.endDate) {
         const endDate = new Date(mission.endDate)
         isExpired = endDate < now
         if (!isExpired) {
           const diffTime = endDate.getTime() - now.getTime()
+          daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        }
+        computedEndDate = endDate.toISOString()
+      } else if (mission.isHourlyScheduled && mission.hourlySchedule) {
+        computedEndDate = getHourlyMissionEndDateIso(now, mission)
+        if (computedEndDate) {
+          const diffTime = new Date(computedEndDate).getTime() - now.getTime()
           daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
         }
       }
@@ -133,7 +182,7 @@ export async function getMissionsForUserEmail(email?: string | null): Promise<Mi
         ...mission,
         _id: mission._id.toString(),
         startDate: mission.startDate ? new Date(mission.startDate).toISOString() : undefined,
-        endDate: mission.endDate ? new Date(mission.endDate).toISOString() : undefined,
+        endDate: computedEndDate,
         createdAt: mission.createdAt ? new Date(mission.createdAt).toISOString() : undefined,
         updatedAt: mission.updatedAt ? new Date(mission.updatedAt).toISOString() : undefined,
         weeklyDayName,

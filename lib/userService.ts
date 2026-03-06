@@ -56,7 +56,7 @@ const getTotalUserCountFromDb = unstable_cache(
   async () => {
     await dbConnect();
     return User.countDocuments({
-      email: { $exists: true, $ne: null },
+      zeClubId: { $exists: true, $ne: null },
     });
   },
   ['user-count-total'],
@@ -71,7 +71,7 @@ function getUserCountByRankFromDb(rank: string) {
     async () => {
       await dbConnect();
       return User.countDocuments({
-        email: { $exists: true, $ne: null },
+        zeClubId: { $exists: true, $ne: null },
         rank,
       });
     },
@@ -84,7 +84,7 @@ function getUserCountByRankFromDb(rank: string) {
 }
 
 /**
- * Get total count of users with email (cached for 5 minutes)
+ * Get total count of Ze Club users (cached for 5 minutes)
  * Used for rank calculations across the platform
  */
 export async function getTotalUserCount(): Promise<number> {
