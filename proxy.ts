@@ -17,6 +17,12 @@ const AUTH_LIMIT = {
   prefix: 'rl:api:auth',
 }
 
+const AUTH_READ_EXEMPT_PATHS = new Set([
+  '/api/auth/session',
+  '/api/auth/providers',
+  '/api/auth/csrf',
+])
+
 const CONTACT_LIMIT = {
   limit: 5,
   windowSeconds: 600,
@@ -25,6 +31,19 @@ const CONTACT_LIMIT = {
 
 function isCsrfExemptPath(path: string) {
   return CSRF_EXEMPT_PREFIXES.some((prefix) => path.startsWith(prefix))
+}
+
+function shouldApplyAuthRateLimit(path: string, method: string) {
+  if (!path.startsWith('/api/auth/')) {
+    return false
+  }
+
+  // Session/provider/csrf polling are low-risk reads and can be called often.
+  if (method === 'GET' && AUTH_READ_EXEMPT_PATHS.has(path)) {
+    return false
+  }
+
+  return true
 }
 
 function isValidSameOriginRequest(request: NextRequest) {
@@ -105,7 +124,7 @@ export async function proxy(request: NextRequest) {
     return ensureCsrfCookie(request, response)
   }
 
-  if (path.startsWith('/api/auth/')) {
+  if (shouldApplyAuthRateLimit(path, method)) {
     const authResult = await checkRateLimit({
       key: ip,
       ...AUTH_LIMIT,
