@@ -40,7 +40,10 @@ async function UserSubmissions() {
 
   const submissions = await MissionSubmission.find({
     user: user._id,
-    submittedAt: { $gte: sevenDaysAgo },
+    $or: [
+      { status: 'pending' },
+      { submittedAt: { $gte: sevenDaysAgo } },
+    ],
   })
     .populate({ path: 'mission', model: Mission, select: 'name' })
     .sort({ submittedAt: -1 })
@@ -116,6 +119,15 @@ async function UserSubmissions() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
             </a>
+            {submission.status === 'pending' && (
+              <div className="mt-3">
+                <Button asChild size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+                  <Link href={`/ze-club/missions/submit?editSubmissionId=${submission._id}`}>
+                    Edit Submission
+                  </Link>
+                </Button>
+              </div>
+            )}
             {submission.remarks && (
               <div className="mt-4 p-3 rounded-lg bg-black/40 border border-white/10">
                 <p className="text-sm text-gray-300">

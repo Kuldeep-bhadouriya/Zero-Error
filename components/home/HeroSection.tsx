@@ -143,16 +143,6 @@ const HeroSection = ({
           </h1>
         </motion.div>
 
-        <motion.p
-          className="text-base sm:text-lg md:text-xl lg:text-2xl text-white mt-4 sm:mt-6 max-w-xl font-light text-shadow"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-        >
-          Zero Error Esports: Gwalior’s first esports hub, nurturing talent and
-          pro gaming in MP.
-        </motion.p>
-
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}

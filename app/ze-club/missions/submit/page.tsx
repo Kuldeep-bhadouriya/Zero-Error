@@ -5,6 +5,10 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { getMissionsForUserEmail } from '@/lib/ze-club/missions'
 import { GlassCard } from '@/components/ui/GlassCard'
+import dbConnect from '@/lib/mongodb'
+import User from '@/models/user'
+import MissionSubmission from '@/models/missionSubmission'
+import Mission from '@/models/mission'
 
 export default async function MissionSubmitPage({
   searchParams,
@@ -32,6 +36,34 @@ export default async function MissionSubmitPage({
   const allMissions = await getMissionsForUserEmail(session.user.email)
   const missions = allMissions.filter((m: any) => !m.isCompleted && !m.isPending)
 
+  const editSubmissionIdParam = searchParams?.editSubmissionId
+  const editSubmissionId = Array.isArray(editSubmissionIdParam)
+    ? editSubmissionIdParam[0]
+    : editSubmissionIdParam
+
+  let editSubmission: { submissionId: string; missionId: string; missionName: string } | undefined
+  if (editSubmissionId) {
+    await dbConnect()
+    const user = await User.findOne({ email: session.user.email }).lean() as { _id: string } | null
+    if (user) {
+      const pendingSubmission = await MissionSubmission.findOne({
+        _id: editSubmissionId,
+        user: user._id,
+        status: 'pending',
+      })
+        .populate({ path: 'mission', model: Mission, select: 'name' })
+        .lean() as any
+
+      if (pendingSubmission?.mission?._id) {
+        editSubmission = {
+          submissionId: pendingSubmission._id.toString(),
+          missionId: pendingSubmission.mission._id.toString(),
+          missionName: pendingSubmission.mission.name,
+        }
+      }
+    }
+  }
+
   const missionIdParam = searchParams?.missionId
   const missionId = Array.isArray(missionIdParam) ? missionIdParam[0] : missionIdParam
   const initialMissionId = missions.some((m: any) => m._id?.toString?.() === missionId) ? missionId : undefined
@@ -50,7 +82,9 @@ export default async function MissionSubmitPage({
             </div>
             <h1 className="text-2xl sm:text-3xl font-semibold mt-2">Submit mission proof</h1>
             <p className="text-gray-400 mt-2 text-sm sm:text-base">
-              Upload a clear image or video that shows the mission completion.
+              {editSubmission
+                ? 'Replace your proof before admin review is complete.'
+                : 'Upload a clear image or video that shows the mission completion.'}
             </p>
           </div>
 
@@ -59,7 +93,11 @@ export default async function MissionSubmitPage({
           </Button>
         </div>
 
-        <MissionUploader missions={missions} initialMissionId={initialMissionId} />
+        <MissionUploader
+          missions={missions}
+          initialMissionId={initialMissionId}
+          editSubmission={editSubmission}
+        />
       </div>
     </ZEClubLayout>
   )

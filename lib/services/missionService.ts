@@ -39,6 +39,13 @@ export async function verifyMissionSubmission(
     return { status: 404, data: { message: 'Submission not found' } }
   }
 
+  if (submission.status !== 'pending') {
+    return {
+      status: 400,
+      data: { message: `Submission is already ${submission.status} and cannot be reviewed again` },
+    }
+  }
+
   submission.status = input.status
   if (input.status === 'approved') {
     submission.approvedBy = input.adminUserId

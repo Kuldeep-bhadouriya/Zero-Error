@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     if (!submission) {
       return NextResponse.json(
-        { error: 'Pending submission not found or cannot be edited' },
+        { error: 'Submission cannot be edited. Only your pending submissions are editable before review.' },
         { status: 404 }
       )
     }

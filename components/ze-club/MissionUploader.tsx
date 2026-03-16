@@ -36,6 +36,11 @@ interface Mission {
 interface MissionUploaderProps {
   missions?: Mission[]
   initialMissionId?: string
+  editSubmission?: {
+    submissionId: string
+    missionId: string
+    missionName: string
+  }
 }
 
 /**
@@ -43,7 +48,7 @@ interface MissionUploaderProps {
  * Allows users to upload proof for completed missions.
  * Handles file validation, UploadThing upload, and submission tracking.
  */
-export default function MissionUploader({ missions: initialMissions, initialMissionId }: MissionUploaderProps) {
+export default function MissionUploader({ missions: initialMissions, initialMissionId, editSubmission }: MissionUploaderProps) {
   const [missions, setMissions] = useState<Mission[]>(() => {
     const base = initialMissions ?? []
     return base.filter((m) => !m.isCompleted && !m.isPending)
@@ -55,6 +60,7 @@ export default function MissionUploader({ missions: initialMissions, initialMiss
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const router = useRouter()
+  const isEditMode = Boolean(editSubmission)
 
   // UploadThing hook
   const { startUpload } = useUploadThing("missionProofUploader")
@@ -162,8 +168,8 @@ export default function MissionUploader({ missions: initialMissions, initialMiss
     event.preventDefault()
     
     // Validate form inputs
-    if (!file || !selectedMission) {
-      alert('Please select a mission and a file.')
+    if (!file || (!isEditMode && !selectedMission)) {
+      alert(isEditMode ? 'Please select a file to update your submission.' : 'Please select a mission and a file.')
       return
     }
 
@@ -190,28 +196,41 @@ export default function MissionUploader({ missions: initialMissions, initialMiss
       const fileUrl = uploadedFiles[0].url
       logger.info('File uploaded successfully to:', fileUrl)
 
-      // Step 2: Save submission to database
-      const response = await fetch('/api/ze-club/missions/upload', {
+      // Step 2: Save submission to database (new) or update pending submission (edit mode)
+      const endpoint = isEditMode ? '/api/ze-club/missions/submissions/edit' : '/api/ze-club/missions/upload'
+      const payload = isEditMode
+        ? {
+            submissionId: editSubmission!.submissionId,
+            fileUrl,
+          }
+        : {
+            missionId: selectedMission,
+            fileUrl,
+          }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          missionId: selectedMission,
-          fileUrl: fileUrl,
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (response.ok) {
         setUploadSuccess(true)
         setTimeout(() => {
           // Reset form state
-          setSelectedMission('')
+          if (!isEditMode) {
+            setSelectedMission('')
+          }
           setFile(null)
           setPreview(null)
           setUploadSuccess(false)
           // Refresh the page to show the new submission
           router.refresh()
+          if (isEditMode) {
+            router.push('/ze-club/missions')
+          }
         }, 2000)
       } else {
         const errorData = await response.json()
@@ -219,7 +238,7 @@ export default function MissionUploader({ missions: initialMissions, initialMiss
         alert(errorMessage)
         
         // If mission is already completed/pending, remove it from the list
-        if (errorMessage.includes('already')) {
+        if (!isEditMode && errorMessage.includes('already')) {
           setMissions(prev => prev.filter(m => m._id !== selectedMission))
           setSelectedMission('')
         }
@@ -233,7 +252,9 @@ export default function MissionUploader({ missions: initialMissions, initialMiss
     }
   }
 
-  const selectedMissionData = missions.find(m => m._id === selectedMission)
+  const selectedMissionData = isEditMode
+    ? missions.find(m => m._id === editSubmission?.missionId)
+    : missions.find(m => m._id === selectedMission)
 
   return (
     <motion.div
@@ -248,9 +269,13 @@ export default function MissionUploader({ missions: initialMissions, initialMiss
               <Upload className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div>
-              <CardTitle className="text-xl sm:text-2xl text-white">Submit Mission Proof</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl text-white">
+                {isEditMode ? 'Edit Mission Submission' : 'Submit Mission Proof'}
+              </CardTitle>
               <CardDescription className="text-xs sm:text-sm text-gray-400">
-                Upload your proof to earn points
+                {isEditMode
+                  ? 'Replace your proof before it is approved or rejected'
+                  : 'Upload your proof to earn points'}
               </CardDescription>
             </div>
           </div>
@@ -265,9 +290,16 @@ export default function MissionUploader({ missions: initialMissions, initialMiss
               transition={{ duration: 0.3, delay: 0.1 }}
             >
               <Label htmlFor="mission" className="text-white text-sm sm:text-base mb-2 block">
-                Select Mission
+                {isEditMode ? 'Mission' : 'Select Mission'}
               </Label>
-              {missions.length === 0 ? (
+              {isEditMode && editSubmission ? (
+                <div className="rounded-lg border border-white/10 bg-black/60 px-3 py-3 text-white">
+                  <p className="text-sm font-medium">{editSubmission.missionName}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    You can replace proof while this submission is pending review.
+                  </p>
+                </div>
+              ) : missions.length === 0 ? (
                 <Alert className="bg-blue-500/10 border-blue-500/30">
                   <AlertCircle className="h-4 w-4 text-blue-400" />
                   <AlertDescription className="text-blue-200 text-sm">
@@ -413,7 +445,7 @@ export default function MissionUploader({ missions: initialMissions, initialMiss
             >
               <Button 
                 type="submit" 
-                disabled={isUploading || !file || !selectedMission}
+                disabled={isUploading || !file || (!isEditMode && !selectedMission)}
                 className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold py-4 sm:py-6 text-base sm:text-lg shadow-lg hover:shadow-red-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUploading ? (
@@ -424,12 +456,12 @@ export default function MissionUploader({ missions: initialMissions, initialMiss
                 ) : uploadSuccess ? (
                   <span className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5" />
-                    Submitted Successfully!
+                    {isEditMode ? 'Updated Successfully!' : 'Submitted Successfully!'}
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
                     <Upload className="h-5 w-5" />
-                    Submit Mission
+                    {isEditMode ? 'Update Submission' : 'Submit Mission'}
                   </span>
                 )}
               </Button>

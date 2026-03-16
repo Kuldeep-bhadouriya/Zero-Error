@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { useIsMobile } from '@/hooks/use-mobile'
 import {
   Select,
   SelectContent,
@@ -43,7 +42,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
-import { CheckCircle2, XCircle, Eye, Search, Filter, TrendingUp, Users, Clock, Image as ImageIcon, Undo2, History, AlertTriangle, Edit2 } from 'lucide-react'
+import { CheckCircle2, XCircle, Eye, Search, Filter, TrendingUp, Users, Clock, Image as ImageIcon, Undo2, History, AlertTriangle } from 'lucide-react'
 
 interface Submission {
   _id: string
@@ -90,12 +89,6 @@ export default function SubmissionVerifier() {
   const [rejectSubmission, setRejectSubmission] = useState<Submission | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [isRejecting, setIsRejecting] = useState(false)
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [editSubmission, setEditSubmission] = useState<Submission | null>(null)
-  const [editProof, setEditProof] = useState('')
-  const [editRemarks, setEditRemarks] = useState('')
-  const [isSavingEdit, setIsSavingEdit] = useState(false)
-  const isMobile = useIsMobile()
 
   async function fetchSubmissions(status: string = 'all') {
     try {
@@ -198,44 +191,6 @@ export default function SubmissionVerifier() {
       setRejectDialogOpen(false)
       setRejectSubmission(null)
       setRejectReason('')
-    }
-  }
-
-  const handleEditClick = (submission: Submission) => {
-    setEditSubmission(submission)
-    setEditProof(submission.proof || '')
-    setEditRemarks(submission.remarks || '')
-    setEditDialogOpen(true)
-  }
-
-  const handleEditSave = async () => {
-    if (!editSubmission) return
-    setIsSavingEdit(true)
-    try {
-      const res = await fetch('/api/admin/submissions/edit', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          submissionId: editSubmission._id,
-          proof: editProof,
-          remarks: editRemarks,
-        }),
-      })
-      if (res.ok) {
-        toast.success('Submission updated successfully')
-        setEditDialogOpen(false)
-        const statusMap: Record<string, string> = {
-          pending: 'pending', approved: 'approved', rejected: 'rejected', all: 'all',
-        }
-        fetchSubmissions(statusMap[activeTab] || 'all')
-      } else {
-        const data = await res.json()
-        toast.error(data.error || 'Failed to update submission')
-      }
-    } catch {
-      toast.error('An error occurred while saving')
-    } finally {
-      setIsSavingEdit(false)
     }
   }
 
@@ -699,15 +654,6 @@ export default function SubmissionVerifier() {
                                 <span className="hidden sm:inline">Revert</span>
                               </Button>
                             )}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditClick(submission)}
-                              className="gap-1 border-zinc-500/50 text-zinc-300 hover:bg-zinc-700/50 text-xs h-8 px-2"
-                            >
-                              <Edit2 className="h-3 w-3" />
-                              <span className="hidden sm:inline">Edit</span>
-                            </Button>
                             </div>
                           </TableCell>
                         </motion.tr>
@@ -823,61 +769,6 @@ export default function SubmissionVerifier() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Edit Submission Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-zinc-900 border-zinc-700">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-white">
-              <Edit2 className="h-5 w-5 text-zinc-300" />
-              Edit Submission
-            </DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Update the proof URL or admin remarks for{' '}
-              <span className="text-white font-semibold">@{editSubmission?.user.zeTag}</span>'s submission.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 mt-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Proof URL</label>
-              <Input
-                value={editProof}
-                onChange={(e) => setEditProof(e.target.value)}
-                placeholder="https://..."
-                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">Admin Remarks</label>
-              <Textarea
-                value={editRemarks}
-                onChange={(e) => setEditRemarks(e.target.value)}
-                placeholder="Internal notes about this submission..."
-                className="bg-zinc-800 border-zinc-700 text-white min-h-[80px]"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setEditDialogOpen(false)}
-              disabled={isSavingEdit}
-              className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleEditSave}
-              disabled={isSavingEdit}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {isSavingEdit ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Reject with Reason Dialog */}
       <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
