@@ -1,12 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, X, ChevronRight, LogOut, User } from "lucide-react";
+import {
+  Menu,
+  X,
+  ChevronRight,
+  LogOut,
+  User,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +22,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Navbar as ResizableNavbar,
+  NavBody,
+  NavItems,
+} from "@/components/ui/resizable-navbar";
 
 // Navigation links data
 const navLinks = [
@@ -30,52 +41,8 @@ const navLinks = [
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const { data: session, status } = useSession();
-
-  // Handle scroll effect with smoother detection
-  useEffect(() => {
-    const handleScroll = () => {
-      const isScrolled = window.scrollY > 20;
-      if (isScrolled !== scrolled) {
-        setScrolled(isScrolled);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [scrolled]);
-
-  const headerVariants = {
-    expanded: {
-      maxWidth: "88%",
-      padding: "0.55rem 2.25rem",
-      background:
-        "linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(75,0,0,0.8) 50%, rgba(0,0,0,0.8) 100%)",
-      boxShadow: "0 8px 32px rgba(255, 0, 0, 0.25)",
-      borderColor: "rgba(255, 0, 0, 0.25)",
-    },
-    collapsed: {
-      maxWidth: "78%",
-      padding: "0.55rem 1.2rem",
-      background:
-        "linear-gradient(90deg, rgba(0,0,0,0.95) 0%, rgba(75,0,0,0.9) 50%, rgba(0,0,0,0.95) 100%)",
-      boxShadow: "0 4px 20px rgba(255, 0, 0, 0.35)",
-      borderColor: "rgba(255, 0, 0, 0.4)",
-    },
-  };
-
-  const navItemVariants = {
-    expanded: (i: number) => ({
-      opacity: 1,
-      y: 0,
-    }),
-    collapsed: {
-      opacity: 0.95,
-      y: 0,
-    },
-  };
 
   // New mobile menu animation variants
   const mobileMenuVariants = {
@@ -91,7 +58,7 @@ export default function Navbar() {
     },
   };
 
-  const AuthButton = () => {
+  const renderAuthButton = () => {
     if (status === "loading") {
       return (
         <div className="w-24 h-10 rounded-full bg-gray-700 animate-pulse" />
@@ -148,9 +115,7 @@ export default function Navbar() {
       >
         <Link
           href="/join-us"
-          className={`px-5 py-2 rounded-full bg-gradient-to-r from-red-700 to-red-500 text-white font-semibold uppercase tracking-[0.06em] transition-all hover:shadow-lg hover:shadow-red-500/30 ${
-            scrolled ? "text-xs" : "text-sm"
-          }`}
+          className="px-5 py-2 rounded-full bg-gradient-to-r from-red-700 to-red-500 text-white text-sm font-semibold uppercase tracking-[0.06em] transition-all hover:shadow-lg hover:shadow-red-500/30"
         >
           Join Us
         </Link>
@@ -158,7 +123,7 @@ export default function Navbar() {
     );
   };
 
-  const MobileAuthButton = () => {
+  const renderMobileAuthButton = () => {
     if (status === "loading") {
       return (
         <div className="w-full h-12 rounded-md bg-gray-700 animate-pulse" />
@@ -201,97 +166,35 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Desktop Navbar - Hidden on tablet/mobile, visible only on lg+ */}
-      <div className="fixed top-0 left-0 right-0 flex justify-center z-[100] pt-3 px-4 hidden lg:flex">
-        <motion.header
-          className="rounded-full backdrop-blur-md border w-auto"
-          variants={headerVariants}
-          animate={scrolled ? "collapsed" : "expanded"}
-          initial="expanded"
-        >
-          <div className="flex items-center justify-between gap-8">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <motion.div
-                initial={{ opacity: 0, rotate: -10 }}
-                animate={{
-                  opacity: 1,
-                  rotate: 0,
-                  scale: scrolled ? 1 : 1.1,
-                  transition: { duration: 0.5 },
-                }}
-                whileHover={{
-                  scale: 1.1,
-                  rotate: 5,
-                  transition: { duration: 0.2 },
-                }}
-              >
+      <div className="fixed inset-x-0 top-0 z-[100] hidden px-4 pt-3 lg:block">
+        <ResizableNavbar className="top-0">
+          <NavBody className="max-w-[88%] border border-red-500/20 bg-black/80 px-6 py-3 shadow-[0_8px_32px_rgba(255,0,0,0.25)] backdrop-blur-md">
+            <Link href="/" className="relative z-20">
+              <motion.div whileTap={{ scale: 0.95 }} transition={{ duration: 0.2 }}>
                 <Image
                   src="/images/favicon.png"
                   alt="Zero Error Esports"
-                  width={45}
-                  height={23}
+                  width={36}
+                  height={18}
                   className="rounded-full"
                   priority
                 />
               </motion.div>
             </Link>
 
-            {/* Desktop Navigation */}
-            <motion.nav
-              className="flex items-center"
-              animate={{
-                gap: scrolled ? "1.2rem" : "2rem",
-                transition: { duration: 0.6, ease: "easeInOut" },
-              }}
-            >
-              {navLinks.map((link, index) => (
-                <motion.div
-                  key={link.name}
-                  custom={index}
-                  variants={navItemVariants}
-                  initial="collapsed"
-                  animate={scrolled ? "collapsed" : "expanded"}
-                  className="group relative"
-                >
-                  <Link
-                    href={link.path}
-                    className={`relative px-1 py-1 font-semibold uppercase tracking-[0.06em] antialiased transition-all ${
-                      scrolled ? "text-sm" : "text-base"
-                    } ${
-                      pathname === link.path ? "text-red-500" : "text-gray-200"
-                    } hover:text-red-400`}
-                  >
-                    {link.name}
-                    <motion.span
-                      className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-red-600 to-red-400 rounded-full transform origin-left"
-                      initial={{ scaleX: pathname === link.path ? 1 : 0 }}
-                      animate={{
-                        scaleX: pathname === link.path ? 1 : 0,
-                        transition: { duration: 0.3 },
-                      }}
-                      whileHover={{
-                        scaleX: 1,
-                        transition: { duration: 0.2 },
-                      }}
-                    />
-                  </Link>
-                </motion.div>
-              ))}
-            </motion.nav>
+            <NavItems
+              items={navLinks.map((link) => ({
+                name: link.name,
+                link: link.path,
+              }))}
+              className="text-gray-200"
+            />
 
-            {/* Auth Buttons */}
-            <motion.div
-              className="flex items-center"
-              animate={{
-                gap: scrolled ? "0.65rem" : "1rem",
-                transition: { duration: 0.6, ease: "easeInOut" },
-              }}
-            >
-              <AuthButton />
-            </motion.div>
-          </div>
-        </motion.header>
+            <div className="relative z-20 flex items-center">
+              {renderAuthButton()}
+            </div>
+          </NavBody>
+        </ResizableNavbar>
       </div>
 
       {/* Mobile Navbar - Visible on tablet/mobile (below lg), hidden on desktop */}
@@ -409,7 +312,7 @@ export default function Navbar() {
 
                 {/* Auth buttons */}
                 <div className="mt-auto space-y-4">
-                  <MobileAuthButton />
+                  {renderMobileAuthButton()}
                 </div>
               </div>
             </motion.div>
