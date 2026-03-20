@@ -217,22 +217,6 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
             </ul>
           </nav>
 
-          {/* Footer / Helper */}
-          <div className="mt-8 pt-6 border-t border-white/5 px-2">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-red-500/10 to-transparent border border-red-500/10">
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 rounded-md bg-red-500/10 shrink-0">
-                  <Target className="h-3.5 w-3.5 text-red-400" />
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-white mb-0.5">Daily Missions</p>
-                  <p className="text-[10px] text-zinc-500 leading-relaxed">
-                    Complete tasks to earn XP and climb the ranks.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Admin Portal Button - Fixed at bottom */}

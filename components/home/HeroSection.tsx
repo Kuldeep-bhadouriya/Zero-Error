@@ -23,12 +23,14 @@ const HeroSection = ({
   const contentTranslateY = useTransform(scrollYProgress, [0, 0.3], [0, -50]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const [isMobile, setIsMobile] = useState(false);
+  const [videoLoadFailed, setVideoLoadFailed] = useState(false);
 
   // Use admin-provided URLs or fallback to defaults
   // When admin uploads a custom video, it will be shown
   // When admin removes the custom video (empty string), default video will be used
   const videoSrc = heroVideoUrl || "/images/background.mp4"
   const posterSrc = heroPosterUrl || "/images/hero-background.jpg"
+  const resolvedVideoSrc = videoLoadFailed ? "/images/background.mp4" : videoSrc
 
   // Detect if device is mobile
   useEffect(() => {
@@ -45,6 +47,11 @@ const HeroSection = ({
     // Cleanup
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
+
+  useEffect(() => {
+    // Reset error state when admin changes the configured video URL.
+    setVideoLoadFailed(false);
+  }, [videoSrc]);
 
   return (
     <section className="relative h-screen overflow-hidden">
@@ -80,20 +87,12 @@ const HeroSection = ({
             muted
             loop
             playsInline
-            preload="auto"
+            preload="metadata"
             poster={posterSrc}
+            src={resolvedVideoSrc}
+            onError={() => setVideoLoadFailed(true)}
           >
-            <source src={videoSrc} type="video/mp4" />
-            <source src="/images/background.webm" type="video/webm" />
-            {/* Fallback image if video fails to load */}
-            <Image
-              src={posterSrc}
-              alt="Zero Error Esports"
-              fill
-              sizes="100vw"
-              className="object-cover opacity-70"
-              priority
-            />
+            Your browser does not support the video tag.
           </video>
         )}
       </motion.div>

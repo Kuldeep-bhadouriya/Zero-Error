@@ -89,7 +89,7 @@ export const ourFileRouter = {
 
   // Hero media uploader endpoint (admin-only)
   heroMediaUploader: f({
-    video: { maxFileSize: "2GB", maxFileCount: 1 },
+    video: { maxFileSize: "128MB", maxFileCount: 1 },
     image: { maxFileSize: "4MB", maxFileCount: 1 },
   })
     .middleware(async () => {
@@ -114,12 +114,12 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata, file }) => {
       // This code runs on the server after upload completes
       logger.info("Hero media upload complete by admin:", metadata.userEmail);
-      logger.info("File URL:", file.url);
+      logger.info("File URL:", file.ufsUrl);
 
       // Return data to the client
       return { 
         uploadedBy: metadata.userEmail,
-        fileUrl: file.url 
+        fileUrl: file.ufsUrl 
       };
     }),
 

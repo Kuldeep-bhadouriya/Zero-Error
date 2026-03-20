@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { Crown, Search, Shield, History } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,6 +19,40 @@ interface LeaderboardUser {
   userRank: string;
   rankIcon: string;
   profilePhoto?: string | null;
+}
+
+interface AnimatedLeaderboardItemProps {
+    children: React.ReactNode;
+    index: number;
+    delay?: number;
+    onMouseEnter?: () => void;
+    onClick?: () => void;
+}
+
+function AnimatedLeaderboardItem({
+    children,
+    index,
+    delay = 0,
+    onMouseEnter,
+    onClick,
+}: AnimatedLeaderboardItemProps) {
+    const ref = useRef<HTMLDivElement>(null);
+    const inView = useInView(ref, { amount: 0.5, once: false });
+
+    return (
+        <motion.div
+            ref={ref}
+            data-index={index}
+            onMouseEnter={onMouseEnter}
+            onClick={onClick}
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
+            transition={{ duration: 0.2, delay }}
+            className="mb-2 cursor-pointer"
+        >
+            {children}
+        </motion.div>
+    );
 }
 
 const RANKS = ['all', 'Errorless Legend', 'Vanguard', 'Gladiator', 'Contender', 'Rookie'];
@@ -68,6 +102,7 @@ export default function Leaderboard() {
 
   const topThree = filteredUsers.slice(0, 3);
   const restUsers = filteredUsers.slice(3);
+    const usersForList = searchQuery || rankFilter !== 'all' || viewState !== 'all' ? filteredUsers : restUsers;
 
   return (
     <div className="text-white min-h-screen pb-24 w-full max-w-7xl mx-auto px-4 sm:px-6">
@@ -163,18 +198,7 @@ export default function Leaderboard() {
                         </div>
                     </div>
                     
-                    <div className="space-y-2">
-                        {/* When the podium is visible (all view, no search, no rank filter), skip
-                            the top-3 users here (they appear in the Podium above). In every other
-                            case (top-10 view, active search, or rank filter) render all filtered
-                            users so no one gets lost. */}
-                        {(searchQuery || rankFilter !== 'all' || viewState !== 'all' ? filteredUsers : restUsers).map((user) => (
-                            <LeaderboardRow 
-                                key={user._id} 
-                                user={user} 
-                            />
-                        ))}
-                    </div>
+                    <AnimatedLeaderboardList users={usersForList} />
                 </div>
                 </>
             )}
@@ -183,6 +207,111 @@ export default function Leaderboard() {
       )}
     </div>
   );
+}
+
+function AnimatedLeaderboardList({ users }: { users: LeaderboardUser[] }) {
+    const listRef = useRef<HTMLDivElement>(null);
+    const keyboardNavRef = useRef(false);
+    const [selectedIndex, setSelectedIndex] = useState<number>(-1);
+    const [isFocused, setIsFocused] = useState(false);
+    const [topGradientOpacity, setTopGradientOpacity] = useState<number>(0);
+    const [bottomGradientOpacity, setBottomGradientOpacity] = useState<number>(1);
+
+    const updateGradientOpacity = useCallback((container: HTMLDivElement) => {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        setTopGradientOpacity(Math.min(scrollTop / 50, 1));
+        const bottomDistance = scrollHeight - (scrollTop + clientHeight);
+        setBottomGradientOpacity(scrollHeight <= clientHeight ? 0 : Math.min(bottomDistance / 50, 1));
+    }, []);
+
+    useEffect(() => {
+        if (listRef.current) {
+            updateGradientOpacity(listRef.current);
+        }
+    }, [users, updateGradientOpacity]);
+
+    useEffect(() => {
+        if (!isFocused) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                keyboardNavRef.current = true;
+                setSelectedIndex((prev) => Math.min(prev + 1, users.length - 1));
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                keyboardNavRef.current = true;
+                setSelectedIndex((prev) => Math.max(prev - 1, 0));
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isFocused, users.length]);
+
+    useEffect(() => {
+        if (!keyboardNavRef.current || selectedIndex < 0 || !listRef.current) return;
+        const container = listRef.current;
+        const selectedItem = container.querySelector(`[data-index="${selectedIndex}"]`) as HTMLElement | null;
+        if (selectedItem) {
+            const extraMargin = 50;
+            const containerScrollTop = container.scrollTop;
+            const containerHeight = container.clientHeight;
+            const itemTop = selectedItem.offsetTop;
+            const itemBottom = itemTop + selectedItem.offsetHeight;
+
+            if (itemTop < containerScrollTop + extraMargin) {
+                container.scrollTo({ top: itemTop - extraMargin, behavior: 'smooth' });
+            } else if (itemBottom > containerScrollTop + containerHeight - extraMargin) {
+                container.scrollTo({ top: itemBottom - containerHeight + extraMargin, behavior: 'smooth' });
+            }
+        }
+        keyboardNavRef.current = false;
+    }, [selectedIndex]);
+
+    if (users.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="relative">
+            <div
+                ref={listRef}
+                tabIndex={0}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                onMouseEnter={() => setIsFocused(true)}
+                onMouseLeave={() => setIsFocused(false)}
+                onScroll={(e) => updateGradientOpacity(e.currentTarget)}
+                className="max-h-[420px] overflow-y-auto pr-1 outline-none [&::-webkit-scrollbar]:w-[8px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/15 [&::-webkit-scrollbar-thumb]:rounded-[4px]"
+                style={{
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: 'rgba(255,255,255,0.2) transparent',
+                }}
+            >
+                {users.map((user, index) => (
+                    <AnimatedLeaderboardItem
+                        key={user._id}
+                        index={index}
+                        delay={0.08}
+                        onMouseEnter={() => setSelectedIndex(index)}
+                        onClick={() => setSelectedIndex(index)}
+                    >
+                        <LeaderboardRow user={user} isActive={selectedIndex === index} />
+                    </AnimatedLeaderboardItem>
+                ))}
+            </div>
+
+            <div
+                className="absolute top-0 left-0 right-0 h-[48px] bg-gradient-to-b from-black/35 to-transparent pointer-events-none transition-opacity duration-300"
+                style={{ opacity: topGradientOpacity }}
+            />
+            <div
+                className="absolute bottom-0 left-0 right-0 h-[88px] bg-gradient-to-t from-black/35 to-transparent pointer-events-none transition-opacity duration-300"
+                style={{ opacity: bottomGradientOpacity }}
+            />
+        </div>
+    );
 }
 
 function HeaderSection() {
@@ -336,7 +465,7 @@ function PodiumCard({ user, rank, color, isFirst = false }: { user: LeaderboardU
     )
 }
 
-function LeaderboardRow({ user }: { user: LeaderboardUser }) {
+function LeaderboardRow({ user, isActive = false }: { user: LeaderboardUser; isActive?: boolean }) {
     const rank = user.rank;
     
     return (
@@ -344,7 +473,10 @@ function LeaderboardRow({ user }: { user: LeaderboardUser }) {
             layout
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="group relative flex items-center justify-between p-3 md:p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-white/10 transition-all duration-300"
+                        className={cn(
+                            "group relative flex items-center justify-between p-3 md:p-4 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 hover:border-white/10 transition-all duration-300",
+                            isActive && "bg-white/[0.06] border-white/15"
+                        )}
         >
             <div className="flex items-center gap-3 md:gap-12">
                 <div className="w-8 flex justify-center">

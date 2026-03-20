@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { UploadButton } from "@/lib/uploadthing"
-import { Loader2, Upload, Video, Image as ImageIcon, Check, X, Undo2, AlertCircle, Info } from "lucide-react"
+import { Loader2, Video, Image as ImageIcon, Check, X, Undo2, AlertCircle, Info } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import logger from '@/lib/browser-logger'
 
@@ -22,6 +22,15 @@ interface HeroSettings {
   previousHeroPosterUrl?: string
   updatedAt?: string
   updatedBy?: string
+}
+
+interface UploadResultItem {
+  url?: string
+  ufsUrl?: string
+  fileUrl?: string
+  serverData?: {
+    fileUrl?: string
+  }
 }
 
 export default function HeroMediaManager() {
@@ -67,6 +76,19 @@ export default function HeroMediaManager() {
   }
 
   async function handleSave() {
+    await saveHeroMedia(
+      {
+        heroVideoUrl: settings.heroVideoUrl,
+        heroPosterUrl: settings.heroPosterUrl,
+      },
+      "Hero media settings updated successfully"
+    )
+  }
+
+  async function saveHeroMedia(
+    payload: { heroVideoUrl?: string; heroPosterUrl?: string },
+    successMessage: string
+  ) {
     try {
       setSaving(true)
 
@@ -75,10 +97,7 @@ export default function HeroMediaManager() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          heroVideoUrl: settings.heroVideoUrl,
-          heroPosterUrl: settings.heroPosterUrl,
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
@@ -90,7 +109,7 @@ export default function HeroMediaManager() {
 
       toast({
         title: "Success",
-        description: "Hero media settings updated successfully",
+        description: successMessage,
       })
     } catch (error) {
       logger.error("Error saving settings:", error)
@@ -147,13 +166,31 @@ export default function HeroMediaManager() {
       return 'Invalid file type. Only MP4 and WebM are allowed.'
     }
 
-    // Check file size (50MB - reduced from 100MB)
-    const maxSize = 50 * 1024 * 1024
+    // Check file size (128MB)
+    const maxSize = 128 * 1024 * 1024
     if (file.size > maxSize) {
-      return 'Video file too large. Maximum size is 50MB. Please compress your video before uploading.'
+      return 'Video file too large. Maximum size is 128MB. Please compress your video before uploading.'
     }
 
     return null
+  }
+
+  function validatePosterFile(file: File): string | null {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      return 'Invalid image type. Only JPG, PNG, and WebP are allowed.'
+    }
+
+    const maxSize = 4 * 1024 * 1024
+    if (file.size > maxSize) {
+      return 'Poster image too large. Maximum size is 4MB.'
+    }
+
+    return null
+  }
+
+  function getUploadedFileUrl(item: UploadResultItem): string {
+    return item.serverData?.fileUrl || item.ufsUrl || item.url || item.fileUrl || ''
   }
 
   if (loading) {
@@ -175,7 +212,7 @@ export default function HeroMediaManager() {
       <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
         <CardTitle className="text-lg sm:text-xl text-white">Hero Media Manager</CardTitle>
         <CardDescription className="text-xs sm:text-sm text-gray-400">
-          Manage home page hero video and fallback image. Changes will appear immediately after saving.
+          Uploads auto-save instantly. Use Save Changes for manual URL edits, clear, or undo actions.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 pb-4 sm:pb-6">
@@ -189,7 +226,7 @@ export default function HeroMediaManager() {
           <Alert className="bg-zinc-800/50 border-zinc-700">
             <AlertCircle className="h-4 w-4 text-gray-400" />
             <AlertDescription className="text-gray-400">
-              Recommended: MP4 or WebM format, max 50MB, 1920x1080 resolution. Compress videos using tools like HandBrake or FFmpeg for best performance.
+                Recommended: MP4 (H.264) or WebM, max 128MB, 1920x1080 resolution. Compress videos using tools like HandBrake or FFmpeg for best performance.
             </AlertDescription>
           </Alert>
           
@@ -208,13 +245,36 @@ export default function HeroMediaManager() {
             <div className="flex flex-col sm:flex-row gap-2">
               <UploadButton
                 endpoint="heroMediaUploader"
-                onClientUploadComplete={(res: any) => {
-                  if (res?.[0]?.url) {
-                    setSettings((prev) => ({ ...prev, heroVideoUrl: res[0].url }))
-                    setVideoPreview(res[0].url)
+                onBeforeUploadBegin={(files) => {
+                  const file = files[0]
+                  if (!file) return files
+
+                  const error = validateVideoFile(file)
+                  if (error) {
                     toast({
-                      title: "Upload Complete",
-                      description: "Video uploaded successfully",
+                      title: "Invalid Video",
+                      description: error,
+                      variant: "destructive",
+                    })
+                    throw new Error(error)
+                  }
+
+                  return files
+                }}
+                onClientUploadComplete={async (res: UploadResultItem[]) => {
+                  const uploadedVideoUrl = res?.[0] ? getUploadedFileUrl(res[0]) : ''
+                  if (uploadedVideoUrl) {
+                    setSettings((prev) => ({ ...prev, heroVideoUrl: uploadedVideoUrl }))
+                    setVideoPreview(uploadedVideoUrl)
+                    await saveHeroMedia(
+                      { heroVideoUrl: uploadedVideoUrl },
+                      "Video uploaded and saved successfully"
+                    )
+                  } else {
+                    toast({
+                      title: "Upload Failed",
+                      description: "Upload completed but no usable video URL was returned. Please try again.",
+                      variant: "destructive",
                     })
                   }
                   setVideoUploading(false)
@@ -312,7 +372,7 @@ export default function HeroMediaManager() {
           <Alert className="bg-zinc-800/50 border-zinc-700">
             <AlertCircle className="h-4 w-4 text-gray-400" />
             <AlertDescription className="text-gray-400">
-              Recommended: JPG or PNG format, 1920x1080 resolution
+              Recommended: JPG, PNG, or WebP format, max 4MB, 1920x1080 resolution
             </AlertDescription>
           </Alert>
           
@@ -331,12 +391,35 @@ export default function HeroMediaManager() {
             <div className="flex flex-col sm:flex-row gap-2">
               <UploadButton
                 endpoint="heroMediaUploader"
-                onClientUploadComplete={(res: any) => {
-                  if (res?.[0]?.url) {
-                    setSettings((prev) => ({ ...prev, heroPosterUrl: res[0].url }))
+                onBeforeUploadBegin={(files) => {
+                  const file = files[0]
+                  if (!file) return files
+
+                  const error = validatePosterFile(file)
+                  if (error) {
                     toast({
-                      title: "Upload Complete",
-                      description: "Poster image uploaded successfully",
+                      title: "Invalid Poster",
+                      description: error,
+                      variant: "destructive",
+                    })
+                    throw new Error(error)
+                  }
+
+                  return files
+                }}
+                onClientUploadComplete={async (res: UploadResultItem[]) => {
+                  const uploadedPosterUrl = res?.[0] ? getUploadedFileUrl(res[0]) : ''
+                  if (uploadedPosterUrl) {
+                    setSettings((prev) => ({ ...prev, heroPosterUrl: uploadedPosterUrl }))
+                    await saveHeroMedia(
+                      { heroPosterUrl: uploadedPosterUrl },
+                      "Poster image uploaded and saved successfully"
+                    )
+                  } else {
+                    toast({
+                      title: "Upload Failed",
+                      description: "Upload completed but no usable image URL was returned. Please try again.",
+                      variant: "destructive",
                     })
                   }
                   setPosterUploading(false)
@@ -358,7 +441,7 @@ export default function HeroMediaManager() {
                 }}
                 content={{
                   button: posterUploading ? "Uploading..." : "Upload Image",
-                  allowedContent: "JPG, PNG (max 16MB)",
+                  allowedContent: "JPG, PNG, WebP (max 4MB)",
                 }}
               />
               
