@@ -83,13 +83,13 @@ const updateCardGlowProperties = (card: HTMLElement, mouseX: number, mouseY: num
 function StatPill({ icon: Icon, label, value }: { icon: any, label: string, value: string | number }) {
   return (
     <div className="rounded-xl border border-red-500/20 bg-gradient-to-br from-white/[0.08] via-white/[0.03] to-transparent p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-      <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-zinc-300">
+      <div className="mb-2 flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.13em] text-zinc-300/90">
         <span className="flex h-6 w-6 items-center justify-center rounded-md border border-red-400/20 bg-red-500/10 text-red-300">
           <Icon className="h-3.5 w-3.5" />
         </span>
         <span>{label}</span>
       </div>
-      <p className="text-2xl font-semibold text-white drop-shadow-[0_0_12px_rgba(239,68,68,0.2)]">{value}</p>
+      <p className="text-[clamp(1.1rem,1.6vw,1.45rem)] font-semibold tracking-tight text-zinc-100 drop-shadow-[0_0_12px_rgba(239,68,68,0.2)]">{value}</p>
     </div>
   )
 }
@@ -515,6 +515,26 @@ function ZEClubMagicBento({
     ? rankOrder[currentRankIndex + 1]
     : "Max Rank"
   const pointsToNextRank = Math.max(0, dashboardData.nextRankPoints - dashboardData.experience)
+  const coinToPointRatio = dashboardData.totalPoints > 0 ? (dashboardData.zeCoins / dashboardData.totalPoints) * 100 : 0
+  const coinMilestones = [500, 1000, 2500, 5000, 10000]
+  const nextCoinMilestone = coinMilestones.find((milestone) => dashboardData.zeCoins < milestone)
+  const coinMilestoneProgress = nextCoinMilestone
+    ? Math.min(100, Math.round((dashboardData.zeCoins / nextCoinMilestone) * 100))
+    : 100
+  const rankProgress = Math.max(0, Math.min(100, dashboardData.progressToNextRank))
+  const leaderboardRank = dashboardData.leaderboardRank
+  const leaderboardBand = !leaderboardRank
+    ? "Unranked"
+    : leaderboardRank <= 10
+      ? "Top 10"
+      : leaderboardRank <= 25
+        ? "Top 25"
+        : leaderboardRank <= 50
+          ? "Top 50"
+          : "Climbing"
+  const xpContribution = dashboardData.totalPoints > 0
+    ? Math.min(100, Math.round((dashboardData.experience / dashboardData.totalPoints) * 100))
+    : 0
 
   useEffect(() => {
     async function fetchFeaturedMissions() {
@@ -531,7 +551,7 @@ function ZEClubMagicBento({
     fetchFeaturedMissions()
   }, [])
 
-  const baseClassName = `card flex flex-col relative aspect-[4/3] w-full max-w-full p-4 sm:p-5 rounded-[20px] border border-solid font-light overflow-hidden transition-colors duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(239,68,68,0.15)] ${
+  const baseClassName = `card flex flex-col relative aspect-[4/3] w-full max-w-full p-4 sm:p-5 rounded-[20px] border border-solid font-normal overflow-hidden transition-colors duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(239,68,68,0.15)] ${
     enableBorderGlow ? "card--border-glow" : ""
   }`
 
@@ -682,6 +702,45 @@ function ZEClubMagicBento({
 
           .tile-title {
             letter-spacing: 0.14em;
+            font-size: 0.67rem;
+            font-weight: 600;
+            color: rgba(228, 228, 231, 0.92);
+          }
+
+          .card__title {
+            font-size: clamp(1.75rem, 2.65vw, 2.45rem);
+            line-height: 0.95;
+            letter-spacing: -0.03em;
+            font-weight: 650;
+            color: rgba(250, 250, 250, 0.98);
+          }
+
+          .card__body-copy {
+            font-size: 0.73rem;
+            letter-spacing: 0.02em;
+            line-height: 1.45;
+            color: rgba(212, 212, 216, 0.9);
+          }
+
+          .card__meta-label {
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.11em;
+            color: rgba(161, 161, 170, 0.94);
+          }
+
+          .card__meta-value {
+            margin-top: 0.2rem;
+            font-size: 0.77rem;
+            font-weight: 560;
+            letter-spacing: 0.005em;
+            color: rgba(244, 244, 245, 0.98);
+          }
+
+          .card__chip {
+            font-size: 0.56rem;
+            font-weight: 600;
+            letter-spacing: 0.13em;
           }
 
           .text-clamp-1 {
@@ -714,11 +773,42 @@ function ZEClubMagicBento({
                 <span className="tile-title card__label text-sm uppercase text-zinc-300">ZE Coins</span>
                 <Coins className="h-4 w-4 text-amber-300" />
               </div>
-              <div className="card__content flex flex-col relative text-white">
-                <h3 className={`card__title font-semibold text-2xl m-0 mb-1 ${textAutoHide ? "text-clamp-1" : ""}`}>
-                  {dashboardData.zeCoins.toLocaleString()}
-                </h3>
-                <p className="text-xs leading-5 text-zinc-300">Redeemable coin balance</p>
+              <div className="card__content flex flex-col gap-2.5 relative text-white">
+                <div className="flex items-end justify-between gap-3">
+                  <h3 className={`card__title m-0 ${textAutoHide ? "text-clamp-1" : ""}`}>
+                    {dashboardData.zeCoins.toLocaleString()}
+                  </h3>
+                  <span className="card__chip rounded-full border border-amber-300/30 bg-amber-300/10 px-2 py-0.5 uppercase text-amber-200">
+                    Active Wallet
+                  </span>
+                </div>
+                <p className="card__body-copy">Coins ready for reward redemptions.</p>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-zinc-300">
+                  <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2">
+                    <p className="card__meta-label">Coin Ratio</p>
+                    <p className="card__meta-value">{coinToPointRatio.toFixed(1)}%</p>
+                  </div>
+                  <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2">
+                    <p className="card__meta-label">Next Target</p>
+                    <p className="card__meta-value">
+                      {nextCoinMilestone ? nextCoinMilestone.toLocaleString() : "Maxed"}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="mb-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-zinc-400">
+                    <span>Milestone Track</span>
+                    <span>{coinMilestoneProgress}%</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-zinc-900/90">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-amber-500/70 via-amber-300/80 to-orange-300/80 transition-all duration-500"
+                      style={{ width: `${coinMilestoneProgress}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -730,11 +820,34 @@ function ZEClubMagicBento({
                 <span className="tile-title card__label text-sm uppercase text-zinc-300">ZE Points</span>
                 <Star className="h-4 w-4 text-rose-300" />
               </div>
-              <div className="card__content flex flex-col relative text-white">
-                <h3 className={`card__title font-semibold text-2xl m-0 mb-1 ${textAutoHide ? "text-clamp-1" : ""}`}>
-                  {dashboardData.experience.toLocaleString()}
-                </h3>
-                <p className="text-xs leading-5 text-zinc-300">Total points earned</p>
+              <div className="card__content flex flex-col gap-2.5 relative text-white">
+                <div className="flex items-end justify-between gap-3">
+                  <h3 className={`card__title m-0 ${textAutoHide ? "text-clamp-1" : ""}`}>
+                    {dashboardData.experience.toLocaleString()}
+                  </h3>
+                  <span className="card__chip rounded-full border border-rose-300/30 bg-rose-300/10 px-2 py-0.5 uppercase text-rose-200">
+                    XP Active
+                  </span>
+                </div>
+                <p className="card__body-copy">Season XP accumulated so far.</p>
+
+                <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 text-[11px]">
+                  <div className="mb-1.5 flex items-center justify-between uppercase tracking-wider text-zinc-400">
+                    <span>Promotion Track</span>
+                    <span>{rankProgress}%</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-zinc-900/90">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-rose-500/70 via-red-400/80 to-orange-300/80 transition-all duration-500"
+                      style={{ width: `${rankProgress}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 text-[11px] text-zinc-300">
+                  <span className="text-zinc-400">Needed for {nextRank} Tier</span>
+                  <span className="font-medium text-white">{pointsToNextRank.toLocaleString()}</span>
+                </div>
               </div>
             </>
           )}
@@ -755,14 +868,14 @@ function ZEClubMagicBento({
               </div>
 
               <div className="rounded-xl border border-red-500/20 bg-gradient-to-br from-black/50 via-black/35 to-red-950/20 p-4">
-                <div className="mb-2 text-xs uppercase tracking-wide text-zinc-400">Progress details</div>
+                <div className="mb-2 text-xs uppercase tracking-wide text-zinc-400">Promotion Intel</div>
                 <div className="grid gap-2 text-sm text-zinc-200 sm:grid-cols-2">
                   <div className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2">
-                    <p className="text-[11px] text-zinc-400">Next Rank</p>
+                    <p className="text-[11px] text-zinc-400">Next Tier</p>
                     <p className="font-medium text-white">{nextRank}</p>
                   </div>
                   <div className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2">
-                    <p className="text-[11px] text-zinc-400">Points Needed</p>
+                    <p className="text-[11px] text-zinc-400">XP Required</p>
                     <p className="font-medium text-white">{pointsToNextRank.toLocaleString()}</p>
                   </div>
                 </div>
@@ -821,11 +934,27 @@ function ZEClubMagicBento({
                 <span className="tile-title card__label text-sm uppercase text-zinc-300">Leaderboard</span>
                 <Trophy className="h-4 w-4 text-yellow-300" />
               </div>
-              <div className="card__content flex flex-col relative text-white">
-                <h3 className={`card__title font-semibold text-2xl m-0 mb-1 ${textAutoHide ? "text-clamp-1" : ""}`}>
-                  #{dashboardData.leaderboardRank ?? "-"}
-                </h3>
-                <p className="text-xs leading-5 text-zinc-300">Season placement</p>
+              <div className="card__content flex flex-col gap-2.5 relative text-white">
+                <div className="flex items-end justify-between gap-3">
+                  <h3 className={`card__title m-0 ${textAutoHide ? "text-clamp-1" : ""}`}>
+                    {leaderboardRank ? `#${leaderboardRank}` : "-"}
+                  </h3>
+                  <span className="card__chip rounded-full border border-yellow-300/30 bg-yellow-300/10 px-2 py-0.5 uppercase text-yellow-200">
+                    {leaderboardBand}
+                  </span>
+                </div>
+                <p className="card__body-copy">Current standing in this season.</p>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-zinc-300">
+                  <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2">
+                    <p className="card__meta-label">Bracket</p>
+                    <p className="card__meta-value">{leaderboardBand}</p>
+                  </div>
+                  <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2">
+                    <p className="card__meta-label">Board State</p>
+                    <p className="card__meta-value">Season Live</p>
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -837,11 +966,34 @@ function ZEClubMagicBento({
                 <span className="tile-title card__label text-sm uppercase text-zinc-300">Total Points</span>
                 <Target className="h-4 w-4 text-red-300" />
               </div>
-              <div className="card__content flex flex-col relative text-white">
-                <h3 className={`card__title font-semibold text-2xl m-0 mb-1 ${textAutoHide ? "text-clamp-1" : ""}`}>
-                  {dashboardData.totalPoints.toLocaleString()}
-                </h3>
-                <p className="text-xs leading-5 text-zinc-300">Lifetime ZE Club score</p>
+              <div className="card__content flex flex-col gap-2.5 relative text-white">
+                <div className="flex items-end justify-between gap-3">
+                  <h3 className={`card__title m-0 ${textAutoHide ? "text-clamp-1" : ""}`}>
+                    {dashboardData.totalPoints.toLocaleString()}
+                  </h3>
+                  <span className="card__chip rounded-full border border-red-300/30 bg-red-300/10 px-2 py-0.5 uppercase text-red-200">
+                    Legacy Total
+                  </span>
+                </div>
+                <p className="card__body-copy">All-time ZE Club points on record.</p>
+
+                <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 text-[11px] text-zinc-300">
+                  <div className="mb-1.5 flex items-center justify-between uppercase tracking-wider text-zinc-400">
+                    <span>Season Share</span>
+                    <span>{xpContribution}%</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-zinc-900/90">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-red-500/75 via-rose-400/80 to-orange-300/75 transition-all duration-500"
+                      style={{ width: `${xpContribution}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 text-[11px] text-zinc-300">
+                  <span className="text-zinc-400">Coins on hand</span>
+                  <span className="font-medium text-white">{dashboardData.zeCoins.toLocaleString()}</span>
+                </div>
               </div>
             </>
           )}

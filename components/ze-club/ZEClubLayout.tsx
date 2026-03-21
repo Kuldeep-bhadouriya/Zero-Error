@@ -14,6 +14,8 @@ import SeasonBanner from "@/components/ze-club/SeasonBanner"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import logger from '@/lib/browser-logger'
 import { useZeClubStore } from '@/lib/stores/zeClubStore'
+import Hyperspeed from "@/components/Hyperspeed"
+import { hyperspeedPresets } from "@/components/HyperSpeedPresets"
 
 function ZEClubLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -62,7 +64,13 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="relative flex min-h-screen z-10 pt-0">
+    <div className="relative min-h-screen overflow-hidden">
+      <div className="fixed inset-0 -z-20">
+        <Hyperspeed effectOptions={hyperspeedPresets.six} />
+      </div>
+      <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_15%_15%,rgba(239,68,68,0.18),transparent_42%),radial-gradient(circle_at_85%_85%,rgba(56,189,248,0.12),transparent_40%)]" />
+
+      <div className="relative z-10 flex min-h-screen pt-0">
       {/* Fluid Menu for mobile */}
       {isMobile && (
         <div className="fixed left-4 bottom-4 z-50">
@@ -123,7 +131,7 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
       {!isMobile && (
       <aside
         className={cn(
-          "fixed left-0 top-20 h-[calc(100vh-5rem)] w-72 bg-[#09090b]/95 backdrop-blur-xl border-r border-white/5 overflow-hidden z-40 flex flex-col shadow-2xl transition-all duration-300"
+          "fixed left-0 top-20 h-[calc(100vh-5rem)] w-72 bg-black/20 backdrop-blur-2xl border-r border-white/15 overflow-hidden z-40 flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.45)] transition-all duration-300"
         )}
       >
         {/* Scrollable container */}
@@ -146,7 +154,7 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
           {session?.user && (
             <div className="mb-8 relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative p-4 rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-sm group-hover:border-white/10 transition-all">
+              <div className="relative p-4 rounded-xl border border-white/15 bg-white/[0.08] backdrop-blur-md group-hover:border-white/30 transition-all">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="h-10 w-10 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/10 flex items-center justify-center shadow-inner">
                     <User className="h-5 w-5 text-zinc-400" />
@@ -161,7 +169,7 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between p-2 rounded-lg bg-black/20 border border-white/5">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-black/20 border border-white/15">
                   <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">ZE Points</span>
                   <span className="text-sm font-bold text-red-500 tabular-nums">
                     {userPoints.toLocaleString()}
@@ -188,8 +196,8 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
                       className={cn(
                         "group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 border border-transparent",
                         isActive
-                          ? "bg-white/[0.08] text-white border-white/5 shadow-sm"
-                          : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
+                          ? "bg-white/[0.14] text-white border-white/25 shadow-sm"
+                          : "text-zinc-300 hover:text-white hover:bg-white/[0.08]"
                       )}
                     >
                       <Icon 
@@ -221,11 +229,11 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
 
         {/* Admin Portal Button - Fixed at bottom */}
         {session?.user?.roles?.includes('admin') && (
-          <div className="p-4 border-t border-white/5 bg-black/20">
+          <div className="p-4 border-t border-white/15 bg-black/25 backdrop-blur-md">
             <Link
               href="/admin/ze-club"
               onClick={handleLinkClick}
-              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 transition-all text-xs font-medium group"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-white/[0.12] border border-white/20 text-zinc-200 hover:text-white hover:border-white/40 transition-all text-xs font-medium group"
             >
               <Shield className="h-3.5 w-3.5 group-hover:text-purple-400 transition-colors" />
               <span>Admin Portal</span>
@@ -257,6 +265,7 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
           </AnimatePresence>
         </ErrorBoundary>
       </main>
+      </div>
     </div>
   )
 }

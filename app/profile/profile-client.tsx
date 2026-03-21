@@ -47,7 +47,7 @@ export function ProfileClient({ profile, stats }: ProfileClientProps) {
   return (
     <div className="space-y-6 pb-10">
       {/* Profile Header - Condensed & Cleaner */}
-      <ProfileHeader profile={profile} onUpdate={handleUpdate} />
+      <ProfileHeader profile={profile} stats={stats} onUpdate={handleUpdate} />
 
       {/* Global Stats - Always Visible */}
       <ProfileStats stats={stats} />
