@@ -1,4 +1,6 @@
-export const hyperspeedPresets = {
+import type { HyperspeedOptions } from "@/components/Hyperspeed";
+
+export const hyperspeedPresets: Record<string, Partial<HyperspeedOptions>> = {
   one: {
     onSpeedUp: () => {},
     onSlowDown: () => {},
