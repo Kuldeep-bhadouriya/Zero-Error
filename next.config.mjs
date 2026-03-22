@@ -5,17 +5,64 @@ const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 })
 
+// CSP rollout checklist:
+// 1) Keep CSP_ENFORCE unset/false to emit Report-Only.
+// 2) Monitor CSP violations in browser reports + edge logs after deploy.
+// 3) Move any required nonce/hash tokens into CSP_*_SRC_EXTRA, then set CSP_ENFORCE=true.
+const isCspEnforced = process.env.CSP_ENFORCE === 'true'
+
+function parseCspExtras(rawValue) {
+  if (!rawValue) {
+    return []
+  }
+
+  return rawValue
+    .split(/[\s,]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+}
+
+function buildCspValue() {
+  const scriptExtras = parseCspExtras(process.env.CSP_SCRIPT_SRC_EXTRA)
+  const styleExtras = parseCspExtras(process.env.CSP_STYLE_SRC_EXTRA)
+
+  const directives = [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "img-src 'self' data: blob: https:",
+    "media-src 'self' blob: https:",
+    "font-src 'self' data:",
+    ["style-src", "'self'", "'unsafe-inline'", ...styleExtras].join(' '),
+    ["script-src", "'self'", "'unsafe-inline'", "'unsafe-eval'", "'strict-dynamic'", ...scriptExtras].join(
+      ' '
+    ),
+    "connect-src 'self' https: wss:",
+    "worker-src 'self' blob:",
+    "manifest-src 'self'",
+  ]
+
+  return directives.join('; ')
+}
+
 const nextConfig = {
   serverExternalPackages: ['pino', 'thread-stream', 'sonic-boom'],
   async headers() {
+    // Switch path: Report-Only -> enforce is controlled only by CSP_ENFORCE.
+    const cspKey = isCspEnforced ? 'Content-Security-Policy' : 'Content-Security-Policy-Report-Only'
+    const cspValue = buildCspValue()
+
     return [
       {
-        source: '/(.*)',
+        // API responses receive the same security headers in proxy.ts.
+        // Limiting this rule avoids duplicate/conflicting header emission.
+        source: '/((?!api/).*)',
         headers: [
           {
-            key: 'Content-Security-Policy',
-            value:
-              "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: https: blob:; media-src 'self' https: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; connect-src 'self' https: wss:;",
+            key: cspKey,
+            value: cspValue,
           },
           {
             key: 'X-Content-Type-Options',
@@ -28,6 +75,11 @@ const nextConfig = {
           {
             key: 'X-Frame-Options',
             value: 'DENY',
+          },
+          {
+            key: 'Permissions-Policy',
+            value:
+              'accelerometer=(), autoplay=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), fullscreen=(self)',
           },
         ],
       },
@@ -76,6 +128,6 @@ const nextConfig = {
       },
     ],
   },
-};
+}
 
-export default withBundleAnalyzer(nextConfig);
+export default withBundleAnalyzer(nextConfig)

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { AlertTriangle, CheckCircle2, Megaphone, BellRing } from 'lucide-react'
 import type { AnnouncementItem } from '@/components/shared/AnnouncementCarousel'
-import { AnnouncementMessage } from '@/components/shared/AnnouncementCarousel'
+import { AnnouncementMessage } from '@/components/shared/AnnouncementMessage'
 import { cn } from '@/lib/utils'
 
 interface ExtendedAnnouncement extends AnnouncementItem {
@@ -41,45 +41,48 @@ const TYPE_META: Record<AnnouncementItem['type'], { label: string; icon: any; ri
   },
 }
 
+export function getVisibleAnnouncements(announcements: ExtendedAnnouncement[]) {
+  return announcements.slice(0, 3)
+}
+
 function AnnouncementsSection() {
   const [announcements, setAnnouncements] = useState<ExtendedAnnouncement[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    let isMounted = true
+    const abortController = new AbortController()
 
     async function fetchAnnouncements() {
       setLoading(true)
       setError(null)
       try {
-        const response = await fetch('/api/announcements/active?targetPage=home', { cache: 'no-store' })
+        const response = await fetch('/api/announcements/active?targetPage=home', {
+          signal: abortController.signal,
+        })
         if (!response.ok) {
           throw new Error('Unable to fetch announcements')
         }
         const data = await response.json()
-        if (isMounted) {
-          setAnnouncements(data.announcements || [])
-        }
+        setAnnouncements(data.announcements || [])
       } catch (fetchError: any) {
-        if (isMounted) {
-          setError(fetchError.message || 'Something went wrong')
+        if (fetchError?.name === 'AbortError') {
+          return
         }
+        setError(fetchError.message || 'Something went wrong')
       } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
+        setLoading(false)
       }
     }
 
     fetchAnnouncements()
 
     return () => {
-      isMounted = false
+      abortController.abort()
     }
   }, [])
 
-  const visibleAnnouncements = useMemo(() => announcements.slice(0, 3), [announcements])
+  const visibleAnnouncements = useMemo(() => getVisibleAnnouncements(announcements), [announcements])
 
   if (loading && !announcements.length) {
     return (

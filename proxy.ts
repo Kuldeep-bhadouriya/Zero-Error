@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { buildRateLimitHeaders, checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import {
+  buildRateLimitHeaders,
+  checkRateLimit,
+  getClientIp,
+  getRateLimitRule,
+} from '@/lib/rate-limit'
 
 const CSRF_COOKIE_NAME = 'ze_csrf_token'
 const MUTATING_METHODS = new Set(['POST', 'PATCH', 'DELETE', 'PUT'])
 const CSRF_EXEMPT_PREFIXES = ['/api/auth/', '/api/uploadthing']
 
-const DEFAULT_API_LIMIT = {
-  limit: 120,
-  windowSeconds: 60,
-  prefix: 'rl:api:default',
-}
-
-const AUTH_LIMIT = {
-  limit: 20,
-  windowSeconds: 600,
-  prefix: 'rl:api:auth',
-}
+const DEFAULT_API_LIMIT = getRateLimitRule('apiDefault')
+const AUTH_LIMIT = getRateLimitRule('apiAuth')
 
 const AUTH_READ_EXEMPT_PATHS = new Set([
   '/api/auth/session',
@@ -23,10 +19,67 @@ const AUTH_READ_EXEMPT_PATHS = new Set([
   '/api/auth/csrf',
 ])
 
-const CONTACT_LIMIT = {
-  limit: 5,
-  windowSeconds: 600,
-  prefix: 'rl:api:contact',
+const CONTACT_LIMIT = getRateLimitRule('apiContact')
+
+// CSP rollout checklist:
+// 1) Default CSP_ENFORCE=false uses Content-Security-Policy-Report-Only.
+// 2) Confirm low/expected violation volume from production telemetry.
+// 3) Set CSP_ENFORCE=true only after policy exceptions are encoded via CSP_*_SRC_EXTRA.
+const CSP_ENFORCED = process.env.CSP_ENFORCE === 'true'
+// Switch path for API responses: this key flips from Report-Only to enforce.
+const CSP_HEADER_KEY = CSP_ENFORCED
+  ? 'Content-Security-Policy'
+  : 'Content-Security-Policy-Report-Only'
+
+function parseCspExtras(rawValue: string | undefined): string[] {
+  if (!rawValue) {
+    return []
+  }
+
+  return rawValue
+    .split(/[\s,]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+}
+
+function buildCspValue() {
+  const scriptExtras = parseCspExtras(process.env.CSP_SCRIPT_SRC_EXTRA)
+  const styleExtras = parseCspExtras(process.env.CSP_STYLE_SRC_EXTRA)
+
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "img-src 'self' data: blob: https:",
+    "media-src 'self' blob: https:",
+    "font-src 'self' data:",
+    ["style-src", "'self'", "'unsafe-inline'", ...styleExtras].join(' '),
+    ["script-src", "'self'", "'unsafe-inline'", "'unsafe-eval'", "'strict-dynamic'", ...scriptExtras].join(' '),
+    "connect-src 'self' https: wss:",
+    "worker-src 'self' blob:",
+    "manifest-src 'self'",
+  ].join('; ')
+}
+
+const SECURITY_HEADERS = {
+  [CSP_HEADER_KEY]: buildCspValue(),
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'X-Frame-Options': 'DENY',
+  'Permissions-Policy':
+    'accelerometer=(), autoplay=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), fullscreen=(self)',
+} as const
+
+function applySecurityHeaders(response: NextResponse) {
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    if (!response.headers.has(key)) {
+      response.headers.set(key, value)
+    }
+  }
+
+  return response
 }
 
 function isCsrfExemptPath(path: string) {
@@ -94,9 +147,11 @@ export async function proxy(request: NextRequest) {
 
   if (MUTATING_METHODS.has(method) && !isCsrfExemptPath(path)) {
     if (!isValidSameOriginRequest(request)) {
-      return NextResponse.json(
+      return applySecurityHeaders(
+        NextResponse.json(
         { error: 'Invalid request origin.' },
         { status: 403 }
+        )
       )
     }
 
@@ -104,9 +159,11 @@ export async function proxy(request: NextRequest) {
     const csrfHeader = request.headers.get('x-csrf-token')
 
     if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
-      return NextResponse.json(
+      return applySecurityHeaders(
+        NextResponse.json(
         { error: 'Invalid CSRF token.' },
         { status: 403 }
+        )
       )
     }
   }
@@ -121,7 +178,7 @@ export async function proxy(request: NextRequest) {
       { error: 'Too many requests. Please try again later.' },
       { status: 429, headers: buildRateLimitHeaders(defaultResult) }
     )
-    return ensureCsrfCookie(request, response)
+    return applySecurityHeaders(ensureCsrfCookie(request, response))
   }
 
   if (shouldApplyAuthRateLimit(path, method)) {
@@ -135,7 +192,7 @@ export async function proxy(request: NextRequest) {
         { error: 'Too many authentication requests. Please try again later.' },
         { status: 429, headers: buildRateLimitHeaders(authResult) }
       )
-      return ensureCsrfCookie(request, response)
+      return applySecurityHeaders(ensureCsrfCookie(request, response))
     }
   }
 
@@ -150,12 +207,12 @@ export async function proxy(request: NextRequest) {
         { error: 'Too many contact requests. Please try again later.' },
         { status: 429, headers: buildRateLimitHeaders(contactResult) }
       )
-      return ensureCsrfCookie(request, response)
+      return applySecurityHeaders(ensureCsrfCookie(request, response))
     }
   }
 
   const response = NextResponse.next()
-  return ensureCsrfCookie(request, response)
+  return applySecurityHeaders(ensureCsrfCookie(request, response))
 }
 
 export const config = {

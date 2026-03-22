@@ -8,11 +8,26 @@ import { customAlphabet } from 'nanoid';
 import { getRankForExperience } from '@/lib/ranks';
 import { gzipSync } from 'zlib';
 import { withErrorHandling, withRequestLogging } from '@/lib/api/middleware';
+import {
+  createNoStoreHeaders,
+  createPublicCacheHeaders,
+  createWeakEtag,
+  isCacheDebugEnabled,
+  isFreshRequest,
+  resolvePublicCacheTtl,
+} from '@/lib/http-cache';
+import logger from '@/lib/logger';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const ZE_TAG_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
 
 const zeSuffix = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 8);
 const zeFallbackSuffix = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 12);
+const LEADERBOARD_CACHE_TTL_SECONDS = resolvePublicCacheTtl('ZE_CLUB_LEADERBOARD_CACHE_TTL_SECONDS', 60);
+const ENABLE_SUBMISSION_RECOMPUTE = process.env.ZE_CLUB_LEADERBOARD_RECOMPUTE_FROM_SUBMISSIONS !== 'false';
+const ENABLE_NORMALIZE_WRITEBACK = process.env.ZE_CLUB_LEADERBOARD_PERSIST_NORMALIZED_FIELDS === 'true';
 
 type LeaderboardUser = {
   _id: Types.ObjectId;
@@ -24,6 +39,11 @@ type LeaderboardUser = {
   rankIcon?: string;
   profilePhotoUrl?: string;
   image?: string;
+};
+
+type SubmissionPointsAggRow = {
+  _id: Types.ObjectId;
+  totalPoints: number;
 };
 
 type LeaderboardCursor = {
@@ -60,26 +80,74 @@ function encodeCursor(cursor: LeaderboardCursor): string {
   return Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64url');
 }
 
-function maybeCompressedJson(request: Request, payload: unknown) {
+function maybeCompressedJson(request: Request, payload: unknown, responseHeaders?: HeadersInit, status = 200) {
   const body = JSON.stringify(payload);
   const acceptEncoding = request.headers.get('accept-encoding') || '';
+  const headers = new Headers(responseHeaders);
+  const existingVary = headers.get('Vary');
+  const varyParts = new Set((existingVary || '').split(',').map((part) => part.trim()).filter(Boolean));
+  varyParts.add('Accept-Encoding');
+  headers.set('Vary', Array.from(varyParts).join(', '));
 
   if (acceptEncoding.includes('gzip')) {
     return new NextResponse(gzipSync(body), {
+      status,
       headers: {
+        ...Object.fromEntries(headers.entries()),
         'Content-Type': 'application/json; charset=utf-8',
         'Content-Encoding': 'gzip',
-        Vary: 'Accept-Encoding',
       },
     });
   }
 
   return new NextResponse(body, {
+    status,
     headers: {
+      ...Object.fromEntries(headers.entries()),
       'Content-Type': 'application/json; charset=utf-8',
-      Vary: 'Accept-Encoding',
     },
   });
+}
+
+async function getSubmissionPointsMap(enabled: boolean) {
+  if (!enabled) {
+    return new Map<string, number>();
+  }
+
+  const submissionPointsAgg = await MissionSubmission.aggregate<SubmissionPointsAggRow>([
+    { $match: { status: 'approved' } },
+    {
+      $group: {
+        _id: {
+          user: '$user',
+          mission: '$mission',
+        },
+        submissionCount: { $sum: 1 },
+      },
+    },
+    {
+      $lookup: {
+        from: 'missions',
+        localField: '_id.mission',
+        foreignField: '_id',
+        as: 'missionData',
+        pipeline: [{ $project: { points: 1 } }],
+      },
+    },
+    { $unwind: { path: '$missionData', preserveNullAndEmptyArrays: false } },
+    {
+      $group: {
+        _id: '$_id.user',
+        totalPoints: {
+          $sum: {
+            $multiply: ['$submissionCount', '$missionData.points'],
+          },
+        },
+      },
+    },
+  ]);
+
+  return new Map(submissionPointsAgg.map((row) => [row._id.toString(), row.totalPoints]));
 }
 
 async function allocateUniqueZeTags(count: number, reservedTags: Set<string>) {
@@ -125,7 +193,9 @@ async function allocateUniqueZeTags(count: number, reservedTags: Set<string>) {
 export const GET = withRequestLogging(
   '/api/ze-club/leaderboard',
   withErrorHandling('/api/ze-club/leaderboard', async (request: Request) => {
-  await dbConnect();
+    await dbConnect();
+
+    const cacheDebug = isCacheDebugEnabled();
 
     const { searchParams } = new URL(request.url);
     const rawLimit = searchParams.get('limit');
@@ -137,34 +207,10 @@ export const GET = withRequestLogging(
 
     // Get current season info
     const activeSeason = await Season.findOne({ status: 'active' })
-      .select('seasonNumber name')
+      .select('seasonNumber name updatedAt')
       .lean() as ISeason | null
 
-    // Issue 3 fix: compute the true total approved-mission points per user
-    // directly from submissions so that stale `experience` / `points` DB values
-    // (caused by past normalization bugs) are always corrected at display time.
-    const submissionPointsAgg = await MissionSubmission.aggregate<{ _id: Types.ObjectId; totalPoints: number }>([
-      { $match: { status: 'approved' } },
-      {
-        $lookup: {
-          from: 'missions',
-          localField: 'mission',
-          foreignField: '_id',
-          as: 'missionData',
-          pipeline: [{ $project: { points: 1 } }],
-        },
-      },
-      { $unwind: { path: '$missionData', preserveNullAndEmptyArrays: false } },
-      {
-        $group: {
-          _id: '$user',
-          totalPoints: { $sum: '$missionData.points' },
-        },
-      },
-    ]);
-    const submissionPointsMap = new Map(
-      submissionPointsAgg.map((s) => [s._id.toString(), s.totalPoints])
-    );
+    const submissionPointsMap = await getSubmissionPointsMap(ENABLE_SUBMISSION_RECOMPUTE);
 
     // Fetch all users, then rank by normalized experience.
     // This avoids stale DB `experience` values excluding users before correction.
@@ -242,26 +288,36 @@ export const GET = withRequestLogging(
     });
 
     // Persist sane defaults for users missing required fields.
-    const ops = normalized
-      .filter((n) => n.needsUpdate)
-      .map((n) => ({
-        updateOne: {
-          filter: { _id: n.user._id },
-          update: {
-            $set: {
-              zeTag: n.zeTag,
-              experience: n.experience,
-              points: n.experience,
-              rank: n.userRank,
-              rankIcon: n.rankIcon,
-              zeCoins: n.zeCoins,
+    if (ENABLE_NORMALIZE_WRITEBACK) {
+      const ops = normalized
+        .filter((n) => n.needsUpdate)
+        .map((n) => ({
+          updateOne: {
+            filter: { _id: n.user._id },
+            update: {
+              $set: {
+                zeTag: n.zeTag,
+                experience: n.experience,
+                points: n.experience,
+                rank: n.userRank,
+                rankIcon: n.rankIcon,
+                zeCoins: n.zeCoins,
+              },
             },
           },
-        },
-      }));
+        }));
 
-    if (ops.length > 0) {
-      await User.bulkWrite(ops, { ordered: false });
+      if (ops.length > 0) {
+        await User.bulkWrite(ops, { ordered: false });
+      }
+    } else if (cacheDebug) {
+      logger.debug(
+        {
+          route: '/api/ze-club/leaderboard',
+          writeback: 'disabled',
+        },
+        'Skipping leaderboard normalization write-back due to env guard'
+      );
     }
 
     // Sort by effective experience after normalization, then apply cursor + page window.
@@ -302,7 +358,7 @@ export const GET = withRequestLogging(
         })
       : null;
 
-    return maybeCompressedJson(request, {
+    const payload = {
       leaderboard,
       pagination: {
         limit: pageSize,
@@ -313,6 +369,71 @@ export const GET = withRequestLogging(
         seasonNumber: activeSeason.seasonNumber,
         name: activeSeason.name,
       } : null,
-    });
+    };
+
+    if (LEADERBOARD_CACHE_TTL_SECONDS <= 0) {
+      if (cacheDebug) {
+        logger.debug(
+          { route: '/api/ze-club/leaderboard', cacheStatus: 'BYPASS', ttl: 0 },
+          'Leaderboard public cache disabled'
+        );
+      }
+
+      return maybeCompressedJson(
+        request,
+        payload,
+        createNoStoreHeaders(cacheDebug ? 'BYPASS' : undefined)
+      );
+    }
+
+    const etag = createWeakEtag(payload);
+    const lastModified = activeSeason?.updatedAt ? new Date(activeSeason.updatedAt) : new Date();
+
+    if (isFreshRequest(request, etag, lastModified)) {
+      if (cacheDebug) {
+        logger.debug(
+          {
+            route: '/api/ze-club/leaderboard',
+            cacheStatus: 'HIT',
+            ttl: LEADERBOARD_CACHE_TTL_SECONDS,
+          },
+          'Returning 304 from conditional leaderboard cache check'
+        );
+      }
+
+      return new NextResponse(null, {
+        status: 304,
+        headers: createPublicCacheHeaders({
+          ttlSeconds: LEADERBOARD_CACHE_TTL_SECONDS,
+          etag,
+          lastModified,
+          cacheStatus: 'HIT',
+          includeDebugHeaders: cacheDebug,
+        }),
+      });
+    }
+
+    if (cacheDebug) {
+      logger.debug(
+        {
+          route: '/api/ze-club/leaderboard',
+          cacheStatus: 'MISS',
+          ttl: LEADERBOARD_CACHE_TTL_SECONDS,
+        },
+        'Returning cached leaderboard response with validators'
+      );
+    }
+
+    return maybeCompressedJson(
+      request,
+      payload,
+      createPublicCacheHeaders({
+        ttlSeconds: LEADERBOARD_CACHE_TTL_SECONDS,
+        etag,
+        lastModified,
+        cacheStatus: 'MISS',
+        includeDebugHeaders: cacheDebug,
+      })
+    );
   })
 )

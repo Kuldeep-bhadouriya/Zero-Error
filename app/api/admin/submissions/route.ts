@@ -7,12 +7,16 @@ import Mission from '@/models/mission'
 import User from '@/models/user'
 import dbConnect from '@/lib/mongodb'
 import logger from '@/lib/logger'
+import { createNoStoreHeaders } from '@/lib/http-cache'
 
 export async function GET(req: Request) {
   const session = await auth()
 
   if (!session || !session.user.roles.includes('admin')) {
-    return errorResponse('Unauthorized', 401)
+    const response = errorResponse('Unauthorized', 401)
+    const noStoreHeaders = createNoStoreHeaders()
+    noStoreHeaders.forEach((value, key) => response.headers.set(key, value))
+    return response
   }
 
   await dbConnect()
@@ -36,9 +40,14 @@ export async function GET(req: Request) {
       .populate('revertedBy', 'zeTag email')
       .sort({ submittedAt: -1 })
       
-    return NextResponse.json(submissions)
+    return NextResponse.json(submissions, {
+      headers: createNoStoreHeaders(),
+    })
   } catch (error) {
     logger.error('Error fetching submissions:', error)
-    return new NextResponse('Internal Server Error', { status: 500 })
+    return new NextResponse('Internal Server Error', {
+      status: 500,
+      headers: createNoStoreHeaders(),
+    })
   }
 }

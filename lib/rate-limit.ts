@@ -1,6 +1,42 @@
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 
+export type RateLimitRule = {
+  prefix: string
+  limit: number
+  windowSeconds: number
+}
+
+export const RATE_LIMIT_RULES = {
+  apiDefault: {
+    prefix: 'rl:api:default',
+    limit: 120,
+    windowSeconds: 60,
+  },
+  apiAuth: {
+    prefix: 'rl:api:auth',
+    limit: 20,
+    windowSeconds: 600,
+  },
+  apiContact: {
+    prefix: 'rl:api:contact',
+    limit: 5,
+    windowSeconds: 600,
+  },
+  contactIp: {
+    prefix: 'rl:contact:ip',
+    limit: 3,
+    windowSeconds: 600,
+  },
+  contactEmail: {
+    prefix: 'rl:contact:email',
+    limit: 2,
+    windowSeconds: 3600,
+  },
+} as const satisfies Record<string, RateLimitRule>
+
+export type RateLimitRuleName = keyof typeof RATE_LIMIT_RULES
+
 type RateLimitCheckResult = {
   success: boolean
   limit: number
@@ -21,6 +57,21 @@ const redis =
     : null
 
 const ratelimiters = new Map<string, Ratelimit>()
+
+type RateLimitIdentityInput = {
+  request?: Request
+  userId?: string | null
+  fallbackKey?: string
+}
+
+function normalizeKeyPart(value: string): string {
+  const normalized = value.trim().toLowerCase().replace(/[^a-z0-9:._-]/g, '_')
+  return normalized.slice(0, 200) || 'unknown'
+}
+
+export function getRateLimitRule(name: RateLimitRuleName): RateLimitRule {
+  return RATE_LIMIT_RULES[name]
+}
 
 function getOrCreateRateLimiter(prefix: string, limit: number, windowSeconds: number) {
   const cacheKey = `${prefix}:${limit}:${windowSeconds}`
@@ -72,19 +123,25 @@ function checkLocalRateLimit(
 }
 
 export async function checkRateLimit(params: {
-  key: string
+  key?: string
+  request?: Request
+  userId?: string | null
+  fallbackKey?: string
   prefix: string
   limit: number
   windowSeconds: number
 }): Promise<RateLimitCheckResult> {
-  const { key, prefix, limit, windowSeconds } = params
+  const { key, request, userId, fallbackKey, prefix, limit, windowSeconds } = params
+  const effectiveKey = key
+    ? normalizeKeyPart(key)
+    : buildRateLimitIdentity({ request, userId, fallbackKey })
 
   if (!redis) {
-    return checkLocalRateLimit(`${prefix}:${key}`, limit, windowSeconds)
+    return checkLocalRateLimit(`${prefix}:${effectiveKey}`, limit, windowSeconds)
   }
 
   const limiter = getOrCreateRateLimiter(prefix, limit, windowSeconds)
-  const result = await limiter.limit(key)
+  const result = await limiter.limit(effectiveKey)
 
   return {
     success: result.success,
@@ -92,6 +149,31 @@ export async function checkRateLimit(params: {
     remaining: result.remaining,
     reset: result.reset,
   }
+}
+
+export function buildRateLimitIdentity(input: RateLimitIdentityInput = {}): string {
+  const { request, userId, fallbackKey } = input
+
+  if (userId && userId.trim().length > 0) {
+    return `user:${normalizeKeyPart(userId)}`
+  }
+
+  if (request) {
+    const ip = getClientIp(request)
+    if (ip !== 'unknown') {
+      return `ip:${normalizeKeyPart(ip)}`
+    }
+
+    const host = request.headers.get('host') || 'no-host'
+    const userAgent = request.headers.get('user-agent') || 'no-user-agent'
+    return `anon:${normalizeKeyPart(`${host}:${userAgent}`)}`
+  }
+
+  if (fallbackKey && fallbackKey.trim().length > 0) {
+    return `fallback:${normalizeKeyPart(fallbackKey)}`
+  }
+
+  return 'anonymous:unknown'
 }
 
 export function getClientIp(request: Request): string {

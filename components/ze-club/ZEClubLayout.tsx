@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import dynamic from 'next/dynamic'
 import { cn } from "@/lib/utils"
 import { AnimatePresence } from "framer-motion"
 import PageTransition from "@/components/page-transition"
-import { useState, useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Menu, X, LayoutDashboard, Trophy, Gift, Target, HeadphonesIcon, User, Shield, CalendarClock } from "lucide-react"
 import { useSession } from "next-auth/react"
@@ -14,17 +15,34 @@ import SeasonBanner from "@/components/ze-club/SeasonBanner"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import logger from '@/lib/browser-logger'
 import { useZeClubStore } from '@/lib/stores/zeClubStore'
-import Hyperspeed from "@/components/Hyperspeed"
 import { hyperspeedPresets } from "@/components/HyperSpeedPresets"
+
+const Hyperspeed = dynamic(() => import('@/components/Hyperspeed'), {
+  ssr: false,
+})
+
+export const ZE_CLUB_NAV_ITEMS = [
+  { href: '/ze-club', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/profile', label: 'Profile', icon: User },
+  { href: '/ze-club/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { href: '/ze-club/rewards', label: 'Rewards', icon: Gift },
+  { href: '/ze-club/missions', label: 'Missions', icon: Target },
+  { href: '/ze-club/seasons', label: 'Seasons', icon: CalendarClock },
+  { href: '/ze-club/support', label: 'Support', icon: HeadphonesIcon },
+] as const
+
+export function getZeClubNavItems() {
+  return ZE_CLUB_NAV_ITEMS
+}
 
 function ZEClubLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isMobile = useIsMobile()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const { data: session } = useSession()
   const userPoints = useZeClubStore((state) => state.totalPoints)
   const userZeTag = useZeClubStore((state) => state.zeTag)
   const hydrateFromDashboard = useZeClubStore((state) => state.hydrateFromDashboard)
+  const navItems = useMemo(() => getZeClubNavItems(), [])
 
   useEffect(() => {
     async function fetchUserData() {
@@ -40,22 +58,6 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
     }
     fetchUserData()
   }, [hydrateFromDashboard])
-
-  const navItems = [
-    { href: "/ze-club", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/profile", label: "Profile", icon: User },
-    { href: "/ze-club/leaderboard", label: "Leaderboard", icon: Trophy },
-    { href: "/ze-club/rewards", label: "Rewards", icon: Gift },
-    { href: "/ze-club/missions", label: "Missions", icon: Target },
-    { href: "/ze-club/seasons", label: "Seasons", icon: CalendarClock },
-    { href: "/ze-club/support", label: "Support", icon: HeadphonesIcon },
-  ]
-
-  const handleLinkClick = () => {
-    if (isMobile) {
-      setSidebarOpen(false)
-    }
-  }
 
   const router = useRouter()
 
@@ -192,7 +194,6 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      onClick={handleLinkClick}
                       className={cn(
                         "group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 border border-transparent",
                         isActive
@@ -232,7 +233,6 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
           <div className="p-4 border-t border-white/15 bg-black/25 backdrop-blur-md">
             <Link
               href="/admin/ze-club"
-              onClick={handleLinkClick}
               className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-white/[0.12] border border-white/20 text-zinc-200 hover:text-white hover:border-white/40 transition-all text-xs font-medium group"
             >
               <Shield className="h-3.5 w-3.5 group-hover:text-purple-400 transition-colors" />

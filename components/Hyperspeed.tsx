@@ -1,5 +1,5 @@
 import { BloomEffect, EffectComposer, EffectPass, RenderPass, SMAAEffect, SMAAPreset } from 'postprocessing';
-import { FC, useEffect, useRef } from 'react';
+import { FC, memo, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
 interface Distortion {
@@ -1289,46 +1289,73 @@ class App {
 
 const DEFAULT_EFFECT_OPTIONS: Partial<HyperspeedOptions> = {};
 
+export function scheduleIdleStart(start: () => void): () => void {
+  if (typeof globalThis === 'undefined') {
+    return () => {};
+  }
+
+  if ('requestIdleCallback' in globalThis) {
+    const idleId = globalThis.requestIdleCallback(start, { timeout: 300 });
+    return () => globalThis.cancelIdleCallback(idleId);
+  }
+
+  const timeoutId = globalThis.setTimeout(start, 0);
+  return () => globalThis.clearTimeout(timeoutId);
+}
+
+export function buildHyperspeedOptions(effectOptions: Partial<HyperspeedOptions>): HyperspeedOptions {
+  const options: HyperspeedOptions = {
+    ...defaultOptions,
+    ...effectOptions,
+    colors: { ...defaultOptions.colors, ...effectOptions.colors }
+  };
+
+  if (typeof options.distortion === 'string') {
+    options.distortion = distortions[options.distortion];
+  }
+
+  return options;
+}
+
 const Hyperspeed: FC<HyperspeedProps> = ({ effectOptions = DEFAULT_EFFECT_OPTIONS }) => {
   const hyperspeed = useRef<HTMLDivElement>(null);
   const appRef = useRef<App | null>(null);
+  const mergedOptions = useMemo<HyperspeedOptions>(() => {
+    return buildHyperspeedOptions(effectOptions);
+  }, [effectOptions]);
 
   useEffect(() => {
-    if (appRef.current) {
-      appRef.current.dispose();
-      appRef.current = null;
-      const container = hyperspeed.current;
-      if (container) {
-        while (container.firstChild) {
-          container.removeChild(container.firstChild);
-        }
-      }
-    }
-
     const container = hyperspeed.current;
     if (!container) return;
 
-    const options: HyperspeedOptions = {
-      ...defaultOptions,
-      ...effectOptions,
-      colors: { ...defaultOptions.colors, ...effectOptions.colors }
-    };
-    if (typeof options.distortion === 'string') {
-      options.distortion = distortions[options.distortion];
-    }
+    let cancelled = false;
+    const cancelIdleStart = scheduleIdleStart(() => {
+      if (cancelled || !hyperspeed.current) {
+        return;
+      }
 
-    const myApp = new App(container, options);
-    appRef.current = myApp;
-    myApp.loadAssets().then(myApp.init);
+      const myApp = new App(hyperspeed.current, mergedOptions);
+      appRef.current = myApp;
+      myApp.loadAssets().then(() => {
+        if (cancelled) {
+          myApp.dispose();
+          return;
+        }
+        myApp.init();
+      });
+    });
 
     return () => {
+      cancelled = true;
+      cancelIdleStart();
       if (appRef.current) {
         appRef.current.dispose();
+        appRef.current = null;
       }
     };
-  }, [effectOptions]);
+  }, [mergedOptions]);
 
   return <div id="lights" className="w-full h-full" ref={hyperspeed}></div>;
 };
 
-export default Hyperspeed;
+export default memo(Hyperspeed);

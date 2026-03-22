@@ -4,7 +4,25 @@ import { errorResponse } from '@/lib/api-response'
 import dbConnect from "@/lib/mongodb"
 import User from "@/models/user"
 import { checkAndAutoEndSeason, getCurrentSeason } from "@/lib/ze-club/seasonTransition"
+import { createNoStoreHeaders } from '@/lib/http-cache'
 import logger from '@/lib/logger'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+type DashboardUser = {
+  points?: number
+  zeCoins?: number
+  experience?: number
+  rank?: string
+  badge?: string
+  progress?: number
+  zeTag?: string
+  rankIcon?: string
+  progressToNextRank?: number
+  nextRankPoints?: number
+  currentRankPoints?: number
+}
 
 /**
  * GET /api/ze-club/user/dashboard
@@ -25,14 +43,32 @@ export async function GET() {
     // Trigger auto-end check for expired seasons
     checkAndAutoEndSeason().catch(() => {})
 
-    // Get current season info
-    const activeSeason = await getCurrentSeason()
-
-    // Fetch user from database
-    const user = await User.findOne({ email: session.user.email })
+    // Fetch current season and user in parallel to reduce endpoint latency.
+    const [activeSeason, user] = await Promise.all([
+      getCurrentSeason(),
+      User.findOne(
+        { email: session.user.email },
+        {
+          points: 1,
+          zeCoins: 1,
+          experience: 1,
+          rank: 1,
+          badge: 1,
+          progress: 1,
+          zeTag: 1,
+          rankIcon: 1,
+          progressToNextRank: 1,
+          nextRankPoints: 1,
+          currentRankPoints: 1,
+        }
+      ).lean<DashboardUser | null>(),
+    ])
 
     if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 })
+      return NextResponse.json(
+        { message: "User not found" },
+        { status: 404, headers: createNoStoreHeaders() }
+      )
     }
 
     // Calculate leaderboard rank (position) based on experience
@@ -62,9 +98,14 @@ export async function GET() {
       } : null,
     }
 
-    return NextResponse.json(dashboardData)
+    return NextResponse.json(dashboardData, {
+      headers: createNoStoreHeaders(),
+    })
   } catch (error) {
     logger.error("Error fetching user dashboard data:", error)
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 })
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500, headers: createNoStoreHeaders() }
+    )
   }
 }
