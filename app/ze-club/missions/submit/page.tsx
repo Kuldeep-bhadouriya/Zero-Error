@@ -9,6 +9,22 @@ import dbConnect from '@/lib/mongodb'
 import User from '@/models/user'
 import MissionSubmission from '@/models/missionSubmission'
 import Mission from '@/models/mission'
+import { createBreadcrumbSchema, createPageMetadata, toJsonLd } from '@/lib/seo'
+
+export const metadata = createPageMetadata({
+  title: 'Submit Mission Proof | ZE Club',
+  description:
+    'Upload mission completion proof for ZE Club and keep your Zero Error Esports progress accurate and review-ready.',
+  path: '/ze-club/missions/submit',
+  noIndex: true,
+})
+
+const breadcrumbSchema = createBreadcrumbSchema([
+  { name: 'Home', path: '/' },
+  { name: 'ZE Club', path: '/ze-club' },
+  { name: 'Missions', path: '/ze-club/missions' },
+  { name: 'Submit Proof', path: '/ze-club/missions/submit' },
+])
 
 export default async function MissionSubmitPage({
   searchParams,
@@ -69,8 +85,13 @@ export default async function MissionSubmitPage({
   const initialMissionId = missions.some((m: any) => m._id?.toString?.() === missionId) ? missionId : undefined
 
   return (
-    <ZEClubLayout>
-      <div className="text-white space-y-8">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbSchema) }}
+      />
+      <ZEClubLayout>
+        <div className="text-white space-y-8">
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="text-xs uppercase tracking-widest text-zinc-500 font-medium">
@@ -98,7 +119,8 @@ export default async function MissionSubmitPage({
           initialMissionId={initialMissionId}
           editSubmission={editSubmission}
         />
-      </div>
-    </ZEClubLayout>
+        </div>
+      </ZEClubLayout>
+    </>
   )
 }

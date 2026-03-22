@@ -11,6 +11,21 @@ import ZEClubLayout from '@/components/ze-club/ZEClubLayout'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { getMissionsForUserEmail } from '@/lib/ze-club/missions'
+import { createBreadcrumbSchema, createPageMetadata, toJsonLd } from '@/lib/seo'
+
+export const metadata = createPageMetadata({
+  title: 'ZE Club Missions | Earn Points in Zero Error Esports',
+  description:
+    'Browse ZE Club missions, submit completion proof, and progress through India-first esports challenges on Zero Error Esports.',
+  path: '/ze-club/missions',
+  noIndex: true,
+})
+
+const breadcrumbSchema = createBreadcrumbSchema([
+  { name: 'Home', path: '/' },
+  { name: 'ZE Club', path: '/ze-club' },
+  { name: 'Missions', path: '/ze-club/missions' },
+])
 
 interface PopulatedSubmission {
   _id: string
@@ -151,8 +166,13 @@ export default function MissionsPage() {
   })()
 
   return (
-    <ZEClubLayout>
-      <div className="text-white space-y-10">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbSchema) }}
+      />
+      <ZEClubLayout>
+        <div className="text-white space-y-10">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -216,8 +236,9 @@ export default function MissionsPage() {
             <UserSubmissions />
           </Suspense>
         </div>
-      </div>
-    </ZEClubLayout>
+        </div>
+      </ZEClubLayout>
+    </>
   )
 }
 

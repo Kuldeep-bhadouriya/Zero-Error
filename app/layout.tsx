@@ -5,6 +5,7 @@ import ClientLayout from "@/components/client-layout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AnimationProvider } from "@/contexts/AnimationContext";
 import BackgroundEffects from "@/components/shared/BackgroundEffects";
+import { createOrganizationSchema, toJsonLd } from "@/lib/seo";
 import "./globals.css";
 
 // Font configuration - Rajdhani is a good gaming font
@@ -48,6 +49,8 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationSchema = createOrganizationSchema()
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -58,6 +61,10 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/images/favicon.png" type="image/x-icon" />
         <meta name="color-scheme" content="dark" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: toJsonLd(organizationSchema) }}
+        />
       </head>
       <body className={rajdhani.className} style={{ colorScheme: 'dark' }}>
         <ErrorBoundary>
