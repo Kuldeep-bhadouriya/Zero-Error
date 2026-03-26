@@ -25,6 +25,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://zeroerroresports.com"),
   title: "Zero Error Esports | Professional Gaming Team",
   description:
     "Official website of Zero Error Esports - Professional gaming team competing across Valorant, Counter-Strike 2, and other major titles",

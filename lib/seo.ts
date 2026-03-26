@@ -45,6 +45,7 @@ export function createPageMetadata({
   const canonical = absoluteUrl(path)
 
   return {
+    metadataBase: new URL(SITE_URL),
     title,
     description,
     alternates: {
