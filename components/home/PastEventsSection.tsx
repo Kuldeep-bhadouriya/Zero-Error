@@ -24,6 +24,80 @@ interface Event {
   organizer: string
 }
 
+const ALLOWED_IMAGE_HOSTS = new Set([
+  'hebbkx1anhila5yf.public.blob.vercel-storage.com',
+  'utfs.io',
+  'cdn.discordapp.com',
+  'lh3.googleusercontent.com',
+])
+
+function toValidDateLabel(value: string) {
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return 'Date TBA'
+  }
+
+  return format(parsed, 'MMM dd, yyyy')
+}
+
+function isSupportedImageUrl(src?: string) {
+  if (!src || typeof src !== 'string') {
+    return false
+  }
+
+  if (src.startsWith('/')) {
+    return true
+  }
+
+  try {
+    const url = new URL(src)
+    return url.protocol === 'https:' && ALLOWED_IMAGE_HOSTS.has(url.hostname)
+  } catch {
+    return false
+  }
+}
+
+function normalizeEvent(item: unknown): Event | null {
+  if (!item || typeof item !== 'object') {
+    return null
+  }
+
+  const source = item as Record<string, unknown>
+  const id = source._id
+  const title = source.title
+  const eventDate = source.eventDate
+
+  if (typeof id !== 'string' || !id || typeof title !== 'string' || typeof eventDate !== 'string') {
+    return null
+  }
+
+  const imageUrl = typeof source.imageUrl === 'string' && isSupportedImageUrl(source.imageUrl)
+    ? source.imageUrl
+    : undefined
+
+  return {
+    _id: id,
+    title,
+    description: typeof source.description === 'string' ? source.description : '',
+    eventDate,
+    eventType: source.eventType === 'upcoming' ? 'upcoming' : 'past',
+    imageUrl,
+    location: typeof source.location === 'string' ? source.location : undefined,
+    registrationLink: typeof source.registrationLink === 'string' ? source.registrationLink : undefined,
+    featured: Boolean(source.featured),
+    games: Array.isArray(source.games) ? source.games.filter((game): game is string => typeof game === 'string') : [],
+    organizer: typeof source.organizer === 'string' ? source.organizer : 'Zero Error Esports',
+  }
+}
+
+function normalizeEvents(input: unknown): Event[] {
+  if (!Array.isArray(input)) {
+    return []
+  }
+
+  return input.map((item) => normalizeEvent(item)).filter((item): item is Event => item !== null)
+}
+
 const PastEventsSection = () => {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,7 +112,7 @@ const PastEventsSection = () => {
       const data = await response.json()
       
       if (data.success) {
-        setEvents(data.events)
+        setEvents(normalizeEvents(data.events))
       }
     } catch (error) {
       logger.error('Error fetching past events:', error)
@@ -197,7 +271,7 @@ const PastEventsSection = () => {
                         className="flex items-center drop-shadow-sm"
                       >
                         <Calendar className="w-3 h-3 mr-2 text-red-500" />
-                        {format(new Date(event.eventDate), 'MMM dd, yyyy')}
+                        {toValidDateLabel(event.eventDate)}
                       </motion.span>
                       {event.location && (
                         <motion.span

@@ -7,6 +7,49 @@ import AnnouncementCarousel, { AnnouncementItem } from './AnnouncementCarousel'
 import { Loader2 } from 'lucide-react'
 import logger from '@/lib/browser-logger'
 
+const VALID_TYPES: AnnouncementItem['type'][] = ['info', 'warning', 'success', 'urgent']
+
+function normalizeAnnouncement(item: unknown): AnnouncementItem | null {
+  if (!item || typeof item !== 'object') {
+    return null
+  }
+
+  const source = item as Record<string, unknown>
+  const id = source._id
+  const title = source.title
+  const message = source.message
+
+  if (typeof id !== 'string' || !id || typeof title !== 'string' || typeof message !== 'string') {
+    return null
+  }
+
+  const type = typeof source.type === 'string' && VALID_TYPES.includes(source.type as AnnouncementItem['type'])
+    ? (source.type as AnnouncementItem['type'])
+    : 'info'
+
+  return {
+    _id: id,
+    title,
+    message,
+    type,
+    priority: typeof source.priority === 'number' ? source.priority : 1,
+    active: Boolean(source.active),
+    dismissible: Boolean(source.dismissible),
+    link: typeof source.link === 'string' ? source.link : undefined,
+    linkText: typeof source.linkText === 'string' ? source.linkText : undefined,
+  }
+}
+
+function normalizeAnnouncements(input: unknown): AnnouncementItem[] {
+  if (!Array.isArray(input)) {
+    return []
+  }
+
+  return input
+    .map((item) => normalizeAnnouncement(item))
+    .filter((item): item is AnnouncementItem => item !== null)
+}
+
 function mapPathToTarget(pathname: string | null) {
   if (!pathname || pathname === '/') {
     return 'home'
@@ -76,7 +119,7 @@ function AnnouncementBanner() {
         }
 
         const data = await response.json()
-        setAnnouncements(data.announcements || [])
+        setAnnouncements(normalizeAnnouncements(data?.announcements))
       } catch (error: any) {
         if (error.name === 'AbortError') {
           return

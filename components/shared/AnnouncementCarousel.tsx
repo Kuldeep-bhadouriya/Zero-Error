@@ -54,6 +54,16 @@ const TYPE_ICONS = {
   urgent: BellRing,
 }
 
+const VALID_TYPES: AnnouncementItem['type'][] = ['info', 'warning', 'success', 'urgent']
+
+function resolveAnnouncementType(type: unknown): AnnouncementItem['type'] {
+  if (typeof type === 'string' && VALID_TYPES.includes(type as AnnouncementItem['type'])) {
+    return type as AnnouncementItem['type']
+  }
+
+  return 'info'
+}
+
 function sanitizeAnnouncementUrl(url: string) {
   if (/^(https?:|mailto:)/i.test(url)) {
     return url
@@ -183,7 +193,8 @@ function AnnouncementCarousel({ announcements }: AnnouncementCarouselProps) {
   }
 
   const currentAnnouncement = filteredAnnouncements[activeIndex]
-  const Icon = TYPE_ICONS[currentAnnouncement.type]
+  const currentType = resolveAnnouncementType(currentAnnouncement.type)
+  const Icon = TYPE_ICONS[currentType]
 
   return (
     <div className="pointer-events-auto">
@@ -197,15 +208,15 @@ function AnnouncementCarousel({ announcements }: AnnouncementCarouselProps) {
             transition={{ duration: 0.4, ease: 'easeOut' }}
             className={cn(
               'bg-gradient-to-r px-4 py-5 md:px-6 md:py-6 text-white',
-              TYPE_STYLES[currentAnnouncement.type].background,
-              currentAnnouncement.type === 'urgent' && 'animate-pulse'
+              TYPE_STYLES[currentType].background,
+              currentType === 'urgent' && 'animate-pulse'
             )}
           >
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <span className={cn('rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-widest', TYPE_STYLES[currentAnnouncement.type].accent)}>
-                    {currentAnnouncement.type}
+                  <span className={cn('rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-widest', TYPE_STYLES[currentType].accent)}>
+                    {currentType}
                   </span>
                   <div className="flex items-center text-xs text-white/80">
                     <Icon className="mr-1 h-4 w-4" />

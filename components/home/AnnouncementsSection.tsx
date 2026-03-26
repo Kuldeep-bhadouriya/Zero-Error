@@ -14,6 +14,50 @@ interface ExtendedAnnouncement extends AnnouncementItem {
   linkText?: string
 }
 
+const VALID_TYPES: AnnouncementItem['type'][] = ['info', 'warning', 'success', 'urgent']
+
+function normalizeAnnouncement(item: unknown): ExtendedAnnouncement | null {
+  if (!item || typeof item !== 'object') {
+    return null
+  }
+
+  const source = item as Record<string, unknown>
+  const type = typeof source.type === 'string' && VALID_TYPES.includes(source.type as AnnouncementItem['type'])
+    ? (source.type as AnnouncementItem['type'])
+    : 'info'
+
+  const id = source._id
+  const title = source.title
+  const message = source.message
+
+  if (typeof id !== 'string' || !id || typeof title !== 'string' || typeof message !== 'string') {
+    return null
+  }
+
+  return {
+    _id: id,
+    title,
+    message,
+    type,
+    priority: typeof source.priority === 'number' ? source.priority : 1,
+    active: Boolean(source.active),
+    dismissible: Boolean(source.dismissible),
+    link: typeof source.link === 'string' ? source.link : undefined,
+    linkText: typeof source.linkText === 'string' ? source.linkText : undefined,
+    updatedAt: typeof source.updatedAt === 'string' ? source.updatedAt : undefined,
+  }
+}
+
+function normalizeAnnouncements(input: unknown): ExtendedAnnouncement[] {
+  if (!Array.isArray(input)) {
+    return []
+  }
+
+  return input
+    .map((item) => normalizeAnnouncement(item))
+    .filter((item): item is ExtendedAnnouncement => item !== null)
+}
+
 const TYPE_META: Record<AnnouncementItem['type'], { label: string; icon: any; ring: string; chip: string }> = {
   info: {
     label: 'Info',
@@ -64,7 +108,7 @@ function AnnouncementsSection() {
           throw new Error('Unable to fetch announcements')
         }
         const data = await response.json()
-        setAnnouncements(data.announcements || [])
+        setAnnouncements(normalizeAnnouncements(data?.announcements))
       } catch (fetchError: any) {
         if (fetchError?.name === 'AbortError') {
           return
@@ -130,7 +174,7 @@ function AnnouncementsSection() {
 
         <div className="grid gap-6 md:grid-cols-3">
           {visibleAnnouncements.map((announcement, index) => {
-            const meta = TYPE_META[announcement.type]
+            const meta = TYPE_META[announcement.type] ?? TYPE_META.info
             const Icon = meta.icon
 
             return (
