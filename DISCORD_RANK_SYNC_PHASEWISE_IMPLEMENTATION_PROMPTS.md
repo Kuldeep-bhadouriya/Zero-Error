@@ -67,7 +67,7 @@ Deliverables:
 
 ### Definition of Done
 - Models compile and tests pass.
-- No regressions in existing auth and ZE Club flows.
+- No r egressions in existing auth and ZE Club flows.
 
 ---
 
