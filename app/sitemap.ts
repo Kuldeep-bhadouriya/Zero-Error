@@ -7,17 +7,10 @@ const staticPublicRoutes = [
   '/about',
   '/contact',
   '/events',
-  '/join-us',
   '/services',
-  '/signup',
   '/teams',
-  '/ze-club',
   '/ze-club/leaderboard',
-  '/ze-club/missions',
-  '/ze-club/missions/submit',
-  '/ze-club/rewards',
   '/ze-club/seasons',
-  '/ze-club/support',
 ] as const
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

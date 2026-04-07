@@ -49,6 +49,21 @@ function buildCspValue() {
 
 const nextConfig = {
   serverExternalPackages: ['pino', 'thread-stream', 'sonic-boom'],
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.zeroerrosports.com' }],
+        destination: 'https://zeroerrosports.com/:path*',
+        permanent: true,
+      },
+      {
+        source: '/%24',
+        destination: '/',
+        permanent: true,
+      },
+    ]
+  },
   async headers() {
     // Switch path: Report-Only -> enforce is controlled only by CSP_ENFORCE.
     const cspKey = isCspEnforced ? 'Content-Security-Policy' : 'Content-Security-Policy-Report-Only'
