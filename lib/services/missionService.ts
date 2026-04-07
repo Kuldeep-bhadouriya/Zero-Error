@@ -10,6 +10,8 @@ import {
 } from '@/lib/repositories/missionRepository'
 import { findUserById, saveUser } from '@/lib/repositories/userRepository'
 import { applyRankFromExperience } from '@/lib/services/rankService'
+import { enqueueDiscordSyncJobsForRankChange } from '@/lib/services/discordSyncEnqueueService'
+import logger from '@/lib/logger'
 
 type MissionServiceResult<T> = {
   status: number
@@ -66,8 +68,28 @@ export async function verifyMissionSubmission(
       user.experience += mission.points
       user.points = user.experience
 
+      const oldRank = user.rank
       applyRankFromExperience(user)
       await saveUser(user)
+
+      try {
+        await enqueueDiscordSyncJobsForRankChange({
+          user,
+          previousRank: oldRank,
+          sourceEventId: `mission-approve:${input.submissionId}`,
+          correlationId: `mission-approve:${input.submissionId}`,
+        })
+      } catch (error) {
+        logger.error(
+          {
+            submissionId: input.submissionId,
+            userId: String(user._id),
+            err: error,
+          },
+          'Failed to enqueue Discord rank sync job after mission approval'
+        )
+      }
+
       await clearUserCache()
 
       await adjustMissionCompletionCount(String(submission.mission), 1)
@@ -133,6 +155,25 @@ export async function revertMissionSubmission(
   applyRankFromExperience(user)
 
   await saveUser(user)
+
+  try {
+    await enqueueDiscordSyncJobsForRankChange({
+      user,
+      previousRank: oldRank,
+      sourceEventId: `mission-revert:${input.submissionId}`,
+      correlationId: `mission-revert:${input.submissionId}`,
+    })
+  } catch (error) {
+    logger.error(
+      {
+        submissionId: input.submissionId,
+        userId: String(user._id),
+        err: error,
+      },
+      'Failed to enqueue Discord rank sync job after mission revert'
+    )
+  }
+
   await clearUserCache()
 
   submission.status = 'rejected'

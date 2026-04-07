@@ -1,11 +1,36 @@
 import mongoose, { Schema, Document } from 'mongoose'
 
+const DISCORD_LINK_STATUSES = ['unlinked', 'linked_unverified', 'linked_verified'] as const
+const DISCORD_SYNC_STATUSES = ['idle', 'queued', 'processing', 'succeeded', 'failed'] as const
+
+export type DiscordLinkStatus = (typeof DISCORD_LINK_STATUSES)[number]
+export type DiscordSyncStatus = (typeof DISCORD_SYNC_STATUSES)[number]
+
+export interface IDiscordSyncMetadata {
+  guildId?: string
+  linkStatus: DiscordLinkStatus
+  verified: boolean
+  linkedAt?: Date
+  verifiedAt?: Date
+  lastSyncedAt?: Date
+  lastSyncStatus: DiscordSyncStatus
+  lastSyncError?: string
+  lastSyncErrorAt?: Date
+}
+
 export interface IUser extends Document {
   name?: string
   email?: string
   image?: string
   emailVerified?: Date
-  discordId: string
+  discordId?: string
+  discordUsername?: string
+  discordGlobalName?: string
+  discordAvatar?: string
+  // Migration/backfill note:
+  // Existing users can keep only `discordId`; `discordSync` is optional and defaults
+  // safely for new writes without requiring a breaking data migration.
+  discordSync?: IDiscordSyncMetadata
   zeClubId: string
   points: number // DEPRECATED: Use zeCoins and experience instead
   zeCoins: number // For redemption/purchasing rewards
@@ -34,6 +59,28 @@ const UserSchema: Schema = new Schema({
   image: { type: String },
   emailVerified: { type: Date },
   discordId: { type: String, unique: true, sparse: true },
+  discordUsername: { type: String },
+  discordGlobalName: { type: String },
+  discordAvatar: { type: String },
+  discordSync: {
+    guildId: { type: String },
+    linkStatus: {
+      type: String,
+      enum: DISCORD_LINK_STATUSES,
+      default: 'unlinked',
+    },
+    verified: { type: Boolean, default: false },
+    linkedAt: { type: Date },
+    verifiedAt: { type: Date },
+    lastSyncedAt: { type: Date },
+    lastSyncStatus: {
+      type: String,
+      enum: DISCORD_SYNC_STATUSES,
+      default: 'idle',
+    },
+    lastSyncError: { type: String },
+    lastSyncErrorAt: { type: Date },
+  },
   zeClubId: { type: String, unique: true, sparse: true },
   points: { type: Number, default: 0 }, // DEPRECATED: Kept for backward compatibility
   zeCoins: { type: Number, default: 0 }, // For redemption/purchasing
@@ -69,5 +116,7 @@ const UserSchema: Schema = new Schema({
 
 UserSchema.index({ email: 1, experience: -1 })
 UserSchema.index({ experience: -1 })
+UserSchema.index({ 'discordSync.guildId': 1, 'discordSync.linkStatus': 1 })
+UserSchema.index({ discordId: 1, 'discordSync.guildId': 1 }, { sparse: true })
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema)

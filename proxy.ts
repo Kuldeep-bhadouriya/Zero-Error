@@ -8,7 +8,7 @@ import {
 
 const CSRF_COOKIE_NAME = 'ze_csrf_token'
 const MUTATING_METHODS = new Set(['POST', 'PATCH', 'DELETE', 'PUT'])
-const CSRF_EXEMPT_PREFIXES = ['/api/auth/', '/api/uploadthing']
+const CSRF_EXEMPT_PREFIXES = ['/api/auth/', '/api/uploadthing', '/api/internal/']
 
 const DEFAULT_API_LIMIT = getRateLimitRule('apiDefault')
 const AUTH_LIMIT = getRateLimitRule('apiAuth')

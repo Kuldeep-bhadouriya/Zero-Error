@@ -33,6 +33,46 @@ export const RATE_LIMIT_RULES = {
     limit: 2,
     windowSeconds: 3600,
   },
+  apiDiscordLinkStart: {
+    prefix: 'rl:api:user:discord:link:start',
+    limit: 10,
+    windowSeconds: 600,
+  },
+  apiDiscordLinkCallback: {
+    prefix: 'rl:api:user:discord:link:callback',
+    limit: 20,
+    windowSeconds: 600,
+  },
+  apiDiscordUnlink: {
+    prefix: 'rl:api:user:discord:unlink',
+    limit: 10,
+    windowSeconds: 600,
+  },
+  apiDiscordStatus: {
+    prefix: 'rl:api:user:discord:status',
+    limit: 60,
+    windowSeconds: 60,
+  },
+  apiInternalDiscordSyncClaim: {
+    prefix: 'rl:api:internal:discord-sync:claim',
+    limit: 120,
+    windowSeconds: 60,
+  },
+  apiInternalDiscordSyncComplete: {
+    prefix: 'rl:api:internal:discord-sync:complete',
+    limit: 120,
+    windowSeconds: 60,
+  },
+  apiInternalDiscordSyncFail: {
+    prefix: 'rl:api:internal:discord-sync:fail',
+    limit: 120,
+    windowSeconds: 60,
+  },
+  apiInternalDiscordSyncReconcile: {
+    prefix: 'rl:api:internal:discord-sync:reconcile',
+    limit: 30,
+    windowSeconds: 60,
+  },
 } as const satisfies Record<string, RateLimitRule>
 
 export type RateLimitRuleName = keyof typeof RATE_LIMIT_RULES
