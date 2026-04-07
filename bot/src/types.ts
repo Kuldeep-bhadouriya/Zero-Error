@@ -19,6 +19,46 @@ export type ClaimJobsResponse = {
   claimedCount: number
 }
 
+export type ReconcileCandidate = {
+  userId: string
+  discordId: string
+  guildId: string
+  expectedRank: string
+  expectedRoleId: string
+  rankRoleIds: string[]
+}
+
+export type ReconcileScanResponse = {
+  guildId: string
+  scopedUserId: string | null
+  scannedUsers: number
+  candidates: ReconcileCandidate[]
+  skippedMissingMapping: number
+}
+
+export type ReconcileExecuteResponse = {
+  mode: 'scheduled' | 'targeted' | 'manual'
+  dryRun: boolean
+  guildId: string
+  scopedUserId: string | null
+  eligibleCount: number
+  mappedUsers: number
+  queuedJobs: number
+  skippedActiveJob: number
+  skippedMissingMapping: number
+}
+
+export type ReconcileRunMetrics = {
+  mode: 'scheduled' | 'targeted'
+  dryRun: boolean
+  guildId: string
+  scopedUserId: string | null
+  scannedUsers: number
+  mismatchesFound: number
+  correctedCount: number
+  failedCount: number
+}
+
 export type CompleteJobPayload = {
   note?: string
 }

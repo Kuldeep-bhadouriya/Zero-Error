@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { Zap } from "lucide-react"
+import { AlertTriangle, CheckCircle2, Link2, ShieldCheck, Zap } from "lucide-react"
 import ZEClubMagicBento from "./ZEClubMagicBento"
+import { deriveDiscordSyncUiState, type DiscordSyncDashboardPayload } from "@/lib/ze-club/discordSyncUi"
 
 interface UserDashboard {
   totalPoints: number
@@ -17,6 +18,7 @@ interface UserDashboard {
   progressToNextRank: number
   nextRankPoints: number
   currentRankPoints: number
+  discord?: DiscordSyncDashboardPayload
 }
 
 /**
@@ -89,6 +91,68 @@ function Dashboard() {
           </div>
         </motion.div>
       </div>
+
+      <motion.section
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="rounded-2xl border border-zinc-700/40 bg-gradient-to-br from-zinc-900/70 via-zinc-900/55 to-zinc-800/50 p-4 sm:p-6"
+      >
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg sm:text-xl font-semibold text-white">Discord Sync Status</h2>
+            <p className="text-xs sm:text-sm text-zinc-400">Keep your ZE Club rank mirrored to Discord roles.</p>
+          </div>
+          {dashboardData.discord?.eligibleForRoleSync ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Eligible
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
+              <AlertTriangle className="h-3.5 w-3.5" /> Action needed
+            </span>
+          )}
+        </div>
+
+        {(() => {
+          const discordState = deriveDiscordSyncUiState(dashboardData.discord)
+          return (
+            <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+              <div className="rounded-xl border border-zinc-700/40 bg-zinc-900/45 p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-zinc-300">
+                  <Link2 className="h-4 w-4 text-red-400" /> Link Status
+                </div>
+                <p className="text-base font-semibold text-white">{discordState.linkLabel}</p>
+              </div>
+
+              <div className="rounded-xl border border-zinc-700/40 bg-zinc-900/45 p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-zinc-300">
+                  <ShieldCheck className="h-4 w-4 text-red-400" /> Verification
+                </div>
+                <p className="text-base font-semibold text-white">{discordState.verifiedLabel}</p>
+              </div>
+
+              <div className="rounded-xl border border-zinc-700/40 bg-zinc-900/45 p-4">
+                <div className="mb-2 text-sm font-medium text-zinc-300">Last Sync</div>
+                <p className="text-sm text-zinc-100">{discordState.lastSyncText}</p>
+              </div>
+
+              <div
+                className={`rounded-xl border p-4 ${
+                  discordState.showError
+                    ? 'border-red-500/35 bg-red-500/10'
+                    : 'border-zinc-700/40 bg-zinc-900/45'
+                }`}
+              >
+                <div className="mb-2 text-sm font-medium text-zinc-300">Last Error</div>
+                <p className={`text-sm ${discordState.showError ? 'text-red-200' : 'text-zinc-100'}`}>
+                  {discordState.lastErrorText}
+                </p>
+              </div>
+            </div>
+          )
+        })()}
+      </motion.section>
 
       <ZEClubMagicBento dashboardData={dashboardData} />
     </div>

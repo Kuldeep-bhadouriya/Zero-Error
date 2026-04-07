@@ -31,7 +31,23 @@ export const GET = withRequestLogging(
 
       await dbConnect()
 
-      const user = await User.findById(session.user.id).lean()
+      const userRaw = await User.findById(session.user.id).lean()
+      const user = userRaw as {
+        discordId?: string
+        discordUsername?: string
+        discordGlobalName?: string
+        discordAvatar?: string
+        discordSync?: {
+          linkStatus?: string
+          verified?: boolean
+          linkedAt?: Date
+          verifiedAt?: Date
+          lastSyncedAt?: Date
+          lastSyncStatus?: string
+          lastSyncError?: string
+          lastSyncErrorAt?: Date
+        }
+      } | null
       if (!user) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 })
       }

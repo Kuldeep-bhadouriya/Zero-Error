@@ -72,6 +72,8 @@ describe('internal discord sync routes', () => {
     process.env.INTERNAL_SERVICE_TOKEN = 'internal-service-token'
     process.env.INTERNAL_SIGNING_SECRET = 'internal-signing-secret'
     process.env.INTERNAL_REQUEST_MAX_AGE_SECONDS = '300'
+    process.env.DISCORD_RECONCILE_ENABLED = 'true'
+    process.env.DISCORD_SYNC_ENABLED = 'true'
   })
 
   it('rejects unauthorized request without service headers', async () => {
@@ -325,10 +327,12 @@ describe('internal discord sync routes', () => {
 
     const userFind = vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
-        lean: vi.fn().mockResolvedValue([
-          { _id: 'u1', discordId: 'd1', rank: 'Rookie' },
-          { _id: 'u2', discordId: 'd2', rank: 'Contender' },
-        ]),
+        sort: vi.fn().mockReturnValue({
+          lean: vi.fn().mockResolvedValue([
+            { _id: 'u1', discordId: 'd1', rank: 'Rookie' },
+            { _id: 'u2', discordId: 'd2', rank: 'Contender' },
+          ]),
+        }),
       }),
     })
 
@@ -364,5 +368,157 @@ describe('internal discord sync routes', () => {
     expect(payload.data.dryRun).toBe(true)
     expect(payload.data.eligibleCount).toBe(2)
     expect(payload.data.mappedUsers).toBe(2)
+    expect(payload.data.mode).toBe('manual')
+  })
+
+  it('returns 429 when claim endpoint is rate limited', async () => {
+    const rateLimitMock = createRateLimitMock()
+    rateLimitMock.checkRateLimit.mockResolvedValueOnce({
+      success: false,
+      limit: 120,
+      remaining: 0,
+      reset: Math.ceil(Date.now() / 1000) + 60,
+    })
+
+    vi.doMock('@/app/api/auth/[...nextauth]/route', () => ({ auth: vi.fn().mockResolvedValue(null) }))
+    vi.doMock('@/lib/logger', createLoggerMock)
+    vi.doMock('@/lib/rate-limit', () => rateLimitMock)
+    vi.doMock('@/lib/mongodb', () => ({ default: vi.fn().mockResolvedValue(undefined) }))
+    vi.doMock('@/models/discordSyncJob', () => ({ default: { findOneAndUpdate: vi.fn() } }))
+
+    const { POST } = await import('@/app/api/internal/discord-sync/jobs/claim/route')
+
+    const body = JSON.stringify({ workerId: 'worker-1', limit: 1 })
+    const path = '/api/internal/discord-sync/jobs/claim'
+    const headers = buildInternalHeaders({ method: 'POST', path, body })
+
+    const response = await POST(
+      new Request(`http://localhost${path}`, {
+        method: 'POST',
+        body,
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+        },
+      }),
+      {} as never
+    )
+
+    expect(response.status).toBe(429)
+    await expect(response.json()).resolves.toMatchObject({
+      success: false,
+      error: 'Too many requests. Please try again later.',
+    })
+  })
+
+  it('returns reconcile scan candidates for valid internal request', async () => {
+    const guildFindOne = vi.fn().mockReturnValue({
+      lean: vi.fn().mockResolvedValue({
+        guildId: 'guild-1',
+        rankRoleMappings: [
+          { rank: 'Rookie', roleId: 'role-1', enabled: true },
+          { rank: 'Contender', roleId: 'role-2', enabled: true },
+        ],
+      }),
+    })
+
+    const userQuery = {
+      limit: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue([{ _id: 'u1', discordId: 'd1', rank: 'Rookie' }]),
+    }
+
+    const userFind = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        sort: vi.fn().mockReturnValue(userQuery),
+      }),
+    })
+
+    vi.doMock('@/app/api/auth/[...nextauth]/route', () => ({ auth: vi.fn().mockResolvedValue(null) }))
+    vi.doMock('@/lib/logger', createLoggerMock)
+    vi.doMock('@/lib/rate-limit', () => createRateLimitMock())
+    vi.doMock('@/lib/mongodb', () => ({ default: vi.fn().mockResolvedValue(undefined) }))
+    vi.doMock('@/models/discordGuildConfig', () => ({ default: { findOne: guildFindOne } }))
+    vi.doMock('@/models/user', () => ({ default: { find: userFind } }))
+
+    const { POST } = await import('@/app/api/internal/discord-sync/reconcile/scan/route')
+
+    const body = JSON.stringify({ guildId: 'guild-1', limit: 10 })
+    const path = '/api/internal/discord-sync/reconcile/scan'
+    const headers = buildInternalHeaders({ method: 'POST', path, body })
+
+    const response = await POST(
+      new Request(`http://localhost${path}`, {
+        method: 'POST',
+        body,
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+        },
+      }),
+      {} as never
+    )
+
+    expect(response.status).toBe(200)
+    const payload = await response.json()
+    expect(payload.success).toBe(true)
+    expect(payload.data.scannedUsers).toBe(1)
+    expect(payload.data.candidates).toHaveLength(1)
+    expect(payload.data.candidates[0]).toMatchObject({
+      userId: 'u1',
+      discordId: 'd1',
+      expectedRoleId: 'role-1',
+    })
+  })
+
+  it('reports skipped candidates when role mapping is missing', async () => {
+    const guildFindOne = vi.fn().mockReturnValue({
+      lean: vi.fn().mockResolvedValue({
+        guildId: 'guild-1',
+        rankRoleMappings: [{ rank: 'Rookie', roleId: 'role-1', enabled: true }],
+      }),
+    })
+
+    const userQuery = {
+      limit: vi.fn().mockReturnThis(),
+      lean: vi.fn().mockResolvedValue([{ _id: 'u1', discordId: 'd1', rank: 'Vanguard' }]),
+    }
+
+    const userFind = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        sort: vi.fn().mockReturnValue(userQuery),
+      }),
+    })
+
+    vi.doMock('@/app/api/auth/[...nextauth]/route', () => ({ auth: vi.fn().mockResolvedValue(null) }))
+    vi.doMock('@/lib/logger', createLoggerMock)
+    vi.doMock('@/lib/rate-limit', () => createRateLimitMock())
+    vi.doMock('@/lib/mongodb', () => ({ default: vi.fn().mockResolvedValue(undefined) }))
+    vi.doMock('@/models/discordGuildConfig', () => ({ default: { findOne: guildFindOne } }))
+    vi.doMock('@/models/user', () => ({ default: { find: userFind } }))
+
+    const { POST } = await import('@/app/api/internal/discord-sync/reconcile/scan/route')
+
+    const body = JSON.stringify({ guildId: 'guild-1', limit: 10 })
+    const path = '/api/internal/discord-sync/reconcile/scan'
+    const headers = buildInternalHeaders({ method: 'POST', path, body })
+
+    const response = await POST(
+      new Request(`http://localhost${path}`, {
+        method: 'POST',
+        body,
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+        },
+      }),
+      {} as never
+    )
+
+    expect(response.status).toBe(200)
+    const payload = await response.json()
+    expect(payload.success).toBe(true)
+    expect(payload.data.scannedUsers).toBe(1)
+    expect(payload.data.candidates).toHaveLength(0)
+    expect(payload.data.skippedMissingMapping).toBe(1)
   })
 })

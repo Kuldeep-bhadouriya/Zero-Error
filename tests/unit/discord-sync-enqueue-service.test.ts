@@ -26,9 +26,14 @@ function makeUser(overrides: Record<string, unknown> = {}) {
 }
 
 describe('discordSyncEnqueueService', () => {
+  const envBackup = { ...process.env }
+
   beforeEach(() => {
     vi.resetModules()
     vi.clearAllMocks()
+    process.env = { ...envBackup }
+    process.env.DISCORD_SYNC_ENABLED = 'true'
+    process.env.DISCORD_SYNC_DRY_RUN = 'false'
   })
 
   it('skips when rank did not change', async () => {
@@ -55,6 +60,75 @@ describe('discordSyncEnqueueService', () => {
     expect(result.enqueuedCount).toBe(0)
     expect(result.skippedReasons).toContain('rank_unchanged')
     expect(findGuildConfigs).not.toHaveBeenCalled()
+  })
+
+  it('skips enqueue when global sync flag is disabled', async () => {
+    process.env.DISCORD_SYNC_ENABLED = 'false'
+
+    const findGuildConfigs = vi.fn()
+    const createJob = vi.fn()
+
+    vi.doMock('@/models/discordGuildConfig', () => ({
+      default: { find: findGuildConfigs },
+    }))
+    vi.doMock('@/models/discordSyncJob', () => ({
+      default: { findOne: vi.fn(), create: createJob },
+    }))
+    vi.doMock('@/lib/logger', createLoggerMock)
+
+    const { enqueueDiscordSyncJobsForRankChange } = await import(
+      '@/lib/services/discordSyncEnqueueService'
+    )
+
+    const result = await enqueueDiscordSyncJobsForRankChange({
+      user: makeUser({ rank: 'Contender' }),
+      previousRank: 'Rookie',
+      sourceEventId: 'mission-approve:sub-1',
+    })
+
+    expect(result.enqueuedCount).toBe(0)
+    expect(result.skippedReasons).toContain('sync_disabled_by_flag')
+    expect(findGuildConfigs).not.toHaveBeenCalled()
+    expect(createJob).not.toHaveBeenCalled()
+  })
+
+  it('skips enqueue when dry-run flag is enabled', async () => {
+    process.env.DISCORD_SYNC_DRY_RUN = 'true'
+
+    const findGuildConfigs = vi.fn().mockReturnValue({
+      lean: vi.fn().mockResolvedValue([
+        {
+          guildId: 'guild-1',
+          rankRoleMappings: [
+            { rank: 'Contender', roleId: 'role-contender', enabled: true },
+          ],
+        },
+      ]),
+    })
+
+    const createJob = vi.fn()
+
+    vi.doMock('@/models/discordGuildConfig', () => ({
+      default: { find: findGuildConfigs },
+    }))
+    vi.doMock('@/models/discordSyncJob', () => ({
+      default: { findOne: vi.fn().mockResolvedValue(null), create: createJob },
+    }))
+    vi.doMock('@/lib/logger', createLoggerMock)
+
+    const { enqueueDiscordSyncJobsForRankChange } = await import(
+      '@/lib/services/discordSyncEnqueueService'
+    )
+
+    const result = await enqueueDiscordSyncJobsForRankChange({
+      user: makeUser({ rank: 'Contender' }),
+      previousRank: 'Rookie',
+      sourceEventId: 'mission-approve:sub-1',
+    })
+
+    expect(result.enqueuedCount).toBe(0)
+    expect(result.skippedReasons).toContain('dry_run_enabled:guild-1')
+    expect(createJob).not.toHaveBeenCalled()
   })
 
   it('skips when user is not verified linked', async () => {

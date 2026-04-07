@@ -463,6 +463,18 @@ describe('public API cache routes', () => {
         progressToNextRank: 5,
         nextRankPoints: 500,
         currentRankPoints: 10,
+        discordId: 'discord-user-1',
+        discordUsername: 'ze_discord',
+        discordGlobalName: 'ZE Discord',
+        discordAvatar: 'https://cdn.discordapp.com/avatars/discord-user-1/avatar.png',
+        discordSync: {
+          linkStatus: 'linked_verified',
+          verified: true,
+          lastSyncedAt: new Date('2026-04-01T12:00:00.000Z'),
+          lastSyncStatus: 'succeeded',
+          lastSyncError: null,
+          lastSyncErrorAt: null,
+        },
       }),
     }
 
@@ -511,6 +523,23 @@ describe('public API cache routes', () => {
       season: {
         seasonNumber: 3,
         name: 'Season 3',
+      },
+      discord: {
+        linked: true,
+        verified: true,
+        eligibleForRoleSync: true,
+        profile: {
+          username: 'ze_discord',
+          globalName: 'ZE Discord',
+          avatar: 'https://cdn.discordapp.com/avatars/discord-user-1/avatar.png',
+        },
+        sync: {
+          linkStatus: 'linked_verified',
+          lastSyncedAt: '2026-04-01T12:00:00.000Z',
+          lastSyncStatus: 'succeeded',
+          lastSyncError: null,
+          lastSyncErrorAt: null,
+        },
       },
     })
   })

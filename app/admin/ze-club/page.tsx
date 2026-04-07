@@ -11,8 +11,9 @@ import UserRoleManager from '@/components/admin/UserRoleManager'
 import RedemptionManager from '@/components/admin/RedemptionManager'
 import RewardManager from '@/components/admin/RewardManager'
 import SeasonManager from '@/components/admin/SeasonManager'
+import DiscordSyncManager from '@/components/admin/DiscordSyncManager'
 import { motion } from 'framer-motion'
-import { Shield, Zap, Video, Calendar, ListChecks, Megaphone, Target, Users, Menu, X, Gift, Award, CalendarClock } from 'lucide-react'
+import { Shield, Zap, Video, Calendar, ListChecks, Megaphone, Target, Users, Menu, X, Gift, Award, CalendarClock, Link2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { MenuItem, MenuContainer } from '@/components/ui/fluid-menu'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -70,6 +71,7 @@ export default function AdminZEClubPage() {
     { id: 'rewards', label: 'Rewards', icon: Award, description: 'Create & manage rewards' },
     { id: 'events', label: 'Events', icon: Calendar, description: 'Manage events' },
     { id: 'announcements', label: 'Announcements', icon: Megaphone, description: 'Post announcements' },
+    { id: 'discord-sync', label: 'Discord Sync', icon: Link2, description: 'Inspect and recover sync failures' },
     { id: 'video', label: 'Background Video', icon: Video, description: 'Update hero video' },
     { id: 'users', label: 'User Roles', icon: Users, description: 'Manage admin roles' },
   ]
@@ -90,6 +92,8 @@ export default function AdminZEClubPage() {
         return <EventManager />
       case 'announcements':
         return <AnnouncementManager />
+      case 'discord-sync':
+        return <DiscordSyncManager />
       case 'video':
         return <HeroMediaManager />
       case 'users':

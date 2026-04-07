@@ -7,6 +7,7 @@ This package runs a stateless Discord.js v14 worker that:
 3. Removes existing rank roles.
 4. Assigns the expected rank role.
 5. Marks jobs complete/fail with retry metadata.
+6. Optionally runs periodic drift reconciliation (expected rank role vs actual Discord roles).
 
 The website remains on Vercel. This worker is intended for Railway, Fly.io, or a VM.
 
@@ -47,6 +48,7 @@ pnpm --dir bot start
 
 - `dev`: start worker in watch mode via `tsx watch`
 - `worker`: run worker once via `tsx`
+- `reconcile`: run one-off drift reconciliation scan (supports targeted user + dry-run)
 - `build`: compile TypeScript to `dist/`
 - `start`: run compiled worker
 - `typecheck`: run TypeScript checks without emit
@@ -57,6 +59,8 @@ pnpm --dir bot start
 - `INTERNAL_API_BASE_URL`: Website base URL, e.g. `https://your-site.vercel.app`.
 - `INTERNAL_SERVICE_TOKEN`: Must match website `INTERNAL_SERVICE_TOKEN`.
 - `INTERNAL_SIGNING_SECRET`: Must match website `INTERNAL_SIGNING_SECRET`.
+- `DISCORD_SYNC_ENABLED`: Global sync switch for claim + role mutation paths.
+- `DISCORD_SYNC_DRY_RUN`: Global dry-run switch. Jobs complete with dry-run notes and no Discord mutation.
 - `DISCORD_WORKER_ID`: Worker identity sent to claim endpoint.
 - `DISCORD_SYNC_GUILD_ID`: Optional; if set, worker only claims jobs for one guild.
 - `DISCORD_CLAIM_BATCH_SIZE`: Number of jobs per claim request.
@@ -65,7 +69,23 @@ pnpm --dir bot start
 - `DISCORD_RETRY_BASE_SECONDS`: Exponential retry base.
 - `DISCORD_RETRY_MAX_SECONDS`: Max retry delay in seconds.
 - `DISCORD_CLAIM_ERROR_BACKOFF_MS`: Delay after claim API failures.
+- `DISCORD_RECONCILE_ENABLED`: Enable periodic reconciliation loop inside worker.
+- `DISCORD_RECONCILE_INTERVAL_MS`: Interval between scheduled reconcile scans.
+- `DISCORD_RECONCILE_DRY_RUN`: Reconcile-specific dry-run override (falls back to `DISCORD_SYNC_DRY_RUN`).
+- `DISCORD_RECONCILE_TARGET_USER_ID`: Optional user id for targeted one-off reconcile runs.
+- `DISCORD_RECONCILE_SCAN_LIMIT`: Max candidates fetched per scheduled scan.
 - `LOG_LEVEL`: `debug`, `info`, `warn`, `error`.
+
+## Reconciliation Modes
+
+- Scheduled run: set `DISCORD_RECONCILE_ENABLED=true` and worker periodically scans candidates, compares actual Discord roles, and enqueues fixes for drift.
+- Targeted user run: set `DISCORD_RECONCILE_TARGET_USER_ID=<userId>` and run `pnpm --dir bot reconcile`.
+- Dry-run: set `DISCORD_RECONCILE_DRY_RUN=true` to report metrics without queueing correction jobs.
+
+## Rollout Safety
+
+- Do not enable production sync until staging dry-run and limited cohort checks pass.
+- Recommended sequence: `DISCORD_SYNC_ENABLED=true` + `DISCORD_SYNC_DRY_RUN=true` first, then disable dry-run for limited cohort, then full rollout.
 
 ## Deployment Notes
 

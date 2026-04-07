@@ -8,7 +8,8 @@ import {
 import type { Logger } from 'pino'
 import type { WorkerConfig } from './config.js'
 import { InternalApiClient } from './internalApi.js'
-import type { ClaimedSyncJob } from './types.js'
+import { evaluateRoleDrift } from './reconcileDrift.js'
+import type { ClaimedSyncJob, ReconcileRunMetrics } from './types.js'
 import { calculateRetryDelaySeconds, createCorrelationId, sleep } from './utils.js'
 
 const NON_RETRIABLE_DISCORD_ERROR_CODES = new Set([10007, 10011, 50001, 50013])
@@ -17,6 +18,8 @@ export class DiscordRoleSyncWorker {
   private readonly client: Client
   private keepRunning = true
   private loopPromise: Promise<void> | null = null
+  private nextReconcileRunAt = 0
+  private syncDisabledLogged = false
 
   constructor(
     private readonly config: WorkerConfig,
@@ -45,18 +48,31 @@ export class DiscordRoleSyncWorker {
     })
   }
 
-  async start() {
+  async start(options?: { startLoop?: boolean }) {
     await this.client.login(this.config.discordBotToken)
     await this.waitForReady()
+
+    if (this.config.reconcileEnabled) {
+      this.nextReconcileRunAt = Date.now()
+    }
 
     this.logger.info(
       {
         workerId: this.config.workerId,
         guildScope: this.config.guildId || null,
+        syncEnabled: this.config.syncEnabled,
+        syncDryRun: this.config.syncDryRun,
         batchSize: this.config.claimBatchSize,
+        reconcileEnabled: this.config.reconcileEnabled,
+        reconcileIntervalMs: this.config.reconcileIntervalMs,
+        reconcileDryRun: this.config.reconcileDryRun,
       },
       'Discord sync worker started'
     )
+
+    if (options?.startLoop === false) {
+      return
+    }
 
     this.loopPromise = this.runLoop()
     return this.loopPromise
@@ -85,6 +101,45 @@ export class DiscordRoleSyncWorker {
 
   private async runLoop() {
     while (this.keepRunning) {
+      if (this.config.reconcileEnabled && Date.now() >= this.nextReconcileRunAt) {
+        const scheduledCorrelationId = createCorrelationId('reconcile-scheduled')
+
+        try {
+          await this.runReconciliationCycle({
+            mode: 'scheduled',
+            dryRun: this.config.reconcileDryRun,
+            correlationId: scheduledCorrelationId,
+          })
+        } catch (error) {
+          this.logger.error(
+            {
+              err: error,
+              correlationId: scheduledCorrelationId,
+            },
+            'Scheduled reconcile cycle failed'
+          )
+        } finally {
+          this.nextReconcileRunAt = Date.now() + this.config.reconcileIntervalMs
+        }
+      }
+
+      if (!this.config.syncEnabled) {
+        if (!this.syncDisabledLogged) {
+          this.syncDisabledLogged = true
+          this.logger.info(
+            {
+              workerId: this.config.workerId,
+            },
+            'Sync loop idle because DISCORD_SYNC_ENABLED is false'
+          )
+        }
+
+        await sleep(this.config.pollIntervalMs)
+        continue
+      }
+
+      this.syncDisabledLogged = false
+
       const claimCorrelationId = createCorrelationId('claim')
 
       try {
@@ -125,18 +180,155 @@ export class DiscordRoleSyncWorker {
     }
   }
 
+  async runReconciliationCycle(params: {
+    mode: 'scheduled' | 'targeted'
+    dryRun: boolean
+    correlationId?: string
+    targetUserId?: string
+  }): Promise<ReconcileRunMetrics> {
+    const correlationId = params.correlationId || createCorrelationId(`reconcile-${params.mode}`)
+    const effectiveDryRun = params.dryRun || this.config.syncDryRun || !this.config.syncEnabled
+
+    if (!this.config.guildId) {
+      const metrics: ReconcileRunMetrics = {
+        mode: params.mode,
+        dryRun: effectiveDryRun,
+        guildId: 'unknown',
+        scopedUserId: params.targetUserId || null,
+        scannedUsers: 0,
+        mismatchesFound: 0,
+        correctedCount: 0,
+        failedCount: 1,
+      }
+
+      this.logger.error(
+        {
+          correlationId,
+          mode: params.mode,
+        },
+        'Reconcile run skipped because DISCORD_SYNC_GUILD_ID is not configured'
+      )
+
+      return metrics
+    }
+
+    const scanResult = await this.apiClient.scanReconcileCandidates({
+      guildId: this.config.guildId,
+      userId: params.targetUserId,
+      limit: params.targetUserId ? undefined : this.config.reconcileScanLimit,
+      correlationId,
+    })
+
+    const metrics: ReconcileRunMetrics = {
+      mode: params.mode,
+      dryRun: effectiveDryRun,
+      guildId: this.config.guildId,
+      scopedUserId: params.targetUserId || null,
+      scannedUsers: scanResult.scannedUsers,
+      mismatchesFound: 0,
+      correctedCount: 0,
+      failedCount: 0,
+    }
+
+    for (const candidate of scanResult.candidates) {
+      try {
+        const guild = await this.client.guilds.fetch(candidate.guildId)
+        const member = await guild.members.fetch(candidate.discordId)
+        const actualRoleIds = Array.from(member.roles.cache.keys())
+
+        const drift = evaluateRoleDrift({
+          expectedRoleId: candidate.expectedRoleId,
+          rankRoleIds: candidate.rankRoleIds,
+          actualRoleIds,
+        })
+
+        if (!drift.hasDrift) {
+          continue
+        }
+
+        metrics.mismatchesFound += 1
+
+        if (effectiveDryRun) {
+          continue
+        }
+
+        const enqueueResult = await this.apiClient.executeReconcile({
+          guildId: candidate.guildId,
+          userId: candidate.userId,
+          dryRun: false,
+          mode: 'targeted',
+          reason: `${params.mode}_drift_repair`,
+          correlationId,
+        })
+
+        if (enqueueResult.queuedJobs > 0) {
+          metrics.correctedCount += 1
+        }
+      } catch (error) {
+        metrics.failedCount += 1
+
+        this.logger.warn(
+          {
+            err: error,
+            correlationId,
+            candidateUserId: candidate.userId,
+            candidateDiscordId: candidate.discordId,
+            guildId: candidate.guildId,
+          },
+          'Failed processing reconcile candidate'
+        )
+      }
+    }
+
+    this.logger.info(
+      {
+        correlationId,
+        mode: metrics.mode,
+        dryRun: metrics.dryRun,
+        guildId: metrics.guildId,
+        scopedUserId: metrics.scopedUserId,
+        scannedUsers: metrics.scannedUsers,
+        mismatchesFound: metrics.mismatchesFound,
+        correctedCount: metrics.correctedCount,
+        failedCount: metrics.failedCount,
+      },
+      'Discord reconcile cycle completed'
+    )
+
+    return metrics
+  }
+
   private async processJob(job: ClaimedSyncJob) {
     const correlationId = job.correlationId || createCorrelationId(`job-${job.id}`)
 
     try {
       const member = await this.resolveMember(job)
-      await this.syncMemberRankRoles(member, job, correlationId)
+      const isDryRun = this.config.syncDryRun || !this.config.syncEnabled
+      if (!isDryRun) {
+        await this.syncMemberRankRoles(member, job, correlationId)
+      } else {
+        this.logger.info(
+          {
+            correlationId,
+            jobId: job.id,
+            guildId: job.guildId,
+            discordId: job.discordId,
+            targetRoleId: job.targetRoleId,
+            targetRank: job.targetRank,
+            syncEnabled: this.config.syncEnabled,
+            syncDryRun: this.config.syncDryRun,
+          },
+          'Dry-run mode active, skipping Discord role mutation'
+        )
+      }
 
       await this.apiClient.completeJob({
         jobId: job.id,
         correlationId,
         payload: {
-          note: `Assigned role ${job.targetRoleId} for rank ${job.targetRank}`,
+          note: isDryRun
+            ? `Dry-run: would assign role ${job.targetRoleId} for rank ${job.targetRank}`
+            : `Assigned role ${job.targetRoleId} for rank ${job.targetRank}`,
         },
       })
 

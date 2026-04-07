@@ -9,6 +9,7 @@
     "bot:dev": "pnpm --dir bot dev",
     "bot:build": "pnpm --dir bot build",
     "bot:start": "pnpm --dir bot start",
+    "bot:reconcile": "pnpm --dir bot reconcile",
     "bot:typecheck": "pnpm --dir bot typecheck",
     "seo:check": "node scripts/seo-check.mjs",
     "seo:check:prod": "SEO_BASE_URL=https://zeroerroresports.com node scripts/seo-check.mjs",

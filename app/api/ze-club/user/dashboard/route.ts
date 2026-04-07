@@ -22,6 +22,18 @@ type DashboardUser = {
   progressToNextRank?: number
   nextRankPoints?: number
   currentRankPoints?: number
+  discordId?: string
+  discordUsername?: string
+  discordGlobalName?: string
+  discordAvatar?: string
+  discordSync?: {
+    linkStatus?: string
+    verified?: boolean
+    lastSyncedAt?: Date
+    lastSyncStatus?: string
+    lastSyncError?: string
+    lastSyncErrorAt?: Date
+  }
 }
 
 /**
@@ -60,6 +72,11 @@ export async function GET() {
           progressToNextRank: 1,
           nextRankPoints: 1,
           currentRankPoints: 1,
+          discordId: 1,
+          discordUsername: 1,
+          discordGlobalName: 1,
+          discordAvatar: 1,
+          discordSync: 1,
         }
       ).lean<DashboardUser | null>(),
     ])
@@ -96,6 +113,28 @@ export async function GET() {
         seasonNumber: activeSeason.seasonNumber,
         name: activeSeason.name,
       } : null,
+      discord: {
+        linked:
+          Boolean(user.discordId) &&
+          (user.discordSync?.linkStatus || 'unlinked') !== 'unlinked',
+        verified: Boolean(user.discordSync?.verified),
+        eligibleForRoleSync:
+          Boolean(user.discordId) &&
+          Boolean(user.discordSync?.verified) &&
+          (user.discordSync?.linkStatus || 'unlinked') === 'linked_verified',
+        profile: {
+          username: user.discordUsername || null,
+          globalName: user.discordGlobalName || null,
+          avatar: user.discordAvatar || null,
+        },
+        sync: {
+          linkStatus: user.discordSync?.linkStatus || 'unlinked',
+          lastSyncedAt: user.discordSync?.lastSyncedAt || null,
+          lastSyncStatus: user.discordSync?.lastSyncStatus || 'idle',
+          lastSyncError: user.discordSync?.lastSyncError || null,
+          lastSyncErrorAt: user.discordSync?.lastSyncErrorAt || null,
+        },
+      },
     }
 
     return NextResponse.json(dashboardData, {

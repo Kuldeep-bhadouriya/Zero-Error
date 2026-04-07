@@ -11,6 +11,11 @@ import User from '@/models/user'
 
 const ROUTE_PATH = '/api/user/discord/link/callback'
 
+function requestPrefersHtml(req: Request) {
+  const acceptHeader = req.headers.get('accept') || ''
+  return acceptHeader.includes('text/html')
+}
+
 export const GET = withRequestLogging(
   ROUTE_PATH,
   withErrorHandling(
@@ -107,10 +112,17 @@ export const GET = withRequestLogging(
 
       await currentUser.save()
 
+      const redirectTo = stateResult.redirectTo || '/ze-club'
+      if (requestPrefersHtml(req)) {
+        const redirectUrl = new URL(redirectTo, req.url)
+        redirectUrl.searchParams.set('discordLinked', '1')
+        return NextResponse.redirect(redirectUrl)
+      }
+
       return NextResponse.json({
         success: true,
         message: 'Discord account linked successfully',
-        redirectTo: stateResult.redirectTo || '/ze-club',
+        redirectTo,
         linked: true,
         verified: true,
         eligibleForRoleSync: true,

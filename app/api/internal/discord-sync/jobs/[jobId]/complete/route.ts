@@ -57,7 +57,7 @@ export const POST = withRequestLogging(
 
       await dbConnect()
 
-      const completedJob = await DiscordSyncJob.findOneAndUpdate(
+      const completedJobRaw = await DiscordSyncJob.findOneAndUpdate(
         { _id: parsedId.data, status: 'processing' },
         {
           $set: {
@@ -71,6 +71,11 @@ export const POST = withRequestLogging(
         },
         { new: true }
       ).lean()
+      const completedJob = completedJobRaw as {
+        _id: { toString(): string }
+        status: string
+        completedAt?: Date
+      } | null
 
       if (!completedJob) {
         return NextResponse.json(

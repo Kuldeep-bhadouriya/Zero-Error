@@ -122,8 +122,23 @@ async function validateInternalServiceRequest(req: Request) {
   const nonce = req.headers.get(INTERNAL_NONCE_HEADER)
   const serviceName = req.headers.get(INTERNAL_SERVICE_NAME_HEADER) || 'discord-sync-worker'
   const correlationId = req.headers.get(INTERNAL_CORRELATION_ID_HEADER) || crypto.randomUUID()
+  const route = new URL(req.url).pathname
 
   if (!token || !signature || !timestampHeader || !nonce) {
+    logger.warn(
+      {
+        route,
+        serviceName,
+        correlationId,
+        missingHeaders: {
+          token: !token,
+          signature: !signature,
+          timestamp: !timestampHeader,
+          nonce: !nonce,
+        },
+      },
+      'Internal service auth missing required headers'
+    )
     return {
       ok: false as const,
       response: errorResponse('Unauthorized', 401),
@@ -131,6 +146,14 @@ async function validateInternalServiceRequest(req: Request) {
   }
 
   if (token !== expectedToken) {
+    logger.warn(
+      {
+        route,
+        serviceName,
+        correlationId,
+      },
+      'Internal service auth token mismatch'
+    )
     return {
       ok: false as const,
       response: errorResponse('Unauthorized', 401),
@@ -139,6 +162,14 @@ async function validateInternalServiceRequest(req: Request) {
 
   const timestamp = Number(timestampHeader)
   if (!Number.isInteger(timestamp)) {
+    logger.warn(
+      {
+        route,
+        serviceName,
+        correlationId,
+      },
+      'Internal service auth timestamp is invalid'
+    )
     return {
       ok: false as const,
       response: errorResponse('Unauthorized', 401),
@@ -148,13 +179,22 @@ async function validateInternalServiceRequest(req: Request) {
   const maxAgeSeconds = getInternalRequestWindowSeconds()
   const nowSeconds = Math.floor(Date.now() / 1000)
   if (Math.abs(nowSeconds - timestamp) > maxAgeSeconds) {
+    logger.warn(
+      {
+        route,
+        serviceName,
+        correlationId,
+        timestampSkewSeconds: nowSeconds - timestamp,
+      },
+      'Internal service auth timestamp expired'
+    )
     return {
       ok: false as const,
       response: errorResponse('Request timestamp expired', 401),
     }
   }
 
-  const path = new URL(req.url).pathname
+  const path = route
   const requestBody = await req.clone().text()
   const expectedSignature = buildInternalServiceSignature({
     timestamp,
@@ -166,6 +206,15 @@ async function validateInternalServiceRequest(req: Request) {
   })
 
   if (!safeCompareSignature(signature, expectedSignature)) {
+    logger.warn(
+      {
+        route,
+        serviceName,
+        correlationId,
+        signatureLength: signature.length,
+      },
+      'Internal service auth signature validation failed'
+    )
     return {
       ok: false as const,
       response: errorResponse('Unauthorized', 401),
@@ -175,6 +224,14 @@ async function validateInternalServiceRequest(req: Request) {
   const replayKey = `${serviceName}:${timestamp}:${nonce}`
   const nonceMarked = markReplayNonce(replayKey, maxAgeSeconds)
   if (!nonceMarked) {
+    logger.warn(
+      {
+        route,
+        serviceName,
+        correlationId,
+      },
+      'Internal service auth replay detected'
+    )
     return {
       ok: false as const,
       response: errorResponse('Replay detected', 401),

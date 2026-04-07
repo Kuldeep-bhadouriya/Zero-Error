@@ -10,16 +10,14 @@ import { buildRateLimitHeaders, checkRateLimit, getRateLimitRule } from '@/lib/r
 import dbConnect from '@/lib/mongodb'
 import logger from '@/lib/logger'
 import { getDiscordSyncFlags } from '@/lib/discord-sync-flags'
-import { executeDiscordReconcile } from '@/lib/services/discordReconcileService'
+import { listDiscordReconcileCandidates } from '@/lib/services/discordReconcileService'
 
-const ROUTE_PATH = '/api/internal/discord-sync/reconcile'
+const ROUTE_PATH = '/api/internal/discord-sync/reconcile/scan'
 
-const reconcileBodySchema = z.object({
+const scanBodySchema = z.object({
   guildId: z.string().trim().min(1).max(120),
   userId: objectIdSchema.optional(),
-  dryRun: z.boolean().default(true),
-  mode: z.enum(['scheduled', 'targeted', 'manual']).optional(),
-  reason: z.string().trim().max(200).optional(),
+  limit: z.number().int().min(1).max(500).optional(),
 })
 
 export const POST = withRequestLogging(
@@ -27,7 +25,7 @@ export const POST = withRequestLogging(
   withErrorHandling(
     ROUTE_PATH,
     withInternalServiceAuth(async (req, _context, service) => {
-      const rateRule = getRateLimitRule('apiInternalDiscordSyncReconcile')
+      const rateRule = getRateLimitRule('apiInternalDiscordSyncReconcileScan')
       const rateResult = await checkRateLimit({
         key: `service:${service.serviceName}`,
         ...rateRule,
@@ -47,7 +45,7 @@ export const POST = withRequestLogging(
         return NextResponse.json({ error: 'Invalid request payload', success: false }, { status: 400 })
       }
 
-      const parsedBody = reconcileBodySchema.safeParse(body)
+      const parsedBody = scanBodySchema.safeParse(body)
       if (!parsedBody.success) {
         return NextResponse.json({ ...badRequestFromZod(parsedBody.error), success: false }, { status: 400 })
       }
@@ -65,16 +63,11 @@ export const POST = withRequestLogging(
 
       await dbConnect()
 
-      const { guildId, userId, dryRun, mode, reason } = parsedBody.data
-      let summary
+      const { guildId, userId, limit } = parsedBody.data
+
+      let result
       try {
-        summary = await executeDiscordReconcile({
-          guildId,
-          userId,
-          dryRun,
-          mode,
-          correlationId: service.correlationId,
-        })
+        result = await listDiscordReconcileCandidates({ guildId, userId, limit })
       } catch (error) {
         if (
           typeof error === 'object' &&
@@ -96,22 +89,17 @@ export const POST = withRequestLogging(
           serviceName: service.serviceName,
           correlationId: service.correlationId,
           guildId,
-          dryRun,
-          mode: summary.mode,
-          reason: reason || null,
-          scopedUserId: summary.scopedUserId,
-          eligibleCount: summary.eligibleCount,
-          mappedUsers: summary.mappedUsers,
-          queuedJobs: summary.queuedJobs,
-          skippedActiveJob: summary.skippedActiveJob,
-          skippedMissingMapping: summary.skippedMissingMapping,
+          scopedUserId: result.scopedUserId,
+          scannedUsers: result.scannedUsers,
+          candidateCount: result.candidates.length,
+          skippedMissingMapping: result.skippedMissingMapping,
         },
-        'Discord reconcile endpoint executed'
+        'Discord reconcile scan endpoint executed'
       )
 
       return NextResponse.json({
         success: true,
-        data: summary,
+        data: result,
       })
     })
   )

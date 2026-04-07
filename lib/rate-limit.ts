@@ -73,6 +73,16 @@ export const RATE_LIMIT_RULES = {
     limit: 30,
     windowSeconds: 60,
   },
+  apiInternalDiscordSyncReconcileScan: {
+    prefix: 'rl:api:internal:discord-sync:reconcile:scan',
+    limit: 60,
+    windowSeconds: 60,
+  },
+  apiInternalDiscordActivityIngest: {
+    prefix: 'rl:api:internal:discord-activity:ingest',
+    limit: 120,
+    windowSeconds: 60,
+  },
 } as const satisfies Record<string, RateLimitRule>
 
 export type RateLimitRuleName = keyof typeof RATE_LIMIT_RULES

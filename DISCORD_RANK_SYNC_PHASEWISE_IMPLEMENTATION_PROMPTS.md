@@ -360,17 +360,33 @@ Constraints:
 ---
 
 ## Suggested Environment Variables (Planned)
+Website (Next.js):
+- `INTERNAL_SERVICE_TOKEN`
+- `INTERNAL_SIGNING_SECRET`
+- `INTERNAL_REQUEST_MAX_AGE_SECONDS`
+- `DISCORD_SYNC_ENABLED`
+- `DISCORD_SYNC_DRY_RUN`
+- `DISCORD_RECONCILE_ENABLED`
+- `DISCORD_ACTIVITY_POINTS_ENABLED` (Optional Phase 9, disabled by default)
+
+Bot worker:
 - `DISCORD_BOT_TOKEN`
-- `DISCORD_GUILD_ID`
+- `INTERNAL_API_BASE_URL`
 - `INTERNAL_SERVICE_TOKEN`
 - `INTERNAL_SIGNING_SECRET`
 - `DISCORD_SYNC_ENABLED`
 - `DISCORD_SYNC_DRY_RUN`
+- `DISCORD_SYNC_GUILD_ID`
 - `DISCORD_RECONCILE_ENABLED`
+- `DISCORD_RECONCILE_DRY_RUN`
+- `DISCORD_RECONCILE_INTERVAL_MS`
+- `DISCORD_RECONCILE_TARGET_USER_ID`
+- `DISCORD_RECONCILE_SCAN_LIMIT`
 
 ## Suggested Final Milestone Checklist
 1. All phases complete with tests passing.
-2. Staging dry-run successful with real Discord test server.
-3. Limited cohort rollout completed without critical errors.
-4. Full rollout enabled and monitored.
-5. Post-launch audit confirms role sync reliability and security.
+2. Staging dry-run successful with real Discord test server (sync + reconcile paths).
+3. Limited cohort rollout completed without critical errors (sync mutations enabled, reconcile still controlled).
+4. Reconciliation promoted from dry-run to live corrective mode with stable metrics.
+5. Optional Phase 9 remains disabled by default until anti-abuse checks pass; then limited cohort rollout is validated.
+6. Full rollout enabled and monitored with post-launch audit confirming reliability and security.

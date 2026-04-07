@@ -7,6 +7,8 @@ import type {
   CompleteJobPayload,
   FailJobPayload,
   InternalApiEnvelope,
+  ReconcileExecuteResponse,
+  ReconcileScanResponse,
 } from './types.js'
 
 class InternalApiError extends Error {
@@ -157,6 +159,58 @@ export class InternalApiClient {
       correlationId: params.correlationId,
       body: params.payload,
     })
+  }
+
+  async scanReconcileCandidates(params: {
+    guildId: string
+    userId?: string
+    limit?: number
+    correlationId: string
+  }) {
+    const envelope = await this.signedRequest<InternalApiEnvelope<ReconcileScanResponse>>({
+      path: '/api/internal/discord-sync/reconcile/scan',
+      method: 'POST',
+      correlationId: params.correlationId,
+      body: {
+        guildId: params.guildId,
+        userId: params.userId,
+        limit: params.limit,
+      },
+    })
+
+    if (!envelope.success || !envelope.data) {
+      throw new InternalApiError('Reconcile scan endpoint returned unsuccessful envelope', 500, envelope)
+    }
+
+    return envelope.data
+  }
+
+  async executeReconcile(params: {
+    guildId: string
+    userId?: string
+    dryRun: boolean
+    mode: 'scheduled' | 'targeted' | 'manual'
+    reason?: string
+    correlationId: string
+  }) {
+    const envelope = await this.signedRequest<InternalApiEnvelope<ReconcileExecuteResponse>>({
+      path: '/api/internal/discord-sync/reconcile',
+      method: 'POST',
+      correlationId: params.correlationId,
+      body: {
+        guildId: params.guildId,
+        userId: params.userId,
+        dryRun: params.dryRun,
+        mode: params.mode,
+        reason: params.reason,
+      },
+    })
+
+    if (!envelope.success || !envelope.data) {
+      throw new InternalApiError('Reconcile execute endpoint returned unsuccessful envelope', 500, envelope)
+    }
+
+    return envelope.data
   }
 }
 

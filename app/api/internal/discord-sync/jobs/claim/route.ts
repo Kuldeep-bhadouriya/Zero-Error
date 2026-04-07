@@ -9,6 +9,7 @@ import { badRequestFromZod } from '@/lib/validation'
 import { buildRateLimitHeaders, checkRateLimit, getRateLimitRule } from '@/lib/rate-limit'
 import dbConnect from '@/lib/mongodb'
 import logger from '@/lib/logger'
+import { getDiscordSyncFlags } from '@/lib/discord-sync-flags'
 import DiscordSyncJob from '@/models/discordSyncJob'
 import DiscordGuildConfig from '@/models/discordGuildConfig'
 
@@ -55,10 +56,40 @@ export const POST = withRequestLogging(
       const now = new Date()
       const { workerId, guildId, limit } = parsed.data
       const jobs: Array<Record<string, unknown>> = []
+      const flags = getDiscordSyncFlags()
 
-      const configuredGuilds = await DiscordGuildConfig.find(
+      if (!flags.syncEnabled) {
+        logger.info(
+          {
+            route: ROUTE_PATH,
+            serviceName: service.serviceName,
+            correlationId: service.correlationId,
+            workerId,
+            guildId: guildId || null,
+            reason: 'sync_disabled_by_flag',
+          },
+          'Skipping claim because Discord sync is disabled'
+        )
+
+        return NextResponse.json({
+          success: true,
+          data: {
+            jobs: [],
+            claimedCount: 0,
+          },
+        })
+      }
+
+      const configuredGuildsRaw = await DiscordGuildConfig.find(
         guildId ? { enabled: true, guildId } : { enabled: true }
       ).lean()
+      const configuredGuilds = configuredGuildsRaw as unknown as Array<{
+        guildId: string
+        rankRoleMappings: Array<{
+          enabled: boolean
+          roleId: string
+        }>
+      }>
 
       const rankRoleIdsByGuild = new Map<string, string[]>()
       for (const guildConfig of configuredGuilds) {
@@ -86,7 +117,7 @@ export const POST = withRequestLogging(
           claimFilter.guildId = guildId
         }
 
-        const claimedJob = await DiscordSyncJob.findOneAndUpdate(
+        const claimedJobRaw = await DiscordSyncJob.findOneAndUpdate(
           claimFilter,
           {
             $set: {
@@ -102,6 +133,20 @@ export const POST = withRequestLogging(
             sort: { createdAt: 1 },
           }
         ).lean()
+        const claimedJob = claimedJobRaw as {
+          _id: { toString(): string }
+          userId: { toString(): string }
+          guildId: string
+          discordId: string
+          targetRank: string
+          targetRoleId: string
+          source: string
+          attemptCount: number
+          maxAttempts: number
+          idempotencyKey: string
+          claimedAt?: Date
+          correlationId?: string
+        } | null
 
         if (!claimedJob) {
           break

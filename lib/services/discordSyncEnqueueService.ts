@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import logger from '@/lib/logger'
+import { getDiscordSyncFlags } from '@/lib/discord-sync-flags'
 import DiscordGuildConfig from '@/models/discordGuildConfig'
 import DiscordSyncJob from '@/models/discordSyncJob'
 
@@ -76,6 +77,22 @@ export async function enqueueDiscordSyncJobsForRankChange(
   const userId = input.user._id.toString()
   const correlationId = input.correlationId || `rank-change:${input.sourceEventId}`
   const skippedReasons: string[] = []
+  const flags = getDiscordSyncFlags()
+
+  if (!flags.syncEnabled) {
+    const reason = 'sync_disabled_by_flag'
+    skippedReasons.push(reason)
+    logger.info(
+      {
+        userId,
+        sourceEventId: input.sourceEventId,
+        correlationId,
+        reason,
+      },
+      'Skipped Discord sync enqueue'
+    )
+    return { enqueuedCount: 0, updatedActiveCount: 0, skippedReasons }
+  }
 
   if (!input.previousRank || input.previousRank === input.user.rank) {
     const reason = 'rank_unchanged'
@@ -115,7 +132,15 @@ export async function enqueueDiscordSyncJobsForRankChange(
     ? { enabled: true, guildId: input.user.discordSync.guildId }
     : { enabled: true }
 
-  const guildConfigs = await DiscordGuildConfig.find(guildFilter).lean()
+  const guildConfigsRaw = await DiscordGuildConfig.find(guildFilter).lean()
+  const guildConfigs = guildConfigsRaw as unknown as Array<{
+    guildId: string
+    rankRoleMappings: Array<{
+      enabled: boolean
+      rank: string
+      roleId: string
+    }>
+  }>
 
   if (guildConfigs.length === 0) {
     const reason = 'no_enabled_guild_config'
@@ -149,6 +174,24 @@ export async function enqueueDiscordSyncJobsForRankChange(
           userId,
           guildId: guildConfig.guildId,
           rank: input.user.rank,
+          sourceEventId: input.sourceEventId,
+          correlationId,
+          reason,
+        },
+        'Skipped Discord sync enqueue'
+      )
+      continue
+    }
+
+    if (flags.dryRun) {
+      const reason = `dry_run_enabled:${guildConfig.guildId}`
+      skippedReasons.push(reason)
+      logger.info(
+        {
+          userId,
+          guildId: guildConfig.guildId,
+          targetRank: input.user.rank,
+          targetRoleId: mapping.roleId,
           sourceEventId: input.sourceEventId,
           correlationId,
           reason,
