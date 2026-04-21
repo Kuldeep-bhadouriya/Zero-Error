@@ -83,7 +83,7 @@ const updateCardGlowProperties = (card: HTMLElement, mouseX: number, mouseY: num
 function StatPill({ icon: Icon, label, value }: { icon: any, label: string, value: string | number }) {
   return (
     <div className="rounded-xl border border-red-500/20 bg-gradient-to-br from-white/[0.08] via-white/[0.03] to-transparent p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-      <div className="mb-2 flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.13em] text-zinc-300/90">
+      <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.13em] text-zinc-300/90">
         <span className="flex h-6 w-6 items-center justify-center rounded-md border border-red-400/20 bg-red-500/10 text-red-300">
           <Icon className="h-3.5 w-3.5" />
         </span>
@@ -702,7 +702,7 @@ function ZEClubMagicBento({
 
           .tile-title {
             letter-spacing: 0.14em;
-            font-size: 0.67rem;
+            font-size: 0.78rem;
             font-weight: 600;
             color: rgba(228, 228, 231, 0.92);
           }
@@ -716,14 +716,14 @@ function ZEClubMagicBento({
           }
 
           .card__body-copy {
-            font-size: 0.73rem;
+            font-size: 0.82rem;
             letter-spacing: 0.02em;
             line-height: 1.45;
             color: rgba(212, 212, 216, 0.9);
           }
 
           .card__meta-label {
-            font-size: 0.62rem;
+            font-size: 0.72rem;
             text-transform: uppercase;
             letter-spacing: 0.11em;
             color: rgba(161, 161, 170, 0.94);
@@ -731,14 +731,14 @@ function ZEClubMagicBento({
 
           .card__meta-value {
             margin-top: 0.2rem;
-            font-size: 0.77rem;
+            font-size: 0.9rem;
             font-weight: 560;
             letter-spacing: 0.005em;
             color: rgba(244, 244, 245, 0.98);
           }
 
           .card__chip {
-            font-size: 0.56rem;
+            font-size: 0.66rem;
             font-weight: 600;
             letter-spacing: 0.13em;
           }
@@ -784,7 +784,7 @@ function ZEClubMagicBento({
                 </div>
                 <p className="card__body-copy">Coins ready for reward redemptions.</p>
 
-                <div className="grid grid-cols-2 gap-2 text-[11px] text-zinc-300">
+                <div className="grid grid-cols-2 gap-2 text-xs text-zinc-300">
                   <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2">
                     <p className="card__meta-label">Coin Ratio</p>
                     <p className="card__meta-value">{coinToPointRatio.toFixed(1)}%</p>
@@ -798,7 +798,7 @@ function ZEClubMagicBento({
                 </div>
 
                 <div>
-                  <div className="mb-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-zinc-400">
+                  <div className="mb-1.5 flex items-center justify-between text-xs uppercase tracking-wider text-zinc-400">
                     <span>Milestone Track</span>
                     <span>{coinMilestoneProgress}%</span>
                   </div>
@@ -831,7 +831,7 @@ function ZEClubMagicBento({
                 </div>
                 <p className="card__body-copy">Season XP accumulated so far.</p>
 
-                <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 text-[11px]">
+                <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 text-xs">
                   <div className="mb-1.5 flex items-center justify-between uppercase tracking-wider text-zinc-400">
                     <span>Promotion Track</span>
                     <span>{rankProgress}%</span>
@@ -844,7 +844,7 @@ function ZEClubMagicBento({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 text-[11px] text-zinc-300">
+                <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 text-xs text-zinc-300">
                   <span className="text-zinc-400">Needed for {nextRank} Tier</span>
                   <span className="font-medium text-white">{pointsToNextRank.toLocaleString()}</span>
                 </div>
@@ -857,7 +857,7 @@ function ZEClubMagicBento({
             <>
               <div className="mb-4 flex items-center justify-between gap-3">
                 <span className="tile-title text-sm uppercase text-zinc-300">Rank Progress</span>
-                <span className="rounded-full border border-red-400/30 bg-red-500/10 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-red-200">
+                <span className="rounded-full border border-red-400/30 bg-red-500/10 px-2.5 py-1 text-xs font-medium uppercase tracking-wider text-red-200">
                   Elite Tier
                 </span>
               </div>
@@ -868,14 +868,14 @@ function ZEClubMagicBento({
               </div>
 
               <div className="rounded-xl border border-red-500/20 bg-gradient-to-br from-black/50 via-black/35 to-red-950/20 p-4">
-                <div className="mb-2 text-xs uppercase tracking-wide text-zinc-400">Promotion Intel</div>
+                <div className="mb-2 text-sm uppercase tracking-wide text-zinc-400">Promotion Intel</div>
                 <div className="grid gap-2 text-sm text-zinc-200 sm:grid-cols-2">
                   <div className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2">
-                    <p className="text-[11px] text-zinc-400">Next Tier</p>
+                    <p className="text-xs text-zinc-400">Next Tier</p>
                     <p className="font-medium text-white">{nextRank}</p>
                   </div>
                   <div className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2">
-                    <p className="text-[11px] text-zinc-400">XP Required</p>
+                    <p className="text-xs text-zinc-400">XP Required</p>
                     <p className="font-medium text-white">{pointsToNextRank.toLocaleString()}</p>
                   </div>
                 </div>
@@ -910,7 +910,7 @@ function ZEClubMagicBento({
                       >
                         <div className="mr-3 min-w-0">
                           <span className="block truncate text-sm text-white">{mission.name}</span>
-                          <span className="text-[10px] uppercase tracking-wider text-zinc-400">{mission.difficulty}</span>
+                          <span className="text-xs uppercase tracking-wider text-zinc-400">{mission.difficulty}</span>
                         </div>
                         <span className="shrink-0 rounded-full border border-amber-300/30 bg-amber-300/10 px-2 py-0.5 text-amber-200">
                           +{mission.points}
@@ -945,7 +945,7 @@ function ZEClubMagicBento({
                 </div>
                 <p className="card__body-copy">Current standing in this season.</p>
 
-                <div className="grid grid-cols-2 gap-2 text-[11px] text-zinc-300">
+                <div className="grid grid-cols-2 gap-2 text-xs text-zinc-300">
                   <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2">
                     <p className="card__meta-label">Bracket</p>
                     <p className="card__meta-value">{leaderboardBand}</p>
@@ -977,7 +977,7 @@ function ZEClubMagicBento({
                 </div>
                 <p className="card__body-copy">All-time ZE Club points on record.</p>
 
-                <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 text-[11px] text-zinc-300">
+                <div className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 text-xs text-zinc-300">
                   <div className="mb-1.5 flex items-center justify-between uppercase tracking-wider text-zinc-400">
                     <span>Season Share</span>
                     <span>{xpContribution}%</span>
@@ -990,7 +990,7 @@ function ZEClubMagicBento({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 text-[11px] text-zinc-300">
+                <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-2 text-xs text-zinc-300">
                   <span className="text-zinc-400">Coins on hand</span>
                   <span className="font-medium text-white">{dashboardData.zeCoins.toLocaleString()}</span>
                 </div>

@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import dynamic from 'next/dynamic'
 import { cn } from "@/lib/utils"
 import { AnimatePresence } from "framer-motion"
 import PageTransition from "@/components/page-transition"
@@ -15,11 +14,6 @@ import SeasonBanner from "@/components/ze-club/SeasonBanner"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import logger from '@/lib/browser-logger'
 import { useZeClubStore } from '@/lib/stores/zeClubStore'
-import { hyperspeedPresets } from "@/components/HyperSpeedPresets"
-
-const Hyperspeed = dynamic(() => import('@/components/Hyperspeed'), {
-  ssr: false,
-})
 
 export const ZE_CLUB_NAV_ITEMS = [
   { href: '/ze-club', label: 'Dashboard', icon: LayoutDashboard },
@@ -67,9 +61,6 @@ function ZEClubLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      <div className="fixed inset-0 -z-20">
-        <Hyperspeed effectOptions={hyperspeedPresets.six} />
-      </div>
       <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_15%_15%,rgba(239,68,68,0.18),transparent_42%),radial-gradient(circle_at_85%_85%,rgba(56,189,248,0.12),transparent_40%)]" />
 
       <div className="relative z-10 flex min-h-screen pt-0">
