@@ -84,6 +84,10 @@ export default function SupportContent() {
       answer: 'You can earn ZE Points by completing missions such as sharing our events on social media, participating in tournaments, creating content, and engaging with our community. Each mission has specific requirements and point values.',
     },
     {
+      question: 'How do I verify my Discord ID?',
+      answer: 'You can verify your Discord ID directly from your ZE Club Dashboard or via the Security Settings in your Profile. Verification is required to sync your ZE Club rank with exclusive roles in our Discord community.',
+    },
+    {
       question: 'How long does mission verification take?',
       answer: 'Mission submissions are typically verified within 24-48 hours. You will be notified once your submission has been reviewed. Make sure to submit clear proof of completion to expedite the process.',
     },

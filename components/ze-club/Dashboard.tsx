@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { AlertTriangle, CheckCircle2, Link2, ShieldCheck, Zap } from "lucide-react"
+import { AlertTriangle, CheckCircle2, Link2, ShieldCheck, Zap, Loader2, ExternalLink } from "lucide-react"
 import ZEClubMagicBento from "./ZEClubMagicBento"
 import { deriveDiscordSyncUiState, type DiscordSyncDashboardPayload } from "@/lib/ze-club/discordSyncUi"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 interface UserDashboard {
   totalPoints: number
@@ -30,6 +32,7 @@ function Dashboard() {
   const [dashboardData, setDashboardData] = useState<UserDashboard | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isLinking, setIsLinking] = useState(false)
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -49,6 +52,35 @@ function Dashboard() {
 
     fetchDashboardData()
   }, [])
+
+  async function handleStartDiscordLink() {
+    setIsLinking(true)
+    try {
+      const response = await fetch('/api/user/discord/link/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ redirectTo: '/ze-club' }),
+      })
+
+      const payload = await response.json()
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Failed to start Discord verification')
+      }
+
+      const authorizationUrl = payload?.authorizationUrl as string | undefined
+      if (!authorizationUrl) {
+        throw new Error('Missing Discord authorization URL')
+      }
+
+      window.location.assign(authorizationUrl)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to start Discord verification'
+      toast.error(message)
+      setIsLinking(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -74,8 +106,38 @@ function Dashboard() {
     )
   }
 
+  const isVerified = dashboardData.discord?.eligibleForRoleSync
+
   return (
     <div className="space-y-6 sm:space-y-8 pb-6 sm:pb-10">
+      {/* Verification Banner */}
+      {!isVerified && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent p-4 sm:p-5"
+        >
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+            </div>
+            <div className="flex-1 text-center sm:text-left">
+              <h3 className="text-sm sm:text-base font-bold text-amber-100">Verify your Identity</h3>
+              <p className="text-xs sm:text-sm text-amber-200/70 mt-0.5">Link your Discord ID to sync your ZE Club rank and unlock exclusive community roles.</p>
+            </div>
+            <Button 
+              onClick={handleStartDiscordLink}
+              disabled={isLinking}
+              size="sm"
+              className="bg-amber-600 hover:bg-amber-500 text-white border-amber-400/30 shadow-lg shadow-amber-900/20 whitespace-nowrap"
+            >
+              {isLinking ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ExternalLink className="w-4 h-4 mr-2" />}
+              {dashboardData.discord?.linked ? 'Complete Verification' : 'Verify ID Now'}
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
       {/* Header Section */}
       <div className="relative z-10">
         <motion.div 
@@ -98,20 +160,34 @@ function Dashboard() {
         transition={{ delay: 0.1 }}
         className="rounded-2xl border border-zinc-700/40 bg-gradient-to-br from-zinc-900/70 via-zinc-900/55 to-zinc-800/50 p-4 sm:p-6"
       >
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-lg sm:text-xl font-semibold text-white">Discord Sync Status</h2>
             <p className="text-xs sm:text-sm text-zinc-400">Keep your ZE Club rank mirrored to Discord roles.</p>
           </div>
-          {dashboardData.discord?.eligibleForRoleSync ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
-              <CheckCircle2 className="h-3.5 w-3.5" /> Eligible
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
-              <AlertTriangle className="h-3.5 w-3.5" /> Action needed
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {dashboardData.discord?.eligibleForRoleSync ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Eligible
+              </span>
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
+                  <AlertTriangle className="h-3.5 w-3.5" /> Action needed
+                </span>
+                <Button 
+                  onClick={handleStartDiscordLink}
+                  disabled={isLinking}
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-3 text-[10px] bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:text-white"
+                >
+                  {isLinking ? <Loader2 className="w-3 h-3 animate-spin mr-1.5" /> : null}
+                  Verify
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {(() => {
