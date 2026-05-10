@@ -15,6 +15,7 @@ export default defineConfig({
     environment: 'node',
     fileParallelism: false,
     setupFiles: ['tests/setup/unit.setup.ts', 'tests/setup/integration.setup.ts'],
+    exclude: ['tests/e2e/**', '**/node_modules/**', '**/dist/**'],
     passWithNoTests: false,
     coverage: {
       provider: 'v8',

@@ -55,6 +55,7 @@ describe('season transition DB integration', () => {
       {
         email: 'legend@test.com',
         zeTag: 'legend',
+        zeClubId: 'legend-1',
         zeCoins: 100,
         experience: 1000,
         points: 1000,
@@ -64,6 +65,7 @@ describe('season transition DB integration', () => {
       {
         email: 'vanguard@test.com',
         zeTag: 'vanguard',
+        zeClubId: 'vanguard-1',
         zeCoins: 80,
         experience: 600,
         points: 600,
@@ -73,6 +75,7 @@ describe('season transition DB integration', () => {
       {
         email: 'rookie@test.com',
         zeTag: 'rookie',
+        zeClubId: 'rookie-1',
         zeCoins: 30,
         experience: 0,
         points: 0,
