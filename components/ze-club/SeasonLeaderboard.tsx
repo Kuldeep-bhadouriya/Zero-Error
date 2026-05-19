@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Crown, Loader2, Shield, Calendar, Users, ArrowLeft, Target, Gift } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
+import ZEClubPageHeader from './ZEClubPageHeader'
 
 interface SeasonInfo {
   seasonNumber: number
@@ -113,33 +114,27 @@ export default function SeasonLeaderboard({ seasonNumber }: { seasonNumber: numb
       </Link>
 
       {/* Season Header */}
-      <div className="pt-0 pb-8 text-center space-y-4 relative">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-32 bg-red-600/20 blur-[100px] pointer-events-none" />
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative z-10"
-        >
-          <h1 className="text-3xl md:text-5xl font-black italic tracking-tight text-white uppercase">
-            Season {season.seasonNumber}:{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">
-              {season.name}
-            </span>
-          </h1>
-          <div className="flex items-center justify-center gap-4 mt-4 text-sm text-gray-400">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="pt-0 pb-8">
+        <ZEClubPageHeader
+          align="center"
+          eyebrow="Season Leaderboard"
+          title={`Season ${season.seasonNumber}`}
+          highlight={season.name}
+          subtitle={season.description || "Season standings, performance highlights, and competitive momentum."}
+        />
+        <div className="mt-4 flex items-center justify-center gap-4 text-sm text-gray-400">
+          <span className="flex items-center gap-1">
+            <Calendar className="h-3.5 w-3.5" />
+            {formatDate(season.startDate)} - {formatDate(season.actualEndDate || season.scheduledEndDate)}
+          </span>
+          {season.totalParticipants !== undefined && season.totalParticipants > 0 && (
             <span className="flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5" />
-              {formatDate(season.startDate)} - {formatDate(season.actualEndDate || season.scheduledEndDate)}
+              <Users className="h-3.5 w-3.5" />
+              {season.totalParticipants} participants
             </span>
-            {season.totalParticipants !== undefined && season.totalParticipants > 0 && (
-              <span className="flex items-center gap-1">
-                <Users className="h-3.5 w-3.5" />
-                {season.totalParticipants} participants
-              </span>
-            )}
-          </div>
-        </motion.div>
-      </div>
+          )}
+        </div>
+      </motion.div>
 
       {/* User's own stats card (if logged in and participated) */}
       {userStats && (

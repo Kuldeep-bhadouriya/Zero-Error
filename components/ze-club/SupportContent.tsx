@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import logger from '@/lib/browser-logger'
+import ZEClubPageHeader from './ZEClubPageHeader'
 
 export default function SupportContent() {
   const [formData, setFormData] = useState({
@@ -111,19 +112,22 @@ export default function SupportContent() {
 
   return (
     <motion.div
-      className="relative z-10"
+      className="relative z-10 space-y-8"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <motion.h1
-        className="text-3xl md:text-4xl font-bold mb-4 md:mb-6 text-red-500"
+      <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        Support & Help
-      </motion.h1>
+        <ZEClubPageHeader
+          eyebrow="ZE Club Support"
+          title="Support and Help"
+          subtitle="Find answers fast or contact the ZE Club team for personalized help."
+        />
+      </motion.div>
 
       {/* FAQ Section */}
       <motion.div

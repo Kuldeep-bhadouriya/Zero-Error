@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import ZEClubPageHeader from './ZEClubPageHeader';
 
 interface LeaderboardUser {
   _id: string;
@@ -316,28 +317,27 @@ function AnimatedLeaderboardList({ users }: { users: LeaderboardUser[] }) {
 
 function HeaderSection() {
     return (
-        <div className="pt-0 pb-8 text-center space-y-4 relative">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-32 bg-red-600/20 blur-[100px] pointer-events-none" />
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative z-10"
-            >
-                <h1 className="text-4xl md:text-6xl font-black italic tracking-tigh text-white uppercase">
-                    Hall of <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">Champions</span>
-                </h1>
-                <p className="text-gray-400 max-w-lg mx-auto text-sm md:text-base mt-4 font-medium leading-relaxed">
-                    Compete, climb the ranks, and earn your place among the Zero Error elite.
-                </p>
-                <Link
-                    href="/ze-club/seasons"
-                    className="inline-flex items-center gap-1.5 mt-3 text-sm text-gray-500 hover:text-red-400 transition-colors"
-                >
-                    <History className="h-3.5 w-3.5" />
-                    View Past Seasons
-                </Link>
-            </motion.div>
-        </div>
+        <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="pt-0 pb-8"
+        >
+            <ZEClubPageHeader
+                eyebrow="ZE Club Leaderboard"
+                title="Hall of"
+                highlight="Champions"
+                subtitle="Compete, climb the ranks, and earn your place among the Zero Error elite."
+                action={
+                    <Link
+                        href="/ze-club/seasons"
+                        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-400 transition-colors"
+                    >
+                        <History className="h-3.5 w-3.5" />
+                        View Past Seasons
+                    </Link>
+                }
+            />
+        </motion.div>
     )
 }
 

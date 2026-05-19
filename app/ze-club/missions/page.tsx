@@ -8,6 +8,7 @@ import Mission from '@/models/mission'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { Badge } from '@/components/ui/badge'
 import ZEClubLayout from '@/components/ze-club/ZEClubLayout'
+import ZEClubPageHeader from '@/components/ze-club/ZEClubPageHeader'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { getMissionsForUserEmail } from '@/lib/ze-club/missions'
@@ -173,23 +174,16 @@ export default function MissionsPage() {
       />
       <ZEClubLayout>
         <div className="text-white space-y-10">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-red-500 via-orange-500 to-red-600 bg-clip-text text-transparent">
-              Missions
-            </h1>
-            <p className="text-gray-400 mt-2 text-sm sm:text-base">
-              Complete missions to earn ZE Points and unlock rewards.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
+        <ZEClubPageHeader
+          eyebrow="ZE Club Missions"
+          title="Missions"
+          subtitle="Complete missions to earn ZE Points and unlock rewards."
+          action={
             <Button asChild className="bg-red-600 hover:bg-red-700 text-white">
               <Link href="/ze-club/missions/submit">Submit Proof</Link>
             </Button>
-          </div>
-        </div>
+          }
+        />
 
         {/* Summary strip */}
         <Suspense

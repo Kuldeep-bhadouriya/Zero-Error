@@ -10,6 +10,7 @@ import User from '@/models/user'
 import MissionSubmission from '@/models/missionSubmission'
 import Mission from '@/models/mission'
 import { createBreadcrumbSchema, createPageMetadata, toJsonLd } from '@/lib/seo'
+import ZEClubPageHeader from '@/components/ze-club/ZEClubPageHeader'
 
 export const metadata = createPageMetadata({
   title: 'Submit Mission Proof | ZE Club',
@@ -92,27 +93,20 @@ export default async function MissionSubmitPage({
       />
       <ZEClubLayout>
         <div className="text-white space-y-8">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <div className="text-xs uppercase tracking-widest text-zinc-500 font-medium">
-              <Link href="/ze-club/missions" className="hover:text-zinc-300 transition-colors">
-                Missions
-              </Link>
-              <span className="mx-2">/</span>
-              <span className="text-zinc-400">Submit proof</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-semibold mt-2">Submit mission proof</h1>
-            <p className="text-gray-400 mt-2 text-sm sm:text-base">
-              {editSubmission
-                ? 'Replace your proof before admin review is complete.'
-                : 'Upload a clear image or video that shows the mission completion.'}
-            </p>
-          </div>
-
-          <Button asChild variant="ghost" className="text-zinc-300 hover:bg-white/5">
-            <Link href="/ze-club/missions">Back</Link>
-          </Button>
-        </div>
+        <ZEClubPageHeader
+          eyebrow="Mission Submissions"
+          title="Submit mission proof"
+          subtitle={
+            editSubmission
+              ? 'Replace your proof before admin review is complete.'
+              : 'Upload a clear image or video that shows the mission completion.'
+          }
+          action={
+            <Button asChild variant="ghost" className="text-zinc-300 hover:bg-white/5">
+              <Link href="/ze-club/missions">Back</Link>
+            </Button>
+          }
+        />
 
         <MissionUploader
           missions={missions}

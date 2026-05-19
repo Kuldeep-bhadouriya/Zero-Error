@@ -13,6 +13,7 @@ import { RewardCard } from './RewardCard';
 import { IReward } from '@/models/reward';
 import logger from '@/lib/browser-logger'
 import { useZeClubStore } from '@/lib/stores/zeClubStore';
+import ZEClubPageHeader from '../ZEClubPageHeader';
 
 // Define the full Reward type as used in the frontend
 interface Reward extends Omit<IReward, 'isModified' | 'increment' | 'get' | '$isNew' | 'errors' | 'schema' | 'db' | 'modelName' | 'collection'> {
@@ -150,27 +151,22 @@ export default function RewardsClient() {
   return (
     <div className="space-y-12 pb-20">
       
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-4 border-b border-white/5">
-        <div className="space-y-2">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-500 bg-clip-text text-transparent">
-            Rewards Store
-          </h1>
-          <p className="text-gray-400 max-w-xl text-lg">
-            Redeem your hard-earned ZE Coins for exclusive gear, tech, and perks.
-          </p>
-        </div>
-
-        <GlassCard className="px-6 py-4 flex items-center gap-4 bg-purple-500/5 hover:bg-purple-500/10 transition-colors">
-          <div className="p-3 rounded-full bg-yellow-500/10">
-            <Coins className="h-6 w-6 text-yellow-400" />
-          </div>
-          <div>
-            <p className="text-xs text-uppercase tracking-wider text-gray-500 font-semibold">Current Balance</p>
-            <p className="text-2xl font-bold text-white tabular-nums">{userCoins.toLocaleString()}</p>
-          </div>
-        </GlassCard>
-      </div>
+      <ZEClubPageHeader
+        eyebrow="ZE Club Rewards"
+        title="Rewards Store"
+        subtitle="Redeem your hard-earned ZE Coins for exclusive gear, tech, and perks."
+        action={
+          <GlassCard className="px-6 py-4 flex items-center gap-4 bg-purple-500/5 hover:bg-purple-500/10 transition-colors">
+            <div className="p-3 rounded-full bg-yellow-500/10">
+              <Coins className="h-6 w-6 text-yellow-400" />
+            </div>
+            <div>
+              <p className="text-xs text-uppercase tracking-wider text-gray-500 font-semibold">Current Balance</p>
+              <p className="text-2xl font-bold text-white tabular-nums">{userCoins.toLocaleString()}</p>
+            </div>
+          </GlassCard>
+        }
+      />
 
       {userCoins === 0 && (
          <motion.div 
