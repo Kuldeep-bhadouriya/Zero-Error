@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { Types } from "mongoose"
 import { auth } from "@/app/api/auth/[...nextauth]/route"
 import { errorResponse } from "@/lib/api-response"
 import dbConnect from "@/lib/mongodb"
@@ -21,7 +22,9 @@ export async function GET() {
   try {
     await dbConnect()
 
-    const user = await User.findOne({ email: session.user.email }).select("_id").lean()
+    const user = await User.findOne({ email: session.user.email })
+      .select("_id")
+      .lean<{ _id: Types.ObjectId } | null>()
     if (!user) {
       return NextResponse.json(
         { message: "User not found" },
@@ -73,7 +76,13 @@ export async function GET() {
         .sort({ createdAt: -1 })
         .limit(6)
         .select("rewardName rewardCost status createdAt")
-        .lean()
+        .lean<{
+          _id: Types.ObjectId
+          rewardName: string
+          rewardCost: number
+          status: string
+          createdAt: Date
+        }[]>()
     ])
 
     const monthlyXp = Array.from({ length: 12 }, () => 0)
