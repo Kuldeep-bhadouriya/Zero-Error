@@ -5,6 +5,7 @@ export interface ISeason extends Document {
   name: string
   description?: string
   status: 'upcoming' | 'active' | 'completed'
+  hideFromHistory?: boolean
   startDate: Date
   scheduledEndDate: Date
   actualEndDate?: Date
@@ -34,6 +35,7 @@ const SeasonSchema: Schema = new Schema(
       enum: ['upcoming', 'active', 'completed'],
       default: 'upcoming',
     },
+    hideFromHistory: { type: Boolean, default: false },
     startDate: { type: Date, required: true },
     scheduledEndDate: { type: Date, required: true },
     actualEndDate: { type: Date },

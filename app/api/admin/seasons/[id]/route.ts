@@ -13,6 +13,7 @@ const seasonPatchSchema = z
     description: optionalTextSchema('Description', 500),
     startDate: z.string().datetime().optional(),
     scheduledEndDate: z.string().datetime().optional(),
+    hideFromHistory: z.boolean().optional(),
   })
   .refine((value) => Object.values(value).some((field) => field !== undefined), {
     message: 'At least one field is required for update',
@@ -54,6 +55,9 @@ export async function PATCH(
     // Only allow certain field updates
     if (updates.name) season.name = updates.name
     if (updates.description !== undefined) season.description = updates.description
+    if (updates.hideFromHistory !== undefined) {
+      season.hideFromHistory = updates.hideFromHistory
+    }
 
     // Only allow date changes for upcoming seasons
     if (updates.startDate && season.status === 'upcoming') {

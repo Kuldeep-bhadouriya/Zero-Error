@@ -12,7 +12,10 @@ export async function GET() {
   try {
     await dbConnect()
 
-    const completedSeasons = await Season.find({ status: 'completed' })
+    const completedSeasons = await Season.find({
+      status: 'completed',
+      hideFromHistory: { $ne: true },
+    })
       .select('seasonNumber name description startDate scheduledEndDate actualEndDate totalParticipants')
       .sort({ seasonNumber: -1 })
       .lean()

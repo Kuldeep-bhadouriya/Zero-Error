@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import {
   Calendar,
@@ -33,6 +34,7 @@ interface Season {
   name: string
   description?: string
   status: 'upcoming' | 'active' | 'completed'
+  hideFromHistory?: boolean
   startDate: string
   scheduledEndDate: string
   actualEndDate?: string
@@ -75,6 +77,7 @@ export default function SeasonManager() {
   const [allSeasons, setAllSeasons] = useState<Season[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [visibilityUpdating, setVisibilityUpdating] = useState<string | null>(null)
 
   // Form fields
   const [formName, setFormName] = useState('')
@@ -282,6 +285,36 @@ export default function SeasonManager() {
       toast.error('Failed to delete season')
     } finally {
       setDeleting(null)
+    }
+  }
+
+  const handleHistoryVisibilityChange = async (
+    seasonId: string,
+    hideFromHistory: boolean
+  ) => {
+    setVisibilityUpdating(seasonId)
+    try {
+      const res = await fetch(`/api/admin/seasons/${seasonId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hideFromHistory }),
+      })
+
+      if (res.ok) {
+        toast.success(
+          hideFromHistory
+            ? 'Season hidden from history'
+            : 'Season visible in history'
+        )
+        await fetchAllSeasons()
+      } else {
+        const data = await res.json()
+        toast.error(data.error || 'Failed to update season visibility')
+      }
+    } catch (error) {
+      toast.error('Failed to update season visibility')
+    } finally {
+      setVisibilityUpdating(null)
     }
   }
 
@@ -612,6 +645,16 @@ export default function SeasonManager() {
                             {season.totalParticipants}
                           </div>
                         )}
+                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                          <span>Hide from history</span>
+                          <Switch
+                            checked={Boolean(season.hideFromHistory)}
+                            onCheckedChange={(checked) =>
+                              handleHistoryVisibilityChange(season._id, checked)
+                            }
+                            disabled={visibilityUpdating === season._id}
+                          />
+                        </div>
                         <Badge variant="outline" className="text-gray-400 border-gray-600">
                           Completed
                         </Badge>
