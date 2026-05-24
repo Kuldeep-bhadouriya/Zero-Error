@@ -10,7 +10,6 @@ import {
   CalendarDays,
   Coins,
   ShieldCheck,
-  Star,
   Target,
   Trophy,
   Zap
@@ -58,37 +57,6 @@ function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [activityData, setActivityData] = useState<DashboardActivity | null>(null)
   const [activityLoading, setActivityLoading] = useState(true)
-  const stats = useMemo(() => {
-    if (!dashboardData) return []
-
-    return [
-      {
-        label: "Total ZE Points",
-        value: dashboardData.totalPoints.toLocaleString(),
-        icon: Star,
-        tone: "from-red-500/30 to-orange-500/10"
-      },
-      {
-        label: "Season XP",
-        value: dashboardData.experience.toLocaleString(),
-        icon: Target,
-        tone: "from-orange-500/30 to-amber-500/10"
-      },
-      {
-        label: "ZE Coins",
-        value: dashboardData.zeCoins.toLocaleString(),
-        icon: Coins,
-        tone: "from-amber-500/30 to-rose-500/10"
-      },
-      {
-        label: "Leaderboard",
-        value: dashboardData.leaderboardRank ? `#${dashboardData.leaderboardRank}` : "Unranked",
-        icon: Trophy,
-        tone: "from-rose-500/30 to-red-500/10"
-      }
-    ]
-  }, [dashboardData])
-
   useEffect(() => {
     async function fetchDashboardData() {
       try {
@@ -218,6 +186,10 @@ function Dashboard() {
               <p className="mt-2 text-sm text-zinc-300 max-w-lg">
                 Complete missions, stack ZE Coins, and keep your rank momentum steady through the season.
               </p>
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-xs text-zinc-300">
+                <span className="text-zinc-400">Total ZE Points</span>
+                <span className="font-semibold text-white">{dashboardData.totalPoints.toLocaleString()}</span>
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <div className="inline-flex items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-3.5 py-2.5 backdrop-blur">
@@ -236,6 +208,23 @@ function Dashboard() {
               <div className="rounded-xl border border-red-400/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-zinc-200">
                 <p className="uppercase tracking-wider text-zinc-400">Progress</p>
                 <p className="text-base font-semibold text-white">{dashboardData.progressToNextRank}%</p>
+              </div>
+              <div className="rounded-xl border border-white/15 bg-white/10 px-3.5 py-2.5 text-xs text-zinc-200 backdrop-blur">
+                <div className="flex items-center gap-2 text-zinc-300">
+                  <Trophy className="h-4 w-4 text-amber-300" />
+                  <p className="uppercase tracking-wider text-zinc-400">Leaderboard</p>
+                </div>
+                <div className="mt-1 flex items-center gap-2">
+                  <p className="text-base font-semibold text-white">
+                    {dashboardData.leaderboardRank ? `#${dashboardData.leaderboardRank}` : "Unranked"}
+                  </p>
+                  <Link
+                    href="/ze-club/leaderboard"
+                    className="text-[10px] uppercase tracking-wider text-amber-200 hover:text-amber-100"
+                  >
+                    View
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -297,22 +286,6 @@ function Dashboard() {
             </div>
           </div>
         </div>
-      </section>
-
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-xl border border-white/10 bg-black/40 px-4 py-4 shadow-[0_12px_30px_rgba(0,0,0,0.35)]"
-          >
-            <div className={`mb-3 flex items-center justify-between rounded-lg bg-gradient-to-r ${stat.tone} px-3 py-2`}>
-              <p className="text-xs uppercase tracking-[0.2em] text-zinc-300">{stat.label}</p>
-              <stat.icon className="h-4 w-4 text-red-200" />
-            </div>
-            <p className="text-2xl font-semibold text-white">{stat.value}</p>
-            <p className="text-xs text-zinc-400 mt-1">Updated moments ago</p>
-          </div>
-        ))}
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
