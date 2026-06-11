@@ -53,8 +53,20 @@ const nextConfig = {
     return [
       {
         source: '/:path*',
+        has: [{ type: 'host', value: 'www.zeroerroresports.com' }],
+        destination: 'https://zeroerroresports.com/:path*',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'zeroerrosports.com' }],
+        destination: 'https://zeroerroresports.com/:path*',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
         has: [{ type: 'host', value: 'www.zeroerrosports.com' }],
-        destination: 'https://zeroerrosports.com/:path*',
+        destination: 'https://zeroerroresports.com/:path*',
         permanent: true,
       },
       {
