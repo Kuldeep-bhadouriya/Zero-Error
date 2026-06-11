@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
-export const SITE_NAME = 'Zero Error Esports'
-export const SITE_URL = 'https://zeroerroresports.com'
+const SITE_NAME = 'Zero Error Esports'
+const SITE_URL = 'https://zeroerroresports.com'
 const DEFAULT_IMAGE = '/images/banner.jpg'
 
 interface PageMetadataOptions {

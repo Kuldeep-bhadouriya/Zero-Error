@@ -5,7 +5,7 @@ import ClientLayout from "@/components/client-layout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AnimationProvider } from "@/contexts/AnimationContext";
 import BackgroundEffects from "@/components/shared/BackgroundEffects";
-import { createOrganizationSchema, toJsonLd, SITE_URL } from "@/lib/seo";
+import { createOrganizationSchema, toJsonLd } from "@/lib/seo";
 import "./globals.css";
 
 // Font configuration - Rajdhani is a good gaming font
@@ -25,7 +25,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: new URL("https://zeroerroresports.com"),
   title: "Zero Error Esports | Professional Gaming Team",
   description:
     "Official website of Zero Error Esports - Professional gaming team competing across Valorant, Counter-Strike 2, and other major titles",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     title: "Zero Error Esports | Professional Gaming Team",
     description:
       "Join the elite gaming team that accepts nothing less than victory",
-    url: SITE_URL,
+    url: "https://zeroerroresports.com",
     siteName: "Zero Error Esports",
     locale: "en_US",
     type: "website",

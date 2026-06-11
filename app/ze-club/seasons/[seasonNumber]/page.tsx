@@ -14,7 +14,6 @@ export async function generateMetadata({
     : undefined
 
   let seasonName: string | undefined
-  let isHidden = false
 
   try {
     const [{ default: dbConnect }, { default: Season }] = await Promise.all([
@@ -26,11 +25,10 @@ export async function generateMetadata({
 
     const season = (await Season.findOne(
       { seasonNumber: validSeasonNumber },
-      { name: 1, hideFromHistory: 1, _id: 0 }
-    ).lean()) as { name?: string; hideFromHistory?: boolean } | null
+      { name: 1, _id: 0 }
+    ).lean()) as { name?: string } | null
 
     seasonName = season?.name
-    isHidden = season?.hideFromHistory ?? false
   } catch {
     // Fall back to parameter-derived metadata if the database is unavailable.
   }
@@ -48,7 +46,6 @@ export async function generateMetadata({
     title: pageTitle,
     description: pageDescription,
     path: `/ze-club/seasons/${seasonNumber}`,
-    noIndex: isHidden,
   })
 }
 

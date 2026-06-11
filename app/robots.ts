@@ -1,5 +1,4 @@
 import type { MetadataRoute } from 'next'
-import { absoluteUrl } from '@/lib/seo'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/admin', '/api', '/profile'],
     },
-    sitemap: absoluteUrl('/sitemap.xml'),
+    sitemap: 'https://zeroerroresports.com/sitemap.xml',
   }
 }

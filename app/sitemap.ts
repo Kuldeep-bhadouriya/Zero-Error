@@ -1,10 +1,7 @@
 import type { MetadataRoute } from 'next'
-import { absoluteUrl } from '@/lib/seo'
 
-/**
- * Only include routes that are meant to be indexed.
- * Excludes: /admin, /api, /profile, /join-us, /signup, /ze-club (authenticated dashboard)
- */
+const BASE_URL = 'https://zeroerroresports.com'
+
 const staticPublicRoutes = [
   '/',
   '/about',
@@ -19,9 +16,8 @@ const staticPublicRoutes = [
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
 
-  // 1. Generate static route entries
   const staticEntries: MetadataRoute.Sitemap = staticPublicRoutes.map((route) => ({
-    url: absoluteUrl(route === '/' ? '' : route),
+    url: `${BASE_URL}${route}`,
     lastModified: now,
     changeFrequency: route === '/' ? 'weekly' : 'monthly',
     priority: route === '/' ? 1 : route.startsWith('/ze-club') ? 0.7 : 0.8,
@@ -29,7 +25,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const seasonEntries: MetadataRoute.Sitemap = []
 
-  // 2. Generate dynamic season entries
   try {
     const [{ default: dbConnect }, { default: Season }] = await Promise.all([
       import('@/lib/mongodb'),
@@ -38,30 +33,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     await dbConnect()
 
-    /**
-     * Filter: 
-     * - Only seasons that are NOT hidden from history.
-     * - Completed seasons are high value.
-     * - Active/Upcoming seasons are also included as they are reachable.
-     */
-    const seasons = (await Season.find(
-      { hideFromHistory: { $ne: true } }, 
-      { seasonNumber: 1, updatedAt: 1, _id: 0 }
-    )
+    const seasons = (await Season.find({}, { seasonNumber: 1, updatedAt: 1, _id: 0 })
       .sort({ seasonNumber: -1 })
       .lean()) as unknown as Array<{ seasonNumber: number; updatedAt?: Date }>
 
     for (const season of seasons) {
       seasonEntries.push({
-        url: absoluteUrl(`/ze-club/seasons/${season.seasonNumber}`),
+        url: `${BASE_URL}/ze-club/seasons/${season.seasonNumber}`,
         lastModified: season.updatedAt ?? now,
         changeFrequency: 'weekly',
         priority: 0.6,
       })
     }
-  } catch (error) {
-    // If DB fails during build/ISR, we still return the static routes
-    // to prevent the entire sitemap from being empty.
+  } catch {
+    // Return static routes even when DB/env is unavailable during generation.
   }
 
   return [...staticEntries, ...seasonEntries]
