@@ -1,0 +1,26 @@
+# Zero Error Esports
+
+> Zero Error Esports is a professional esports organization. This website serves as the main hub for our teams, events, services, and community platform.
+
+## About Us
+
+Zero Error Esports competes in various competitive gaming titles. The website offers news, event schedules, team rosters, and details on our services.
+
+## ZE Club Loyalty Program
+
+ZE Club is our community engagement and loyalty program. Members can complete missions to earn points, climb the leaderboard (Rookie, Bronze, Silver, Gold, Platinum, Diamond), and redeem points for exclusive rewards in our catalog.
+
+## Important Links
+
+- [Home](https://zeroerroresports.com/)
+- [About Us](https://zeroerroresports.com/about)
+- [Teams](https://zeroerroresports.com/teams)
+- [Events](https://zeroerroresports.com/events)
+- [Services](https://zeroerroresports.com/services)
+- [ZE Club](https://zeroerroresports.com/ze-club)
+- [Contact](https://zeroerroresports.com/contact)
+
+## Technical Resources
+
+- [Sitemap](https://zeroerroresports.com/sitemap.xml)
+- [Robots](https://zeroerroresports.com/robots.txt)
