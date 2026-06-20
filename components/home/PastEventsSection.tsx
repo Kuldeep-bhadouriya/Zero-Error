@@ -22,6 +22,8 @@ interface Event {
   featured: boolean
   games: string[]
   organizer: string
+  winner?: string
+  gameCategory?: string
 }
 
 const ALLOWED_IMAGE_HOSTS = new Set([
@@ -87,6 +89,8 @@ function normalizeEvent(item: unknown): Event | null {
     featured: Boolean(source.featured),
     games: Array.isArray(source.games) ? source.games.filter((game): game is string => typeof game === 'string') : [],
     organizer: typeof source.organizer === 'string' ? source.organizer : 'Zero Error Esports',
+    winner: typeof source.winner === 'string' ? source.winner : undefined,
+    gameCategory: typeof source.gameCategory === 'string' ? source.gameCategory : undefined,
   }
 }
 

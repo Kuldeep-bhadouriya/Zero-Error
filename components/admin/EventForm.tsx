@@ -45,6 +45,8 @@ interface EventFormData {
   organizer: string
   maxParticipants?: number
   status: 'draft' | 'published' | 'cancelled'
+  winner?: string
+  gameCategory?: string
 }
 
 interface EventFormProps {
@@ -63,6 +65,19 @@ const GAME_OPTIONS = [
   'Dota 2',
   'Apex Legends',
   'Fortnite',
+  'Other',
+]
+
+const GAME_CATEGORY_OPTIONS = [
+  'Battle Royale',
+  'FPS',
+  'MOBA',
+  'Fighting',
+  'Sports',
+  'Wrestling',
+  'Racing',
+  'Strategy',
+  'Card/Board',
   'Other',
 ]
 
@@ -122,6 +137,8 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
           organizer: event.organizer,
           maxParticipants: event.maxParticipants,
           status: event.status,
+          winner: event.winner,
+          gameCategory: event.gameCategory,
         }
       : {
           featured: false,
@@ -435,6 +452,40 @@ function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
             placeholder="Optional"
             className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
           />
+        </div>
+      </div>
+
+      {/* Winner & Game Category */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="winner" className="text-white font-medium">Winner</Label>
+          <Input
+            id="winner"
+            {...register('winner', {
+              maxLength: { value: 200, message: 'Winner cannot exceed 200 characters' },
+            })}
+            placeholder="e.g., Aniraj or Team Tag Elite"
+            className="bg-zinc-800 border-zinc-700 text-white placeholder:text-gray-500"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="gameCategory" className="text-white font-medium">Game Category</Label>
+          <Select
+            onValueChange={(value) => setValue('gameCategory', value)}
+            value={event?.gameCategory || ''}
+          >
+            <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+              <SelectValue placeholder="Select game category" />
+            </SelectTrigger>
+            <SelectContent>
+              {GAME_CATEGORY_OPTIONS.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

@@ -100,6 +100,8 @@ type EventCardData = {
   featured: boolean
   games: string[]
   organizer: string
+  winner?: string
+  gameCategory?: string
 }
 
 async function getInitialEvents(): Promise<{
@@ -132,6 +134,8 @@ async function getInitialEvents(): Promise<{
       featured: Boolean(event.featured),
       games: Array.isArray(event.games) ? event.games : [],
       organizer: String(event.organizer ?? 'Zero Error Esports'),
+      winner: typeof event.winner === 'string' ? event.winner : undefined,
+      gameCategory: typeof event.gameCategory === 'string' ? event.gameCategory : undefined,
     })
 
     return {

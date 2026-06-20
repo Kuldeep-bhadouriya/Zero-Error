@@ -23,6 +23,8 @@ interface Event {
   organizer: string
   maxParticipants?: number
   currentParticipants: number
+  winner?: string
+  gameCategory?: string
 }
 
 const CurrentEventsSection = () => {

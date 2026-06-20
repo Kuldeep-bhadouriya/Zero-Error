@@ -29,6 +29,8 @@ interface Event {
   featured: boolean
   games: string[]
   organizer: string
+  winner?: string
+  gameCategory?: string
 }
 
 interface EventsPageProps {
@@ -401,10 +403,36 @@ export default function EventsPage({ initialUpcomingEvents, initialPastEvents }:
                       ))}
                     </div>
                   )}
-                  
-                  <div className="flex items-center justify-end">
-                    <ChevronRight className="h-4 w-4 text-red-500 group-hover:translate-x-1 transition-transform" />
-                  </div>
+
+                  {event.winner && (
+                    <div className="border-t border-zinc-800 pt-3">
+                      <span className="text-green-400 font-semibold text-sm">
+                        Winner:{" "}
+                      </span>
+                      <span className="text-white font-bold text-sm">
+                        {event.winner}
+                      </span>
+                    </div>
+                  )}
+
+                  {(event.gameCategory || event.winner) && (
+                    <div className="flex items-center justify-between">
+                      {event.gameCategory ? (
+                        <span className="bg-zinc-800 px-2 py-1 rounded-full text-xs text-zinc-300">
+                          {event.gameCategory}
+                        </span>
+                      ) : (
+                        <span />
+                      )}
+                      <ChevronRight className="h-4 w-4 text-red-500 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  )}
+
+                  {!event.winner && !event.gameCategory && (
+                    <div className="flex items-center justify-end">
+                      <ChevronRight className="h-4 w-4 text-red-500 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}

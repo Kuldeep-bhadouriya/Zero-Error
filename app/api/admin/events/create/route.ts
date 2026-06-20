@@ -30,6 +30,8 @@ export async function POST(req: Request) {
       organizer,
       maxParticipants,
       status,
+      winner,
+      gameCategory,
     } = body
 
     // Validation
@@ -82,6 +84,8 @@ export async function POST(req: Request) {
       maxParticipants,
       currentParticipants: 0,
       status: status || 'draft',
+      winner,
+      gameCategory,
       createdBy: session.user.id,
     })
 

@@ -21,6 +21,8 @@ interface Event {
   maxParticipants?: number
   currentParticipants: number
   status: 'draft' | 'published' | 'cancelled'
+  winner?: string
+  gameCategory?: string
   createdAt: string
   updatedAt: string
 }

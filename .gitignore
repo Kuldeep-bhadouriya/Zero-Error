@@ -28,3 +28,4 @@ dump*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.antigravity.md

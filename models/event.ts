@@ -14,6 +14,8 @@ export interface IEvent extends Document {
   maxParticipants?: number
   currentParticipants: number
   status: 'draft' | 'published' | 'cancelled'
+  winner?: string
+  gameCategory?: string
   createdBy: mongoose.Types.ObjectId
   createdAt: Date
   updatedAt: Date
@@ -83,6 +85,16 @@ const EventSchema = new Schema<IEvent>(
       enum: ['draft', 'published', 'cancelled'],
       default: 'draft',
       index: true,
+    },
+    winner: {
+      type: String,
+      trim: true,
+      maxlength: [200, 'Winner name cannot exceed 200 characters'],
+    },
+    gameCategory: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Game category cannot exceed 100 characters'],
     },
     createdBy: {
       type: Schema.Types.ObjectId,
